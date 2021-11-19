@@ -12,6 +12,8 @@ fn main() {
     let mut reader = BufReader::new(File::open(filename).unwrap());
     reader.read_to_string(&mut content);
     content = "<div>data</div>".to_string();
-    let parser = DOParser::new(content);
+    let mut parser = DOParser::new(content);
+    parser.fmt_content();
+
     println!("{:?}", parser)
 }
