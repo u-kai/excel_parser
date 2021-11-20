@@ -1,5 +1,6 @@
 pub mod tag {
 use std::collections::HashMap;
+#[derive(PartialEq,Debug)]
 pub struct Tag {
     element:String,
     properties:Option<HashMap<String,String>>,
