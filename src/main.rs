@@ -4,7 +4,7 @@ use std::{
     io::{BufRead, BufReader, Read},
 };
 
-use excel_parser::mods::do_parser::DOParser;
+use excel_parser::mods::document_obj::do_parser::DOParser;
 
 fn main() {
     let filename = "excel/xl/worksheets/sheet1.xml";

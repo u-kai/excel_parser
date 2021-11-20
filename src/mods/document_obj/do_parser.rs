@@ -2,7 +2,8 @@ use std::{collections::HashMap, fmt::format, fs::OpenOptions, future::Ready, has
 
 use regex::Regex;
 
-use super::tag::tag::Tag;
+use crate::mods::tag::tag::Tag;
+
 
 #[derive(Debug)]
 pub struct DOParser {
@@ -14,7 +15,7 @@ impl DOParser {
     }
 
     pub fn search_element(&self,element:String)-> Option<Tag> {
-        let re_str = format!(r"(<{})( *[^>]*)>",element);
+        let re_str = format!(r"<({})( *[^>]*)>",element);
         let re = Regex::new(&re_str).unwrap();
         if !re.is_match(&self.content){
             return None
@@ -44,9 +45,18 @@ impl DOParser {
             },
             None=>None
         };
-        Some(Tag::new(format!("{}>",element),None,properties))
+        Some(Tag::new(format!("{}",element),None,properties))
     }
-
+    pub fn is_require_element(&self,content:&str,element_name:&str)->bool {
+        let re_str = format!(r"<({})( *[^>]*)>",element_name);
+        let re = Regex::new(&re_str).unwrap();
+        re.is_match(content)
+    }
+    pub fn is_require_end_element(&self,content:&str,element_name:&str)->bool {
+        let re_str = format!(r"</({})>",element_name);
+        let re = Regex::new(&re_str).unwrap();
+        re.is_match(content)
+    }
     pub fn fmt_content(&mut self) -> &Self {
         self.to_lf();
         self.insert_new_line()
@@ -80,7 +90,9 @@ impl DOParser {
 mod tests{
     use std::collections::HashMap;
 
-    use crate::mods::{do_parser::DOParser, tag::tag::Tag};
+    use crate::mods::tag::tag::Tag;
+    use crate::mods::document_obj::do_parser::DOParser;
+
 
 #[test]
 

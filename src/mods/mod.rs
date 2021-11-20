@@ -1,3 +1,2 @@
 pub mod tag;
-pub mod do_parser;
-pub mod do_searcher;
+pub mod document_obj;
