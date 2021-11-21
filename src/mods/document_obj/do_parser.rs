@@ -89,8 +89,13 @@ impl DOParser {
             let capts = re.captures(&self.content).unwrap();
             return capts.get(1).unwrap().as_str().to_string()
         }
-        let re_str = format!(r"< *{} *([^>]*)>((hello+|< *{} *[^>]*>.*</{}>|<[^{}][^>]*>.*</[^{}][^>]*>)*)</{}>",element_name,element_name,element_name,element_name,element_name,element_name);//element_name);
-
+        let re_element_start =format!("< *{} *([^>]*)>",element_name); 
+        let re_element_end = format!("</{}>",element_name);
+        let re_not_element_start = format!("<[^{}][^>]*>",element_name);
+        let re_not_element_end = format!("</[^{}][^>]*>",element_name);
+        let re_children = format!("((hello|{}.*{}|{}.*{})*)",re_element_start,re_element_end,re_not_element_start,re_not_element_end,);
+        let re_str = format!("{}{}{}",re_element_start,re_children,re_element_end);
+        //let re_str = format!(r"< *{} *([^>]*)>(([a-z]+|< *{} *[^>]*>.*</{}>|<[^{}][^>]*>.*</[^{}][^>]*>)*)</{}>",element_name,element_name,element_name,element_name,element_name,element_name);//element_name);
         //let re_str = format!(r"< *{} *([^>]*)>(.*)</{}>",element_name,element_name);//,element_name,element_name);
         println!("{}",re_str);
         println!("{}",&self.content);
