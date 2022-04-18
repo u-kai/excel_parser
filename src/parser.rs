@@ -94,7 +94,6 @@ impl XMLNode {
     pub fn add_child(&mut self, child: XMLNode) {
         self.children.push(child)
     }
-    pub fn add_to_nth_parent(&mut self, parent_index: usize) {}
 }
 
 impl From<&str> for XMLNode {
@@ -143,9 +142,8 @@ impl From<Vec<Token>> for XMLNode {
 }
 
 #[cfg(test)]
-mod XMLNodeTest {
-
-    use super::{Token, TokenType, XMLNode};
+mod xml_node_test {
+    use super::{Token, XMLNode};
     #[test]
     fn from_token_array_test() {
         let data = "<div>
