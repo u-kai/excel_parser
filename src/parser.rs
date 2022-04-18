@@ -124,6 +124,10 @@ impl From<Vec<Token>> for XMLNode {
                     parent_stack.last_mut().unwrap().add_child(child)
                 }
                 TokenType::EndToken => {
+                    let end_node = XMLNode::from(token);
+                    if end_node.value != parent_stack.last().unwrap().value {
+                        continue;
+                    }
                     let child = parent_stack.pop();
                     match child {
                         Some(c) => {
@@ -162,6 +166,25 @@ mod xml_node_test {
         assert_eq!(expect, div);
         let data = "<div><div>div-first
             <p>p-data</p>
+            div-data</div>
+        </div>";
+        let token_array = Token::create_token_array(data);
+        let expect = XMLNode::from(token_array);
+        let p_child = XMLNode::from("p-data");
+        let mut p = XMLNode::from("p");
+        p.add_child(p_child);
+        let div_child = XMLNode::from("div-data");
+        let mut div = XMLNode::from("div");
+        let mut child_div = XMLNode::from("div");
+        let child_div_child = XMLNode::from("div-first");
+        child_div.add_child(child_div_child);
+        child_div.add_child(p);
+        child_div.add_child(div_child);
+        div.add_child(child_div);
+        assert_eq!(expect, div);
+        let data = "<div><div>div-first
+            <p>p-data</p>
+            <data/>
             div-data</div>
         </div>";
         let token_array = Token::create_token_array(data);
