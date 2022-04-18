@@ -89,23 +89,23 @@ impl DOParser {
             let capts = re.captures(&self.content).unwrap();
             return capts.get(1).unwrap().as_str().to_string()
         }
-        let re_element_start =format!("< *{} *([^>]*)>",element_name); 
+        let re_element_start =format!("(< *{} *([^>]*) *>)",element_name); 
         let re_element_end = format!("</{}>",element_name);
-        let re_not_element_start = format!("<[^{}][^>]*>",element_name);
+        let re_not_element_start = format!("< *[^/]*[^{}][^>]*>",element_name);
         let re_not_element_end = format!("</[^{}][^>]*>",element_name);
-        let re_children = format!("((hello|{}.*{}|{}.*{})*)",re_element_start,re_element_end,re_not_element_start,re_not_element_end,);
+        let re_element_children = format!("{}.*{}",re_element_start,re_element_end);
+        let re_not_element_children = format!("{}.*{}",re_not_element_start,re_not_element_end);
+        let re_children = format!("(?P<children>([a-z]|{}|{})*)",re_element_children,re_not_element_children);
         let re_str = format!("{}{}{}",re_element_start,re_children,re_element_end);
         //let re_str = format!(r"< *{} *([^>]*)>(([a-z]+|< *{} *[^>]*>.*</{}>|<[^{}][^>]*>.*</[^{}][^>]*>)*)</{}>",element_name,element_name,element_name,element_name,element_name,element_name);//element_name);
         //let re_str = format!(r"< *{} *([^>]*)>(.*)</{}>",element_name,element_name);//,element_name,element_name);
-        println!("{}",re_str);
-        println!("{}",&self.content);
         let re = Regex::new(&re_str).unwrap();
         if !re.is_match(&self.content) {
             println!("not match")
         }
         let capts = re.captures(&self.content).unwrap();
         println!("{:?}",capts);
-        capts.get(2).unwrap().as_str().to_string()
+        capts.name("children").unwrap().as_str().to_string()
     } 
     fn to_lf(&mut self) -> &Self {
         let re = Regex::new(r"\r\n").unwrap();
@@ -151,7 +151,31 @@ mod tests {
     }
     #[test]
     fn get_tag_test() {
-        let content = "<div>fa</div><element p=12 d=13>hello<element>dfa</element><div>a<element>dfa2</element></div><div>data</div></element><element>element2</element><element>element3</element>";
+        let content = "
+        <div>
+            fa
+        </div>
+        <element p=12 d=13>
+            hello
+            <element>
+                dfa
+            </element>
+            <div>
+                a
+                <element>
+                    dfa2
+                </element>
+            </div>
+            <div>
+                data
+            </div>
+        </element>
+        <element>
+            element2
+        </element>
+        <element>
+            element3
+        </element>";
         let mut dp = DOParser::new(content.to_string());
         let properites = dp.get_tag("element");
         assert_eq!(properites,"hello<element>dfa</element><div>a<element>dfa2</element></div><div>data</div>");

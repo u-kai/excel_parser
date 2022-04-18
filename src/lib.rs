@@ -1,1 +1,1 @@
-pub mod mods;
+pub mod parser;
