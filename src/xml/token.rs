@@ -1,15 +1,17 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TokenType {
     StartToken,
     EndToken,
     Character,
 }
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum PreviousCharState {
     StartTag,
     EndTag,
     Character,
     Slash,
 }
+
 type TokenValue = String;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
@@ -29,7 +31,8 @@ impl Token {
     pub fn create_token_array(s: &str) -> Vec<Token> {
         let mut token_array = Vec::new();
         let mut tmp_token = Token::new();
-        let mut prev_char_state = PreviousCharState::StartTag;
+        let mut slash_buffer = Vec::new();
+        let mut prev_char_state = PreviousCharState::Character;
         for c in s.chars() {
             match c {
                 '<' => {
@@ -37,25 +40,50 @@ impl Token {
                         token_array.push(tmp_token.clone());
                         tmp_token.clear_value();
                     }
+                    prev_char_state = PreviousCharState::StartTag;
                     tmp_token.change_type(TokenType::StartToken);
                 }
                 '/' => {
-                    tmp_token.change_type(TokenType::EndToken);
+                    match prev_char_state {
+                        PreviousCharState::StartTag => tmp_token.change_type(TokenType::EndToken),
+                        PreviousCharState::Slash => tmp_token.add_char(slash_buffer.pop().unwrap()),
+                        PreviousCharState::EndTag => {
+                            tmp_token.add_char(c);
+                        }
+                        PreviousCharState::Character => {
+                            ();
+                        }
+                    }
+                    prev_char_state = PreviousCharState::Slash;
+                    slash_buffer.push(c);
                 }
                 '>' => {
+                    if prev_char_state == PreviousCharState::Slash {
+                        tmp_token.change_type(TokenType::EndToken);
+                        slash_buffer.pop();
+                    }
+                    prev_char_state = PreviousCharState::EndTag;
                     token_array.push(tmp_token.clone());
                     tmp_token.clear_value();
                     tmp_token.change_type(TokenType::Character);
                 }
-                _ => match tmp_token.get_token_type() {
-                    TokenType::Character => {
-                        if !(c.is_whitespace()) {
-                            tmp_token.add_char(c)
-                        }
+                _ => {
+                    if prev_char_state == PreviousCharState::Slash
+                        && tmp_token.get_token_type() != &TokenType::EndToken
+                    {
+                        tmp_token.add_char(slash_buffer.pop().unwrap());
                     }
-                    TokenType::StartToken => tmp_token.add_char(c),
-                    TokenType::EndToken => tmp_token.add_char(c),
-                },
+                    match tmp_token.get_token_type() {
+                        TokenType::Character => {
+                            if !(c.is_whitespace()) {
+                                tmp_token.add_char(c)
+                            }
+                        }
+                        TokenType::StartToken => tmp_token.add_char(c),
+                        TokenType::EndToken => tmp_token.add_char(c),
+                    }
+                    prev_char_state = PreviousCharState::Character;
+                }
             }
         }
         token_array

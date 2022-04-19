@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use super::token::{Token, TokenType};
 
 type NodeElement = HashMap<String, String>;
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 struct NodeValue {
     value: String,
     element: Option<NodeElement>,
@@ -18,7 +18,7 @@ impl NodeValue {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct XMLNode {
     value: NodeValue,
     children: Option<Box<Vec<XMLNode>>>,
@@ -38,8 +38,15 @@ impl XMLNode {
         }
         self.children = Some(Box::new(vec![child]));
     }
-    pub fn get_children(&self) -> &Option<Box<Vec<XMLNode>>> {
-        &self.children
+    pub fn nth_child(&mut self, n: usize) -> Option<XMLNode> {
+        if self.has_children() {
+            let result = Some(self.children.as_mut().unwrap().remove(n));
+            if self.children.as_ref().unwrap().len() == 0 {
+                self.children = None;
+            }
+            return result;
+        }
+        None
     }
     pub fn get_value(&self) -> &str {
         &self.value.value
@@ -89,7 +96,6 @@ impl From<Token> for XMLNode {
 }
 impl From<Vec<Token>> for XMLNode {
     fn from(token_array: Vec<Token>) -> Self {
-        println!("{:?}", token_array);
         let mut parent_stack = Vec::new();
         for token in token_array {
             match token.get_token_type() {
@@ -100,7 +106,6 @@ impl From<Vec<Token>> for XMLNode {
                 }
                 TokenType::EndToken => {
                     let end_node = XMLNode::from(token);
-                    println!("{:?}", parent_stack);
                     if end_node.get_value() != parent_stack.last().unwrap().get_value() {
                         parent_stack.last_mut().unwrap().add_child(end_node);
                         continue;
@@ -211,5 +216,29 @@ mod xml_node_test {
         child_div.add_child(div_child);
         div.add_child(child_div);
         assert_eq!(expect, div)
+    }
+    #[test]
+    fn get_nth_child_test() {
+        let data = r#"<div id="1180" name="kai"><div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+        </div>"#;
+        let mut root_node = XMLNode::from(data);
+        let child = root_node.nth_child(0).unwrap();
+        assert_eq!(
+            child,
+            XMLNode::from(
+                r#"<div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+            <div/>"#
+            )
+        );
+        let child = root_node.nth_child(0);
+        assert_eq!(child, None);
+        let child = root_node.nth_child(0);
+        assert_eq!(child, None);
     }
 }
