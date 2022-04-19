@@ -2,16 +2,34 @@
 pub enum TokenType {
     StartToken,
     EndToken,
+    SingleToken,
     Character,
 }
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum PreviousCharState {
+pub enum PrevCharState {
     StartTag,
     EndTag,
     Character,
     Slash,
 }
-
+type Slash = char;
+struct SlashBuffer {
+    value: Vec<Slash>,
+}
+impl SlashBuffer {
+    pub fn new() -> Self {
+        SlashBuffer { value: Vec::new() }
+    }
+    pub fn add(&mut self, slash: char) {
+        self.value.push(slash)
+    }
+    pub fn trash_one(&mut self) {
+        self.value.pop();
+    }
+    pub fn pop(&mut self) -> char {
+        self.value.pop().unwrap()
+    }
+}
 type TokenValue = String;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
@@ -31,8 +49,8 @@ impl Token {
     pub fn create_token_array(s: &str) -> Vec<Token> {
         let mut token_array = Vec::new();
         let mut tmp_token = Token::new();
-        let mut slash_buffer = Vec::new();
-        let mut prev_char_state = PreviousCharState::Character;
+        let mut slash_buffer = SlashBuffer::new();
+        let mut prev_char_state = PrevCharState::Character;
         for c in s.chars() {
             match c {
                 '<' => {
@@ -40,38 +58,38 @@ impl Token {
                         token_array.push(tmp_token.clone());
                         tmp_token.clear_value();
                     }
-                    prev_char_state = PreviousCharState::StartTag;
+                    prev_char_state = PrevCharState::StartTag;
                     tmp_token.change_type(TokenType::StartToken);
                 }
                 '/' => {
                     match prev_char_state {
-                        PreviousCharState::StartTag => tmp_token.change_type(TokenType::EndToken),
-                        PreviousCharState::Slash => tmp_token.add_char(slash_buffer.pop().unwrap()),
-                        PreviousCharState::EndTag => {
+                        PrevCharState::StartTag => tmp_token.change_type(TokenType::EndToken),
+                        PrevCharState::Slash => tmp_token.add_char(slash_buffer.pop()),
+                        PrevCharState::EndTag => {
                             tmp_token.add_char(c);
                         }
-                        PreviousCharState::Character => {
+                        PrevCharState::Character => {
                             ();
                         }
                     }
-                    prev_char_state = PreviousCharState::Slash;
-                    slash_buffer.push(c);
+                    prev_char_state = PrevCharState::Slash;
+                    slash_buffer.add(c);
                 }
                 '>' => {
-                    if prev_char_state == PreviousCharState::Slash {
-                        tmp_token.change_type(TokenType::EndToken);
-                        slash_buffer.pop();
+                    if prev_char_state == PrevCharState::Slash {
+                        tmp_token.change_type(TokenType::SingleToken);
+                        slash_buffer.trash_one();
                     }
-                    prev_char_state = PreviousCharState::EndTag;
+                    prev_char_state = PrevCharState::EndTag;
                     token_array.push(tmp_token.clone());
                     tmp_token.clear_value();
                     tmp_token.change_type(TokenType::Character);
                 }
                 _ => {
-                    if prev_char_state == PreviousCharState::Slash
+                    if prev_char_state == PrevCharState::Slash
                         && tmp_token.get_token_type() != &TokenType::EndToken
                     {
-                        tmp_token.add_char(slash_buffer.pop().unwrap());
+                        tmp_token.add_char(slash_buffer.pop());
                     }
                     match tmp_token.get_token_type() {
                         TokenType::Character => {
@@ -79,10 +97,9 @@ impl Token {
                                 tmp_token.add_char(c)
                             }
                         }
-                        TokenType::StartToken => tmp_token.add_char(c),
-                        TokenType::EndToken => tmp_token.add_char(c),
+                        _ => tmp_token.add_char(c),
                     }
-                    prev_char_state = PreviousCharState::Character;
+                    prev_char_state = PrevCharState::Character;
                 }
             }
         }
@@ -139,7 +156,7 @@ mod token_test {
         let start_root_token = Token::new_source(TokenType::StartToken, "div".to_string());
         let char_token = Token::new_source(TokenType::Character, "helloworld".to_string());
         let root_token = Token::new_source(
-            TokenType::EndToken,
+            TokenType::SingleToken,
             r#"a href="http://localhost:8000""#.to_string(),
         );
         let end_root_token = Token::new_source(TokenType::EndToken, "div".to_string());

@@ -99,7 +99,7 @@ impl From<&str> for XMLNode {
 }
 impl From<Token> for XMLNode {
     fn from(token: Token) -> Self {
-        fn token_to_node(token: Token) -> XMLNode {
+        fn _token_to_node(token: Token) -> XMLNode {
             let mut split_value = token
                 .get_value()
                 .split(' ')
@@ -124,7 +124,7 @@ impl From<Token> for XMLNode {
         }
         match token.get_token_type() {
             TokenType::Character => XMLNode::new(token.get_value()),
-            _ => token_to_node(token),
+            _ => _token_to_node(token),
         }
     }
 }
@@ -138,12 +138,16 @@ impl From<Vec<Token>> for XMLNode {
                     let child = XMLNode::from(token);
                     parent_stack.last_mut().unwrap().add_child(child)
                 }
+                TokenType::SingleToken => {
+                    let node = XMLNode::from(token);
+                    parent_stack.last_mut().unwrap().add_child(node);
+                }
                 TokenType::EndToken => {
-                    let end_node = XMLNode::from(token);
-                    if end_node.get_value() != parent_stack.last().unwrap().get_value() {
-                        parent_stack.last_mut().unwrap().add_child(end_node);
-                        continue;
-                    }
+                    //let end_node = XMLNode::from(token);
+                    //if end_node.get_value() != parent_stack.last().unwrap().get_value() {
+                    //parent_stack.last_mut().unwrap().add_child(end_node);
+                    //continue;
+                    //}
                     let child = parent_stack.pop();
                     match child {
                         Some(c) => {
