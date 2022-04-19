@@ -1039,15 +1039,9 @@ fn main() {
 </worksheet>
 "#;
     let token_array = xml::token::Token::create_token_array(source);
-    let mut xml_node = xml::node::XMLNode::from(token_array);
-    let child = xml_node.nth_child(0);
-    println!("child 0 {:?}", child);
-    let child = xml_node.nth_child(0);
-    println!("child 1 {:?}", child);
-    let child = xml_node.nth_child(0);
-    println!("child 2 {:?}", child);
-    let child = xml_node.nth_child(0);
-    println!("child 3 {:?}", child);
-    let child = xml_node.nth_child(0);
-    println!("child 4 {:?}", child);
+    let xml_node = xml::node::XMLNode::from(token_array);
+    println!(
+        "{:?}",
+        xml_node.search_node("cols").unwrap().search_nodes("col")
+    )
 }

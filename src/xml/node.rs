@@ -38,6 +38,31 @@ impl XMLNode {
         }
         self.children = Some(Box::new(vec![child]));
     }
+    pub fn search_node(&self, search_value: &str) -> Option<&XMLNode> {
+        if self.has_children() {
+            return self
+                .children
+                .as_ref()
+                .unwrap()
+                .iter()
+                .filter(|child| child.get_value() == search_value)
+                .nth(0);
+        }
+        None
+    }
+    pub fn search_nodes(&self, search_value: &str) -> Option<Vec<&XMLNode>> {
+        if self.has_children() {
+            return Some(
+                self.children
+                    .as_ref()
+                    .unwrap()
+                    .iter()
+                    .filter(|child| child.get_value() == search_value)
+                    .collect(),
+            );
+        }
+        None
+    }
     pub fn nth_child(&mut self, n: usize) -> Option<XMLNode> {
         if self.has_children() {
             let result = Some(self.children.as_mut().unwrap().remove(n));
@@ -89,8 +114,7 @@ impl From<Token> for XMLNode {
         }
         match token.get_token_type() {
             TokenType::Character => XMLNode::new(token.get_value()),
-            TokenType::StartToken => token_to_node(token),
-            TokenType::EndToken => token_to_node(token),
+            _ => token_to_node(token),
         }
     }
 }
@@ -240,5 +264,56 @@ mod xml_node_test {
         assert_eq!(child, None);
         let child = root_node.nth_child(0);
         assert_eq!(child, None);
+    }
+    #[test]
+    fn search_node_test() {
+        let data = r#"<div id="1180" name="kai"><div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+        </div>"#;
+        let root_node = XMLNode::from(data);
+        let search_node = root_node.search_node("div").unwrap().clone();
+        assert_eq!(
+            search_node,
+            XMLNode::from(
+                r#"<div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+            <div/>"#
+            )
+        );
+        let search_node = search_node.search_node("p").unwrap();
+        assert_eq!(search_node, &XMLNode::from(r#"<p>p-data</p>"#));
+    }
+    fn search_nodes_test() {
+        let data = r#"<div id="1180" name="kai"><div>div-first
+            <p>p-data</p>
+            <p>p-data-2</p>
+            <data/>
+            div-data</div>
+        </div>"#;
+        let root_node = XMLNode::from(data);
+        let search_node = root_node.search_nodes("div").unwrap();
+        assert_eq!(
+            search_node,
+            vec![&XMLNode::from(
+                r#"<div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+            <div/>"#
+            )]
+        );
+        let search_node = search_node[0];
+        let search_node = search_node.search_nodes("p").unwrap();
+        assert_eq!(
+            search_node,
+            vec![
+                &XMLNode::from(r#"<p>p-data</p>"#),
+                &XMLNode::from(r#"<p>p-data-2</p>"#)
+            ]
+        );
     }
 }
