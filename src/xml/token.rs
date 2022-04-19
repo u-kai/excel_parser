@@ -51,15 +51,18 @@ impl Token {
         let mut tmp_token = Token::new();
         let mut slash_buffer = SlashBuffer::new();
         let mut prev_char_state = PrevCharState::Character;
+        fn _init_token(token: &mut Token, new_type: TokenType) {
+            token.clear_value();
+            token.change_type(new_type);
+        }
         for c in s.chars() {
             match c {
                 '<' => {
-                    if token_array.len() > 0 && tmp_token.get_value() != "" {
+                    if !(tmp_token.is_empty_value()) {
                         token_array.push(tmp_token.clone());
-                        tmp_token.clear_value();
                     }
+                    tmp_token.init_token(TokenType::StartToken);
                     prev_char_state = PrevCharState::StartTag;
-                    tmp_token.change_type(TokenType::StartToken);
                 }
                 '/' => {
                     match prev_char_state {
@@ -82,14 +85,13 @@ impl Token {
                     }
                     prev_char_state = PrevCharState::EndTag;
                     token_array.push(tmp_token.clone());
-                    tmp_token.clear_value();
-                    tmp_token.change_type(TokenType::Character);
+                    tmp_token.init_token(TokenType::Character)
                 }
                 _ => {
-                    if prev_char_state == PrevCharState::Slash
-                        && tmp_token.get_token_type() != &TokenType::EndToken
-                    {
+                    if tmp_token.is_add_slash(prev_char_state) {
                         tmp_token.add_char(slash_buffer.pop());
+                    } else {
+                        slash_buffer.trash_one();
                     }
                     match tmp_token.get_token_type() {
                         TokenType::Character => {
@@ -119,6 +121,16 @@ impl Token {
     }
     pub fn clear_value(&mut self) {
         self.value = "".to_string();
+    }
+    fn is_add_slash(&self, prev_char_state: PrevCharState) -> bool {
+        prev_char_state == PrevCharState::Slash && self.get_token_type() != &TokenType::EndToken
+    }
+    fn is_empty_value(&self) -> bool {
+        self.get_value() == ""
+    }
+    fn init_token(&mut self, token_type: TokenType) {
+        self.clear_value();
+        self.change_type(token_type);
     }
 }
 
