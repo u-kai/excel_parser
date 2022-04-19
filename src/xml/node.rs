@@ -83,6 +83,16 @@ impl XMLNode {
 
 impl From<&str> for XMLNode {
     fn from(s: &str) -> Self {
+        fn _is_declear_exist(s: &str) -> bool {
+            s.get(0..5) == Some("<?xml")
+        }
+        fn _delete_top_line<'a>(s: &'a str) -> &'a str {
+            s.get(s.find('\n').unwrap()..).unwrap()
+        }
+        if _is_declear_exist(s) {
+            let token_array = Token::create_token_array(_delete_top_line(s));
+            return XMLNode::from(token_array);
+        }
         let token_array = Token::create_token_array(s);
         XMLNode::from(token_array)
     }
@@ -190,13 +200,13 @@ mod xml_node_test {
         child_div.add_child(div_child);
         div.add_child(child_div);
         assert_eq!(expect, div);
-        let data = "<div><div>div-first
+        let data = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <div><div>div-first
             <p>p-data</p>
             <data/>
             div-data</div>
-        </div>";
-        let token_array = Token::create_token_array(data);
-        let expect = XMLNode::from(token_array);
+        </div>"#;
+        let expect = XMLNode::from(data);
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
         p.add_child(p_child);

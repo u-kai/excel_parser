@@ -1,7 +1,7 @@
 mod xml;
 
 fn main() {
-    let source = r#"
+    let source = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{44FEEDED-D128-4496-B199-BCD526D1EB2C}">
     <dimension ref="B2:S50"/>
     <sheetViews>
@@ -1038,8 +1038,7 @@ fn main() {
     <pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
 </worksheet>
 "#;
-    let token_array = xml::token::Token::create_token_array(source);
-    let xml_node = xml::node::XMLNode::from(token_array);
+    let xml_node = xml::node::XMLNode::from(source);
     println!(
         "{:?}",
         xml_node.search_node("cols").unwrap().search_nodes("col")
