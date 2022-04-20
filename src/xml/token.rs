@@ -51,17 +51,13 @@ impl Token {
         let mut tmp_token = Token::new();
         let mut slash_buffer = SlashBuffer::new();
         let mut prev_char_state = PrevCharState::Character;
-        fn _init_token(token: &mut Token, new_type: TokenType) {
-            token.clear_value();
-            token.change_type(new_type);
-        }
         for c in s.chars() {
             match c {
                 '<' => {
                     if !(tmp_token.is_empty_value()) {
                         token_array.push(tmp_token.clone());
                     }
-                    tmp_token.init_token(TokenType::StartToken);
+                    tmp_token.initialize(TokenType::StartToken);
                     prev_char_state = PrevCharState::StartTag;
                 }
                 '/' => {
@@ -85,7 +81,7 @@ impl Token {
                     }
                     prev_char_state = PrevCharState::EndTag;
                     token_array.push(tmp_token.clone());
-                    tmp_token.init_token(TokenType::Character)
+                    tmp_token.initialize(TokenType::Character)
                 }
                 _ => {
                     if tmp_token.is_add_slash(prev_char_state) {
@@ -107,19 +103,23 @@ impl Token {
         }
         token_array
     }
-    pub fn add_char(&mut self, c: char) {
-        self.value = format!("{}{}", self.value, c)
-    }
-    pub fn change_type(&mut self, token_type: TokenType) {
-        self.token_type = token_type
-    }
     pub fn get_value(&self) -> &TokenValue {
         &self.value
     }
     pub fn get_token_type(&self) -> &TokenType {
         &self.token_type
     }
-    pub fn clear_value(&mut self) {
+    fn add_char(&mut self, c: char) {
+        self.value = format!("{}{}", self.value, c)
+    }
+    fn initialize(&mut self, token_type: TokenType) {
+        self.clear_value();
+        self.change_type(token_type);
+    }
+    fn change_type(&mut self, token_type: TokenType) {
+        self.token_type = token_type
+    }
+    fn clear_value(&mut self) {
         self.value = "".to_string();
     }
     fn is_add_slash(&self, prev_char_state: PrevCharState) -> bool {
@@ -127,10 +127,6 @@ impl Token {
     }
     fn is_empty_value(&self) -> bool {
         self.get_value() == ""
-    }
-    fn init_token(&mut self, token_type: TokenType) {
-        self.clear_value();
-        self.change_type(token_type);
     }
 }
 

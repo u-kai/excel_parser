@@ -83,16 +83,6 @@ impl XMLNode {
 
 impl From<&str> for XMLNode {
     fn from(s: &str) -> Self {
-        fn _is_declear_exist(s: &str) -> bool {
-            s.get(0..5) == Some("<?xml")
-        }
-        fn _delete_top_line<'a>(s: &'a str) -> &'a str {
-            s.get(s.find('\n').unwrap()..).unwrap()
-        }
-        if _is_declear_exist(s) {
-            let token_array = Token::create_token_array(_delete_top_line(s));
-            return XMLNode::from(token_array);
-        }
         let token_array = Token::create_token_array(s);
         XMLNode::from(token_array)
     }
@@ -143,11 +133,6 @@ impl From<Vec<Token>> for XMLNode {
                     parent_stack.last_mut().unwrap().add_child(node);
                 }
                 TokenType::EndToken => {
-                    //let end_node = XMLNode::from(token);
-                    //if end_node.get_value() != parent_stack.last().unwrap().get_value() {
-                    //parent_stack.last_mut().unwrap().add_child(end_node);
-                    //continue;
-                    //}
                     let child = parent_stack.pop();
                     match child {
                         Some(c) => {
@@ -161,7 +146,11 @@ impl From<Vec<Token>> for XMLNode {
                 }
             }
         }
-        panic!("error not end tag")
+        // case exist declear line
+        if parent_stack.len() == 1 {
+            return parent_stack.pop().unwrap();
+        }
+        panic!("not had end tag this stack : {:?}", parent_stack)
     }
 }
 
@@ -211,6 +200,12 @@ mod xml_node_test {
             div-data</div>
         </div>"#;
         let expect = XMLNode::from(data);
+        let mut root = XMLNode::new("?xml");
+        let mut root_element = HashMap::new();
+        root_element.insert("standalone".to_string(), r#""yes"?"#.to_string());
+        root_element.insert("encoding".to_string(), r#""UTF-8""#.to_string());
+        root_element.insert("version".to_string(), r#""1.0""#.to_string());
+        root.value.element = Some(root_element);
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
         p.add_child(p_child);
@@ -224,7 +219,8 @@ mod xml_node_test {
         child_div.add_child(single_data);
         child_div.add_child(div_child);
         div.add_child(child_div);
-        assert_eq!(expect, div)
+        root.add_child(div);
+        assert_eq!(expect, root)
     }
     #[test]
     fn element_test() {
