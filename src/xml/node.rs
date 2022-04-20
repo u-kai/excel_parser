@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use self::from_token::token_to_node;
 
-use super::token::{Token, TokenType};
+use super::token::{PrevChar, Token, TokenType};
 type NodeElement = HashMap<String, Vec<String>>;
 #[derive(Debug, PartialEq, Eq, Clone)]
 struct NodeValue {
@@ -81,19 +81,105 @@ impl XMLNode {
         self.children.is_some()
     }
 }
-
+pub struct TokenArray {
+    value: Vec<Token>,
+    tmp_token: Token,
+    prev_char: PrevCharcter,
+}
+struct PrevCharcter {
+    value: PrevChar,
+}
+impl PrevCharcter {
+    pub fn new() -> Self {
+        PrevCharcter {
+            value: PrevChar::Character,
+        }
+    }
+    pub fn get_prev_char(&self) -> PrevChar {
+        self.value
+    }
+    pub fn change_character(&mut self) {
+        self.value = PrevChar::Character;
+    }
+    pub fn change_start_tag(&mut self) {
+        self.value = PrevChar::StartTag;
+    }
+    pub fn change_end_tag(&mut self) {
+        self.value = PrevChar::EndTag;
+    }
+    pub fn change_slash(&mut self) {
+        self.value = PrevChar::Slash;
+    }
+}
+impl TokenArray {
+    pub fn new() -> Self {
+        TokenArray {
+            value: Vec::new(),
+            tmp_token: Token::new(),
+            prev_char: PrevCharcter::new(),
+        }
+    }
+    pub fn build(&mut self, s: &str) -> &Self {
+        s.chars().for_each(|c| match c {
+            '<' => {
+                if !(self.tmp_token.is_empty_value()) {
+                    self.value.push(self.tmp_token.drain());
+                }
+                self.tmp_token.change_start();
+                self.prev_char.change_start_tag();
+            }
+            '/' => {
+                match self.prev_char.get_prev_char() {
+                    PrevChar::StartTag => self.tmp_token.change_end(),
+                    PrevChar::Slash => self.tmp_token.add_char('/'),
+                    PrevChar::EndTag => {
+                        self.tmp_token.add_char(c);
+                    }
+                    PrevChar::Character => {
+                        ();
+                    }
+                }
+                self.prev_char.change_slash();
+            }
+            '>' => {
+                if self.prev_char.get_prev_char() == PrevChar::Slash {
+                    self.tmp_token.change_single();
+                }
+                self.prev_char.change_end_tag();
+                self.value.push(self.tmp_token.drain());
+                self.tmp_token.change_character()
+            }
+            _ => {
+                if self.tmp_token.is_add_slash(self.prev_char.get_prev_char()) {
+                    self.tmp_token.add_char('/');
+                }
+                match self.tmp_token.get_token_type() {
+                    TokenType::Character => {
+                        if !(c.is_whitespace()) {
+                            self.tmp_token.add_char(c)
+                        }
+                    }
+                    _ => self.tmp_token.add_char(c),
+                }
+                self.prev_char.change_character()
+            }
+        });
+        self
+    }
+    pub fn drain(self) -> Vec<Token> {
+        self.value
+    }
+}
 impl From<&str> for XMLNode {
     fn from(s: &str) -> Self {
-        let token_array = Token::create_token_array(s);
-        XMLNode::from(token_array)
+        let mut token_array = TokenArray::new();
+        token_array.build(s);
+        XMLNode::from(token_array.drain())
     }
 }
 impl From<Token> for XMLNode {
     fn from(token: Token) -> Self {
-        match token.get_token_type() {
-            TokenType::Character => XMLNode::new(token.get_value()),
-            _ => token_to_node(token),
-        }
+        token_to_node(token)
     }
 }
 impl From<Vec<Token>> for XMLNode {
@@ -273,6 +359,8 @@ mod from_token {
 mod xml_node_test {
     use std::collections::HashMap;
 
+    use crate::xml::node::TokenArray;
+
     use super::{Token, XMLNode};
     #[test]
     fn from_token_array_test() {
@@ -280,8 +368,9 @@ mod xml_node_test {
             <p>p-data</p>
             div-data
         </div>";
-        let token_array = Token::create_token_array(data);
-        let expect = XMLNode::from(token_array);
+        let mut token_array = TokenArray::new();
+        token_array.build(data);
+        let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
         p.add_child(p_child);
@@ -294,8 +383,9 @@ mod xml_node_test {
             <p>p-data</p>
             div-data</div>
         </div>";
-        let token_array = Token::create_token_array(data);
-        let expect = XMLNode::from(token_array);
+        let mut token_array = TokenArray::new();
+        token_array.build(data);
+        let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
         p.add_child(p_child);
@@ -344,8 +434,12 @@ mod xml_node_test {
             <data/>
             div-data</div>
         </div>"#;
-        let token_array = Token::create_token_array(data);
-        let expect = XMLNode::from(token_array);
+
+        let mut token_array = TokenArray::new();
+        token_array.build(data);
+        let mut token_array = TokenArray::new();
+        token_array.build(data);
+        let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
         p.add_child(p_child);
@@ -370,8 +464,9 @@ mod xml_node_test {
             <data/>
             div-data</div>
         </div>"#;
-        let token_array = Token::create_token_array(data);
-        let expect = XMLNode::from(token_array);
+        let mut token_array = TokenArray::new();
+        token_array.build(data);
+        let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
         p.add_child(p_child);
