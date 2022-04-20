@@ -136,12 +136,8 @@ impl TokenArray {
                 match self.prev_char.get_prev_char() {
                     PrevChar::StartTag => self.tmp_token.change_end(),
                     PrevChar::Slash => self.tmp_token.add_char('/'),
-                    PrevChar::EndTag => {
-                        self.tmp_token.add_char(c);
-                    }
-                    PrevChar::Character => {
-                        ();
-                    }
+                    PrevChar::EndTag => self.tmp_token.add_char(c),
+                    PrevChar::Character => {}
                 }
                 self.prev_char.change_slash();
             }
@@ -228,16 +224,9 @@ mod from_token {
 
     pub fn token_to_node(token: Token) -> XMLNode {
         match token.get_token_type() {
-            TokenType::Character => XMLNode::new(token.get_value()),
             TokenType::StartToken => start_or_single_token_to_node(token),
             TokenType::SingleToken => start_or_single_token_to_node(token),
-            TokenType::EndToken => XMLNode {
-                value: NodeValue {
-                    value: token.get_value().to_string(),
-                    element: None,
-                },
-                children: None,
-            },
+            _ => XMLNode::new(token.get_value()),
         }
     }
     fn start_or_single_token_to_node(token: Token) -> XMLNode {
@@ -371,7 +360,7 @@ mod xml_node_test {
             <p>p-data</p>
             div-data
         </div>";
-        let mut token_array = TokenArray::new(data);
+        let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
@@ -385,7 +374,7 @@ mod xml_node_test {
             <p>p-data</p>
             div-data</div>
         </div>";
-        let mut token_array = TokenArray::new(data);
+        let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
@@ -436,7 +425,7 @@ mod xml_node_test {
             div-data</div>
         </div>"#;
 
-        let mut token_array = TokenArray::new(data);
+        let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
@@ -462,7 +451,7 @@ mod xml_node_test {
             <data/>
             div-data</div>
         </div>"#;
-        let mut token_array = TokenArray::new(data);
+        let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
