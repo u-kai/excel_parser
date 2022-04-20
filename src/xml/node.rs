@@ -112,14 +112,18 @@ impl PrevCharcter {
     }
 }
 impl TokenArray {
-    pub fn new() -> Self {
+    pub fn new(s: &str) -> Self {
+        let token_array = TokenArray::_new();
+        token_array._build(s)
+    }
+    fn _new() -> Self {
         TokenArray {
             value: Vec::new(),
             tmp_token: Token::new(),
             prev_char: PrevCharcter::new(),
         }
     }
-    pub fn build(&mut self, s: &str) -> &Self {
+    fn _build(mut self, s: &str) -> Self {
         s.chars().for_each(|c| match c {
             '<' => {
                 if !(self.tmp_token.is_empty_value()) {
@@ -172,8 +176,7 @@ impl TokenArray {
 }
 impl From<&str> for XMLNode {
     fn from(s: &str) -> Self {
-        let mut token_array = TokenArray::new();
-        token_array.build(s);
+        let token_array = TokenArray::new(s);
         XMLNode::from(token_array.drain())
     }
 }
@@ -237,7 +240,7 @@ mod from_token {
             },
         }
     }
-    pub fn start_or_single_token_to_node(token: Token) -> XMLNode {
+    fn start_or_single_token_to_node(token: Token) -> XMLNode {
         let mut prev_char = StartTokenPrevChar::NodeChar;
         let mut node_value = String::new();
         let mut element = Element::new();
@@ -361,15 +364,14 @@ mod xml_node_test {
 
     use crate::xml::node::TokenArray;
 
-    use super::{Token, XMLNode};
+    use super::XMLNode;
     #[test]
     fn from_token_array_test() {
         let data = "<div>
             <p>p-data</p>
             div-data
         </div>";
-        let mut token_array = TokenArray::new();
-        token_array.build(data);
+        let mut token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
@@ -383,8 +385,7 @@ mod xml_node_test {
             <p>p-data</p>
             div-data</div>
         </div>";
-        let mut token_array = TokenArray::new();
-        token_array.build(data);
+        let mut token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
@@ -435,10 +436,7 @@ mod xml_node_test {
             div-data</div>
         </div>"#;
 
-        let mut token_array = TokenArray::new();
-        token_array.build(data);
-        let mut token_array = TokenArray::new();
-        token_array.build(data);
+        let mut token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
@@ -464,8 +462,7 @@ mod xml_node_test {
             <data/>
             div-data</div>
         </div>"#;
-        let mut token_array = TokenArray::new();
-        token_array.build(data);
+        let mut token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array.drain());
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
@@ -537,6 +534,8 @@ mod xml_node_test {
         let search_node = search_node.search_node("p").unwrap();
         assert_eq!(search_node, &XMLNode::from(r#"<p>p-data</p>"#));
     }
+    #[test]
+
     fn search_nodes_test() {
         let data = r#"<div id="1180" name="kai"><div>div-first
             <p>p-data</p>
@@ -551,6 +550,7 @@ mod xml_node_test {
             vec![&XMLNode::from(
                 r#"<div>div-first
             <p>p-data</p>
+            <p>p-data-2</p>
             <data/>
             div-data</div>
             <div/>"#
