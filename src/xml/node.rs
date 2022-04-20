@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
-use super::token::{Token, TokenType};
+use self::from_token::token_to_node;
 
+use super::token::{Token, TokenType};
 type NodeElement = HashMap<String, Vec<String>>;
 #[derive(Debug, PartialEq, Eq, Clone)]
 struct NodeValue {
@@ -87,118 +88,11 @@ impl From<&str> for XMLNode {
         XMLNode::from(token_array)
     }
 }
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-enum StartTokenPrevChar {
-    NodeChar,
-    ElementKey,
-    ElementValue,
-    Equal,
-    Blank,
-}
 impl From<Token> for XMLNode {
     fn from(token: Token) -> Self {
-        fn _start_or_single_token_to_node(token: Token) -> XMLNode {
-            let mut prev_char = StartTokenPrevChar::NodeChar;
-            let mut node_value = String::new();
-            let mut element_key = String::new();
-            let mut element_value = String::new();
-            let mut element_value_array = Vec::new();
-            let mut element: HashMap<String, Vec<String>> = HashMap::new();
-
-            for c in token.get_value().chars() {
-                match c {
-                    ' ' => match prev_char {
-                        StartTokenPrevChar::NodeChar => prev_char = StartTokenPrevChar::Blank,
-                        StartTokenPrevChar::ElementValue => {
-                            element_value_array.push(element_value.clone());
-                            element_value = "".to_string();
-                        }
-                        _ => {
-                            ();
-                        }
-                    },
-                    '"' => match prev_char {
-                        StartTokenPrevChar::ElementValue => {
-                            element_value_array.push(element_value.clone());
-                            element.insert(element_key.clone(), element_value_array.clone());
-                            element_key = "".to_string();
-                            element_value = "".to_string();
-                            element_value_array = vec![];
-                            prev_char = StartTokenPrevChar::ElementKey
-                        }
-                        StartTokenPrevChar::Equal => prev_char = StartTokenPrevChar::ElementValue,
-                        _ => panic!(r#"error not parse before {} after ""#, c),
-                    },
-
-                    '=' => match prev_char {
-                        StartTokenPrevChar::Blank => {
-                            ();
-                        }
-
-                        StartTokenPrevChar::ElementKey => prev_char = StartTokenPrevChar::Equal,
-                        StartTokenPrevChar::ElementValue => {
-                            element_value = format!("{}{}", element_value, c)
-                        }
-                        _ => {
-                            panic!(r#"not pattern to prev {} and next ="#, c)
-                        }
-                    },
-
-                    _ => match prev_char {
-                        StartTokenPrevChar::NodeChar => {
-                            node_value.push(c);
-                        }
-                        StartTokenPrevChar::Blank => {
-                            prev_char = StartTokenPrevChar::ElementKey;
-                            element_key.push(c);
-                        }
-
-                        StartTokenPrevChar::ElementKey => {
-                            element_key.push(c);
-                        }
-                        StartTokenPrevChar::ElementValue => {
-                            element_value.push(c);
-                        }
-                        StartTokenPrevChar::Equal => {
-                            prev_char = StartTokenPrevChar::ElementValue;
-                            element_value.push(c);
-                        }
-                    },
-                }
-            }
-
-            XMLNode {
-                value: {
-                    NodeValue {
-                        value: node_value,
-                        element: if !(element.is_empty()) {
-                            Some(element)
-                        } else {
-                            None
-                        },
-                    }
-                },
-                children: None,
-            }
-        }
-        fn _token_to_node(token: Token) -> XMLNode {
-            match token.get_token_type() {
-                TokenType::Character => XMLNode::new(token.get_value()),
-                TokenType::StartToken => _start_or_single_token_to_node(token),
-                TokenType::SingleToken => _start_or_single_token_to_node(token),
-                TokenType::EndToken => XMLNode {
-                    value: NodeValue {
-                        value: token.get_value().to_string(),
-                        element: None,
-                    },
-                    children: None,
-                },
-            }
-        }
         match token.get_token_type() {
             TokenType::Character => XMLNode::new(token.get_value()),
-            _ => _token_to_node(token),
+            _ => token_to_node(token),
         }
     }
 }
@@ -235,6 +129,143 @@ impl From<Vec<Token>> for XMLNode {
             return parent_stack.pop().unwrap();
         }
         panic!("not had end tag this stack : {:?}", parent_stack)
+    }
+}
+
+mod from_token {
+    use super::{NodeValue, XMLNode};
+    use crate::xml::token::{Token, TokenType};
+    use std::collections::HashMap;
+
+    pub fn token_to_node(token: Token) -> XMLNode {
+        match token.get_token_type() {
+            TokenType::Character => XMLNode::new(token.get_value()),
+            TokenType::StartToken => start_or_single_token_to_node(token),
+            TokenType::SingleToken => start_or_single_token_to_node(token),
+            TokenType::EndToken => XMLNode {
+                value: NodeValue {
+                    value: token.get_value().to_string(),
+                    element: None,
+                },
+                children: None,
+            },
+        }
+    }
+    pub fn start_or_single_token_to_node(token: Token) -> XMLNode {
+        let mut prev_char = StartTokenPrevChar::NodeChar;
+        let mut node_value = String::new();
+        let mut element = Element::new();
+
+        for c in token.get_value().chars() {
+            match c {
+                ' ' => match prev_char {
+                    StartTokenPrevChar::NodeChar => prev_char = StartTokenPrevChar::Blank,
+                    StartTokenPrevChar::ElementValue => {
+                        element.add_value_buffer();
+                    }
+                    _ => {
+                        ();
+                    }
+                },
+                '"' => match prev_char {
+                    StartTokenPrevChar::ElementValue => {
+                        element.add_element();
+                        prev_char = StartTokenPrevChar::ElementKey
+                    }
+                    StartTokenPrevChar::Equal => prev_char = StartTokenPrevChar::ElementValue,
+                    _ => panic!(r#"error not parse before {} after ""#, c),
+                },
+
+                '=' => match prev_char {
+                    StartTokenPrevChar::ElementKey => prev_char = StartTokenPrevChar::Equal,
+                    StartTokenPrevChar::ElementValue => {
+                        element.add_value(c);
+                    }
+                    StartTokenPrevChar::Blank => {}
+                    _ => {
+                        panic!(r#"not pattern to prev {} and next ="#, c)
+                    }
+                },
+                _ => match prev_char {
+                    StartTokenPrevChar::NodeChar => {
+                        node_value.push(c);
+                    }
+                    StartTokenPrevChar::Blank => {
+                        prev_char = StartTokenPrevChar::ElementKey;
+                        element.add_key(c);
+                    }
+
+                    StartTokenPrevChar::ElementKey => {
+                        element.add_key(c);
+                    }
+                    StartTokenPrevChar::ElementValue => {
+                        element.add_value(c);
+                    }
+                    StartTokenPrevChar::Equal => {
+                        prev_char = StartTokenPrevChar::ElementValue;
+                        element.add_value(c);
+                    }
+                },
+            }
+        }
+        XMLNode {
+            value: {
+                NodeValue {
+                    value: node_value,
+                    element: element.get_element(),
+                }
+            },
+            children: None,
+        }
+    }
+
+    #[derive(Debug, PartialEq, Eq, Clone)]
+    enum StartTokenPrevChar {
+        NodeChar,
+        ElementKey,
+        ElementValue,
+        Equal,
+        Blank,
+    }
+    #[derive(Debug, PartialEq, Eq, Clone)]
+    struct Element {
+        key: String,
+        value: String,
+        value_buffer: Vec<String>,
+        hash_map: HashMap<String, Vec<String>>,
+    }
+    impl Element {
+        pub fn new() -> Self {
+            Element {
+                key: String::new(),
+                value: String::new(),
+                value_buffer: Vec::new(),
+                hash_map: HashMap::new(),
+            }
+        }
+        pub fn get_element(self) -> Option<HashMap<String, Vec<String>>> {
+            if self.hash_map.is_empty() {
+                None
+            } else {
+                Some(self.hash_map)
+            }
+        }
+        pub fn add_element(&mut self) {
+            self.add_value_buffer();
+            self.hash_map.insert(
+                self.key.drain(..).collect(),
+                self.value_buffer.drain(..).collect(),
+            );
+        }
+        pub fn add_value_buffer(&mut self) {
+            self.value_buffer.push(self.value.drain(..).collect());
+        }
+        pub fn add_value(&mut self, c: char) {
+            self.value.push(c)
+        }
+        pub fn add_key(&mut self, c: char) {
+            self.key.push(c)
+        }
     }
 }
 
