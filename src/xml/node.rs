@@ -110,32 +110,15 @@ impl From<Token> for XMLNode {
                 match c {
                     ' ' => match prev_char {
                         StartTokenPrevChar::NodeChar => prev_char = StartTokenPrevChar::Blank,
-                        StartTokenPrevChar::Blank => {
-                            ();
-                        }
-
-                        StartTokenPrevChar::ElementKey => {
-                            ();
-                        }
                         StartTokenPrevChar::ElementValue => {
                             element_value_array.push(element_value.clone());
                             element_value = "".to_string();
                         }
-                        StartTokenPrevChar::Equal => {
+                        _ => {
                             ();
                         }
                     },
                     '"' => match prev_char {
-                        StartTokenPrevChar::NodeChar => {
-                            panic!(r#"not pattern to prev node char and next ""#)
-                        }
-                        StartTokenPrevChar::Blank => {
-                            panic!(r#"not pattern to prev blank and next ""#)
-                        }
-
-                        StartTokenPrevChar::ElementKey => {
-                            panic!(r#"not pattern to prev element key and next ""#)
-                        }
                         StartTokenPrevChar::ElementValue => {
                             element_value_array.push(element_value.clone());
                             element.insert(element_key.clone(), element_value_array.clone());
@@ -145,12 +128,10 @@ impl From<Token> for XMLNode {
                             prev_char = StartTokenPrevChar::ElementKey
                         }
                         StartTokenPrevChar::Equal => prev_char = StartTokenPrevChar::ElementValue,
+                        _ => panic!(r#"error not parse before {} after ""#, c),
                     },
 
                     '=' => match prev_char {
-                        StartTokenPrevChar::NodeChar => {
-                            panic!(r#"not pattern to prev node char and next ="#)
-                        }
                         StartTokenPrevChar::Blank => {
                             ();
                         }
@@ -159,29 +140,29 @@ impl From<Token> for XMLNode {
                         StartTokenPrevChar::ElementValue => {
                             element_value = format!("{}{}", element_value, c)
                         }
-                        StartTokenPrevChar::Equal => {
-                            panic!(r#"not pattern to prev = and next ="#)
+                        _ => {
+                            panic!(r#"not pattern to prev {} and next ="#, c)
                         }
                     },
 
                     _ => match prev_char {
                         StartTokenPrevChar::NodeChar => {
-                            node_value = format!("{}{}", node_value, c);
+                            node_value.push(c);
                         }
                         StartTokenPrevChar::Blank => {
                             prev_char = StartTokenPrevChar::ElementKey;
-                            element_key = format!("{}{}", element_key, c);
+                            element_key.push(c);
                         }
 
                         StartTokenPrevChar::ElementKey => {
-                            element_key = format!("{}{}", element_key, c);
+                            element_key.push(c);
                         }
                         StartTokenPrevChar::ElementValue => {
-                            element_value = format!("{}{}", element_value, c);
+                            element_value.push(c);
                         }
                         StartTokenPrevChar::Equal => {
                             prev_char = StartTokenPrevChar::ElementValue;
-                            element_value = format!("{}{}", element_value, c);
+                            element_value.push(c);
                         }
                     },
                 }
@@ -238,11 +219,11 @@ impl From<Vec<Token>> for XMLNode {
                 TokenType::EndToken => {
                     let child = parent_stack.pop();
                     match child {
-                        Some(c) => {
+                        Some(node) => {
                             if parent_stack.len() == 0 {
-                                return c;
+                                return node;
                             }
-                            parent_stack.last_mut().unwrap().add_child(c)
+                            parent_stack.last_mut().unwrap().add_child(node)
                         }
                         None => panic!("error: this case is not parse"),
                     }
