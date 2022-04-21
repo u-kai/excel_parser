@@ -18,6 +18,9 @@ impl XMLNode {
             children: None,
         }
     }
+    pub fn get_child(&self) -> &Option<Box<Vec<XMLNode>>> {
+        &self.children
+    }
     pub fn new_with_element(s: &str, element: Option<NodeElement>) -> Self {
         if element.is_some() {
             let mut node = XMLNode::new(s);
@@ -85,7 +88,7 @@ impl XMLNode {
         }
         None
     }
-    fn is_containe_key_value(&self, key: &str, value: &str) -> bool {
+    pub fn is_containe_key_value(&self, key: &str, value: &str) -> bool {
         if let Some(element) = &self.value.get_element() {
             if element.contains_key(key) {
                 element[key].contains(&value.to_string())
@@ -94,6 +97,23 @@ impl XMLNode {
             }
         } else {
             false
+        }
+    }
+    pub fn serach_child_rec(&self, id: &str) -> Option<&XMLNode> {
+        match self.get_child() {
+            Some(children) => {
+                for child in children.iter() {
+                    if child.is_containe_key_value("id", id) {
+                        return Some(child);
+                    }
+                    let result_rec = child.serach_child_rec(id);
+                    if let Some(node) = result_rec {
+                        return Some(node);
+                    }
+                }
+                None
+            }
+            None => None,
         }
     }
     pub fn get_value(&self) -> &str {
