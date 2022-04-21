@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, net::ToSocketAddrs};
 
 use self::from_token::token_to_node;
 
@@ -71,6 +71,33 @@ impl XMLNode {
                 self.children = None;
             }
             return result;
+        }
+        None
+    }
+    fn is_containe_key_value(&self, key: &str, value: &str) -> bool {
+        if let Some(element) = &self.value.element {
+            if element.contains_key(key) {
+                element[key].contains(&value.to_string())
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+    pub fn element_all(&mut self, key: &str, value: &str) -> Option<Vec<&XMLNode>> {
+        if self.has_children() {
+            let maybe = self
+                .children
+                .as_ref()
+                .unwrap()
+                .iter()
+                .filter(|node| node.is_containe_key_value(key, value))
+                .collect::<Vec<_>>();
+            if maybe.len() == 0 {
+                return None;
+            }
+            return Some(maybe);
         }
         None
     }
@@ -553,6 +580,22 @@ mod xml_node_test {
                 &XMLNode::from(r#"<p>p-data</p>"#),
                 &XMLNode::from(r#"<p>p-data-2</p>"#)
             ]
+        );
+    }
+    #[test]
+    fn element_all_test() {
+        let data = r#"<div id="1180" name="kai">
+            <p class="p1">p-data</p>
+            <p class="p1">p-data-2</p>
+            <data/>
+        </div>"#;
+        let mut root_node = XMLNode::from(data);
+        assert_eq!(
+            root_node.element_all("class", "p1"),
+            Some(vec![
+                &XMLNode::from(r#"<p class="p1">p-data</p>"#),
+                &XMLNode::from(r#"<p class="p1">p-data-2</p>"#)
+            ])
         );
     }
 }
