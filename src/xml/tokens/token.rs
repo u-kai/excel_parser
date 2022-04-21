@@ -1,17 +1,5 @@
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum TokenType {
-    StartToken,
-    EndToken,
-    SingleToken,
-    Character,
-}
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum PrevChar {
-    StartTag,
-    EndTag,
-    Character,
-    Slash,
-}
+use super::states::{PrevChar, TokenType};
+
 type TokenValue = String;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
@@ -65,7 +53,8 @@ impl Token {
 
 #[cfg(test)]
 mod token_test {
-    use crate::xml::{node::TokenArray, token::TokenValue};
+
+    use crate::xml::tokens::{token::TokenValue, token_array::TokenArray};
 
     use super::{Token, TokenType};
 
