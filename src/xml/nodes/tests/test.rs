@@ -86,7 +86,7 @@ pub mod xml_node_test {
             <p class="p1">p-data-2</p>
             <data/>
         </div>"#;
-        let mut root_node = XMLNode::from(data);
+        let root_node = XMLNode::from(data);
         assert_eq!(
             root_node.element_all("class", "p1"),
             Some(vec![

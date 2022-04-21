@@ -12,6 +12,7 @@ pub struct Dom {
 }
 
 impl Dom {
+    #[allow(dead_code)]
     pub fn new(s: &str) -> Self {
         Dom {
             node: HTMLNode::from(s),

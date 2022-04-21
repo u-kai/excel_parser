@@ -49,6 +49,7 @@ impl XMLNode {
         }
         None
     }
+    #[allow(dead_code)]
     pub fn search_nodes(&self, search_value: &str) -> Option<Vec<&XMLNode>> {
         if self.has_children() {
             return Some(
@@ -62,6 +63,7 @@ impl XMLNode {
         }
         None
     }
+    #[allow(dead_code)]
     pub fn nth_child(&mut self, n: usize) -> Option<XMLNode> {
         if self.has_children() {
             let result = Some(self.children.as_mut().unwrap().remove(n));
@@ -72,7 +74,8 @@ impl XMLNode {
         }
         None
     }
-    pub fn element_all(&mut self, key: &str, value: &str) -> Option<Vec<&XMLNode>> {
+    #[allow(dead_code)]
+    pub fn element_all(&self, key: &str, value: &str) -> Option<Vec<&XMLNode>> {
         if self.has_children() {
             let maybe = self
                 .children
@@ -116,9 +119,11 @@ impl XMLNode {
             None => None,
         }
     }
+    #[allow(dead_code)]
     pub fn get_value(&self) -> &str {
         &self.value.get_value()
     }
+    #[allow(dead_code)]
     pub fn get_node_value(&mut self) -> &mut NodeValue {
         &mut self.value
     }

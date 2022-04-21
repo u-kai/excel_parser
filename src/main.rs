@@ -17,5 +17,5 @@ fn main() {
     println!("{:?}", file);
     let html_node = Dom::from(file);
     println!("{:?}", xml_node.search_node("html").unwrap());
-    println!("{:?}", html_node.get_node().search_node("body"))
+    println!("{:?}", html_node.get_element_by_id("js-review-widget"))
 }
