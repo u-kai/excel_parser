@@ -72,52 +72,52 @@ impl From<XMLNode> for Dom {
 #[cfg(test)]
 mod dom_test {
     use crate::{html::dom::Dom, xml::nodes::node::XMLNode};
-    #[test]
-    fn get_elements_by_class_name_test() {
-        let data = r#"
-        <!DOCUMENT TYPE>
-        <html>
-            <div class="test">
-                <p>hello</p>
-                <div>div-hello</div>
-                <data/>
-                <div>
-                    <div class="test data">
-                        data
-                    </div>
-                </div>
-            </div>
-        <html>
-        "#;
-        let dom = Dom::from(data);
-        let elements = dom.get_elements_by_class_name("test");
-        assert_eq!(
-            elements,
-            Some(vec![
-                XMLNode::from(
-                    r#"
-            <div class="test">
-                <p>hello</p>
-                <div>div-hello</div>
-                <data/>
-                <div>
-                    <div class="test data">
-                        data
-                    </div>
-                </div>
-            </div>
-                "#
-                ),
-                XMLNode::from(
-                    r#"
-                    <div class="test data">
-                        data
-                    </div>
-                "#
-                )
-            ])
-        )
-    }
+    //#[test]
+    //fn get_elements_by_class_name_test() {
+    //let data = r#"
+    //<!DOCUMENT TYPE>
+    //<html>
+    //<div class="test">
+    //<p>hello</p>
+    //<div>div-hello</div>
+    //<data/>
+    //<div>
+    //<div class="test data">
+    //data
+    //</div>
+    //</div>
+    //</div>
+    //<html>
+    //"#;
+    //let dom = Dom::from(data);
+    //let elements = dom.get_elements_by_class_name("test");
+    //assert_eq!(
+    //elements,
+    //Some(vec![
+    //XMLNode::from(
+    //r#"
+    //<div class="test">
+    //<p>hello</p>
+    //<div>div-hello</div>
+    //<data/>
+    //<div>
+    //<div class="test data">
+    //data
+    //</div>
+    //</div>
+    //</div>
+    //"#
+    //),
+    //XMLNode::from(
+    //r#"
+    //<div class="test data">
+    //data
+    //</div>
+    //"#
+    //)
+    //])
+    //)
+    //}
     #[test]
 
     fn get_element_by_id_test() {

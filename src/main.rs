@@ -6,9 +6,9 @@ use std::{fs::File, io::BufReader};
 use html::dom::Dom;
 use xml::nodes::node::XMLNode;
 
+mod excel;
 mod html;
 mod xml;
-
 fn main() {
     let mut buf = String::new();
     let file = File::open("test.html").unwrap();
