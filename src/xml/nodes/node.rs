@@ -6,20 +6,80 @@ use super::{
 };
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub struct ChildrenNode {
+    nodes: Option<Box<Vec<XMLNode>>>,
+    characters: Option<Vec<String>>,
+}
+impl ChildrenNode {
+    pub fn new() -> Self {
+        ChildrenNode {
+            nodes: None,
+            characters: None,
+        }
+    }
+    pub fn add_charcters(&mut self, s: &str) {
+        if self.has_characters() {
+            self.characters.as_mut().unwrap().push(s.to_string());
+            return;
+        }
+        self.characters = Some(vec![s.to_string()])
+    }
+    pub fn add_node(&mut self, node: XMLNode) {
+        if self.has_nodes() {
+            self.nodes.as_mut().unwrap().push(node);
+            return;
+        }
+        self.nodes = Some(Box::new(vec![node]));
+    }
+    pub fn init_characters(&mut self) {
+        self.characters = None;
+    }
+    pub fn init_nodes(&mut self) {
+        self.nodes = None;
+    }
+    pub fn get_nodes(&self) -> &Option<Box<Vec<XMLNode>>> {
+        &self.nodes
+    }
+    pub fn get_charcters(&self) -> &Option<Vec<String>> {
+        &self.characters
+    }
+    pub fn get_n_node(&self, n: usize) -> Option<&XMLNode> {
+        if self.has_nodes() {
+            self.get_nodes().as_ref().unwrap().get(n)
+        } else {
+            None
+        }
+    }
+    pub fn get_n_charcters(&self, n: usize) -> Option<&String> {
+        if self.has_characters() {
+            self.get_charcters().as_ref().unwrap().get(n)
+        } else {
+            None
+        }
+    }
+    fn has_nodes(&self) -> bool {
+        self.nodes.is_some()
+    }
+    fn has_characters(&self) -> bool {
+        self.characters.is_some()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct XMLNode {
     value: NodeValue,
-    children: Option<Box<Vec<XMLNode>>>,
+    children: ChildrenNode,
 }
 
 impl XMLNode {
     pub fn new(s: &str) -> Self {
         XMLNode {
             value: NodeValue::new(s),
-            children: None,
+            children: ChildrenNode::new(),
         }
     }
-    pub fn get_child(&self) -> &Option<Box<Vec<XMLNode>>> {
-        &self.children
+    pub fn get_child_nodes(&self) -> &Option<Box<Vec<XMLNode>>> {
+        &self.children.get_nodes()
     }
     pub fn new_with_element(s: &str, element: Option<NodeElement>) -> Self {
         if element.is_some() {
@@ -30,17 +90,13 @@ impl XMLNode {
             XMLNode::new(s)
         }
     }
-    pub fn add_child(&mut self, child: XMLNode) {
-        if self.has_children() {
-            self.children.as_mut().unwrap().push(child);
-            return;
-        }
-        self.children = Some(Box::new(vec![child]));
+    pub fn add_node(&mut self, child: XMLNode) {
+        self.children.add_node(child);
     }
     pub fn search_node(&self, search_value: &str) -> Option<&XMLNode> {
-        if self.has_children() {
+        if self.children.has_nodes() {
             return self
-                .children
+                .get_child_nodes()
                 .as_ref()
                 .unwrap()
                 .iter()
@@ -51,9 +107,9 @@ impl XMLNode {
     }
     #[allow(dead_code)]
     pub fn search_nodes(&self, search_value: &str) -> Option<Vec<&XMLNode>> {
-        if self.has_children() {
+        if self.children.has_nodes() {
             return Some(
-                self.children
+                self.get_child_nodes()
                     .as_ref()
                     .unwrap()
                     .iter()
@@ -64,21 +120,18 @@ impl XMLNode {
         None
     }
     #[allow(dead_code)]
-    pub fn nth_child(&mut self, n: usize) -> Option<XMLNode> {
-        if self.has_children() {
-            let result = Some(self.children.as_mut().unwrap().remove(n));
-            if self.children.as_ref().unwrap().len() == 0 {
-                self.children = None;
-            }
+    pub fn nth_child_node(&mut self, n: usize) -> Option<&XMLNode> {
+        if self.children.has_nodes() {
+            let result = self.children.get_n_node(n);
             return result;
         }
         None
     }
     #[allow(dead_code)]
     pub fn element_all(&self, key: &str, value: &str) -> Option<Vec<&XMLNode>> {
-        if self.has_children() {
+        if self.children.has_nodes() {
             let maybe = self
-                .children
+                .get_child_nodes()
                 .as_ref()
                 .unwrap()
                 .iter()
@@ -105,7 +158,7 @@ impl XMLNode {
     // search_child_rec is search all children that one parent has.
     //
     pub fn serach_child_rec(&self, key: &str, value: &str) -> Option<&XMLNode> {
-        match self.get_child() {
+        match self.get_child_nodes() {
             Some(children) => {
                 for child in children.iter() {
                     if child.is_containe_key_value(key, value) {
@@ -129,9 +182,6 @@ impl XMLNode {
     pub fn get_node_value(&mut self) -> &mut NodeValue {
         &mut self.value
     }
-    fn has_children(&self) -> bool {
-        self.children.is_some()
-    }
 }
 impl From<&str> for XMLNode {
     fn from(s: &str) -> Self {
@@ -153,11 +203,11 @@ impl From<TokenArray> for XMLNode {
                 TokenType::StartToken => parent_stack.push(XMLNode::from(token)),
                 TokenType::Character => {
                     let child = XMLNode::from(token);
-                    parent_stack.last_mut().unwrap().add_child(child)
+                    parent_stack.last_mut().unwrap().add_node(child)
                 }
                 TokenType::SingleToken => {
                     let node = XMLNode::from(token);
-                    parent_stack.last_mut().unwrap().add_child(node);
+                    parent_stack.last_mut().unwrap().add_node(node);
                 }
                 TokenType::EndToken => {
                     let child = parent_stack.pop();
@@ -166,7 +216,7 @@ impl From<TokenArray> for XMLNode {
                             if parent_stack.len() == 0 {
                                 return node;
                             }
-                            parent_stack.last_mut().unwrap().add_child(node)
+                            parent_stack.last_mut().unwrap().add_node(node)
                         }
                         None => panic!("error: this case is not parse"),
                     }

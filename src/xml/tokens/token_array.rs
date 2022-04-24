@@ -84,11 +84,11 @@ mod create_node {
         let expect = XMLNode::from(token_array);
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
-        p.add_child(p_child);
+        p.add_node(p_child);
         let div_child = XMLNode::new("div-data");
         let mut div = XMLNode::new("div");
-        div.add_child(p);
-        div.add_child(div_child);
+        div.add_node(p);
+        div.add_node(div_child);
         assert_eq!(expect, div);
         let data = "<div><div>div-first
             <p>p-data</p>
@@ -98,15 +98,15 @@ mod create_node {
         let expect = XMLNode::from(token_array);
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
-        p.add_child(p_child);
+        p.add_node(p_child);
         let div_child = XMLNode::new("div-data");
         let mut div = XMLNode::new("div");
         let mut child_div = XMLNode::new("div");
         let child_div_child = XMLNode::new("div-first");
-        child_div.add_child(child_div_child);
-        child_div.add_child(p);
-        child_div.add_child(div_child);
-        div.add_child(child_div);
+        child_div.add_node(child_div_child);
+        child_div.add_node(p);
+        child_div.add_node(div_child);
+        div.add_node(child_div);
         assert_eq!(expect, div);
         let data = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <div><div>div-first
@@ -124,18 +124,18 @@ mod create_node {
         root.get_node_value().set_element(root_element);
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
-        p.add_child(p_child);
+        p.add_node(p_child);
         let div_child = XMLNode::new("div-data");
         let single_data = XMLNode::new("data");
         let mut div = XMLNode::new("div");
         let mut child_div = XMLNode::new("div");
         let child_div_child = XMLNode::new("div-first");
-        child_div.add_child(child_div_child);
-        child_div.add_child(p);
-        child_div.add_child(single_data);
-        child_div.add_child(div_child);
-        div.add_child(child_div);
-        root.add_child(div);
+        child_div.add_node(child_div_child);
+        child_div.add_node(p);
+        child_div.add_node(single_data);
+        child_div.add_node(div_child);
+        div.add_node(child_div);
+        root.add_node(div);
         assert_eq!(expect, root)
     }
     #[test]
@@ -150,7 +150,7 @@ mod create_node {
         let expect = XMLNode::from(token_array);
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
-        p.add_child(p_child);
+        p.add_node(p_child);
         let div_child = XMLNode::new("div-data");
         let single_data = XMLNode::new("data");
         let mut div = XMLNode::new("div");
@@ -161,11 +161,11 @@ mod create_node {
         div.get_node_value().set_element(element);
         let mut child_div = XMLNode::new("div");
         let child_div_child = XMLNode::new("div-first");
-        child_div.add_child(child_div_child);
-        child_div.add_child(p);
-        child_div.add_child(single_data);
-        child_div.add_child(div_child);
-        div.add_child(child_div);
+        child_div.add_node(child_div_child);
+        child_div.add_node(p);
+        child_div.add_node(single_data);
+        child_div.add_node(div_child);
+        div.add_node(child_div);
         assert_eq!(expect, div);
         let data = r#"<div id="1180" name="kai" class="style1 style2"><div>div-first
             <p>p-data</p>
@@ -176,7 +176,7 @@ mod create_node {
         let expect = XMLNode::from(token_array);
         let p_child = XMLNode::new("p-data");
         let mut p = XMLNode::new("p");
-        p.add_child(p_child);
+        p.add_node(p_child);
         let div_child = XMLNode::new("div-data");
         let single_data = XMLNode::new("data");
         let mut div = XMLNode::new("div");
@@ -191,11 +191,11 @@ mod create_node {
         div.get_node_value().set_element(element);
         let mut child_div = XMLNode::new("div");
         let child_div_child = XMLNode::new("div-first");
-        child_div.add_child(child_div_child);
-        child_div.add_child(p);
-        child_div.add_child(single_data);
-        child_div.add_child(div_child);
-        div.add_child(child_div);
+        child_div.add_node(child_div_child);
+        child_div.add_node(p);
+        child_div.add_node(single_data);
+        child_div.add_node(div_child);
+        div.add_node(child_div);
         assert_eq!(expect, div)
     }
 }

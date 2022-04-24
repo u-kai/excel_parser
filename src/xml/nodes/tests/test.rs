@@ -9,10 +9,10 @@ pub mod xml_node_test {
             div-data</div>
         </div>"#;
         let mut root_node = XMLNode::from(data);
-        let child = root_node.nth_child(0).unwrap();
+        let child = root_node.nth_child_node(0).unwrap();
         assert_eq!(
             child,
-            XMLNode::from(
+            &XMLNode::from(
                 r#"<div>div-first
             <p>p-data</p>
             <data/>
@@ -20,9 +20,9 @@ pub mod xml_node_test {
             <div/>"#
             )
         );
-        let child = root_node.nth_child(0);
+        let child = root_node.nth_child_node(1);
         assert_eq!(child, None);
-        let child = root_node.nth_child(0);
+        let child = root_node.nth_child_node(2);
         assert_eq!(child, None);
     }
     #[test]
