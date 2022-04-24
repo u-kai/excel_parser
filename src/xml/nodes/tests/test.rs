@@ -20,8 +20,14 @@ pub mod xml_node_test {
             <div/>"#
             )
         );
-        let child = root_node.nth_child_node(1);
-        assert_eq!(child, None);
+        println!("{:?}", child);
+
+        let char = child.get_child_charcter(0);
+        assert_eq!(char, Some(&"div-first".to_string()));
+        let char = child.get_child_charcter(1);
+        assert_eq!(char, Some(&"div-data".to_string()));
+        let char = child.get_child_charcter(2);
+        assert_eq!(char, None);
         let child = root_node.nth_child_node(2);
         assert_eq!(child, None);
     }

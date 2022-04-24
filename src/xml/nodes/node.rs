@@ -43,6 +43,12 @@ impl ChildrenNode {
     pub fn get_charcters(&self) -> &Option<Vec<String>> {
         &self.characters
     }
+    pub fn get_child_charcter(&self, n: usize) -> Option<&String> {
+        if self.has_characters() {
+            return self.get_charcters().as_ref().unwrap().get(n);
+        }
+        None
+    }
     pub fn get_n_node(&self, n: usize) -> Option<&XMLNode> {
         if self.has_nodes() {
             self.get_nodes().as_ref().unwrap().get(n)
@@ -81,6 +87,9 @@ impl XMLNode {
     pub fn get_child_nodes(&self) -> &Option<Box<Vec<XMLNode>>> {
         &self.children.get_nodes()
     }
+    pub fn get_child_charcter(&self, n: usize) -> Option<&String> {
+        self.children.get_child_charcter(n)
+    }
     pub fn new_with_element(s: &str, element: Option<NodeElement>) -> Self {
         if element.is_some() {
             let mut node = XMLNode::new(s);
@@ -92,6 +101,9 @@ impl XMLNode {
     }
     pub fn add_node(&mut self, child: XMLNode) {
         self.children.add_node(child);
+    }
+    pub fn add_charcter(&mut self, s: &str) {
+        self.children.add_charcters(s)
     }
     pub fn search_node(&self, search_value: &str) -> Option<&XMLNode> {
         if self.children.has_nodes() {
@@ -201,10 +213,10 @@ impl From<TokenArray> for XMLNode {
         for token in token_array {
             match token.get_token_type() {
                 TokenType::StartToken => parent_stack.push(XMLNode::from(token)),
-                TokenType::Character => {
-                    let child = XMLNode::from(token);
-                    parent_stack.last_mut().unwrap().add_node(child)
-                }
+                TokenType::Character => parent_stack
+                    .last_mut()
+                    .unwrap()
+                    .add_charcter(token.get_value()),
                 TokenType::SingleToken => {
                     let node = XMLNode::from(token);
                     parent_stack.last_mut().unwrap().add_node(node);
