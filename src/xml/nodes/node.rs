@@ -102,14 +102,16 @@ impl XMLNode {
             false
         }
     }
-    pub fn serach_child_rec(&self, id: &str) -> Option<&XMLNode> {
+    // search_child_rec is search all children that one parent has.
+    //
+    pub fn serach_child_rec(&self, key: &str, value: &str) -> Option<&XMLNode> {
         match self.get_child() {
             Some(children) => {
                 for child in children.iter() {
-                    if child.is_containe_key_value("id", id) {
+                    if child.is_containe_key_value(key, value) {
                         return Some(child);
                     }
-                    let result_rec = child.serach_child_rec(id);
+                    let result_rec = child.serach_child_rec(key, value);
                     if let Some(node) = result_rec {
                         return Some(node);
                     }

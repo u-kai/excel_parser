@@ -1,4 +1,6 @@
+use std::fs::rename;
 use std::io::Read;
+use std::process::Command;
 use std::{fs::File, io::BufReader};
 
 use html::dom::Dom;
@@ -16,6 +18,20 @@ fn main() {
     let file = File::open("test.html").unwrap();
     println!("{:?}", file);
     let html_node = Dom::from(file);
-    println!("{:?}", xml_node.search_node("html").unwrap());
-    println!("{:?}", html_node.get_element_by_id("js-review-widget"))
+    //println!("{:?}", xml_node.search_node("html").unwrap());
+    xlsx_to_zip("test.xlsx");
+    Command::new("sh")
+        .arg("-c")
+        .arg("unzip test.zip -d aed")
+        .output()
+        .unwrap();
+    Command::new("sh")
+        .arg("-c")
+        .arg("rm -rf ./aed")
+        .output()
+        .unwrap();
+}
+
+fn xlsx_to_zip(filename: &str) -> () {
+    rename(filename, "test.zip");
 }

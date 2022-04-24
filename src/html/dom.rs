@@ -26,8 +26,23 @@ impl Dom {
         if node.get_value() == id {
             return Some(node);
         }
-        node.serach_child_rec(id)
+        node.serach_child_rec("id", id)
     }
+    //pub fn get_elements_by_class_name(&self,class_name:&str)->Option<Vec<&HTMLNode>>{
+    //let node = self.get_node();
+    //if node.get_child().is_some() {
+    //node.get_child().unwrap().iter().filter(|child|{child.is_containe_key_value("class", )})
+    //}
+    //None
+    //}
+    //fn searche_rec(&mut self,key:&str,value:&str)->&Option<Vec<&HTMLNode>> {
+    //let node =self.get_node();
+    //if node.get_child().is_some() {
+    //for
+    //}
+    //&None
+
+    //}
 }
 impl From<File> for Dom {
     fn from(f: File) -> Self {
@@ -57,6 +72,52 @@ impl From<XMLNode> for Dom {
 #[cfg(test)]
 mod dom_test {
     use crate::{html::dom::Dom, xml::nodes::node::XMLNode};
+    #[test]
+    fn get_elements_by_class_name_test() {
+        let data = r#"
+        <!DOCUMENT TYPE>
+        <html>
+            <div class="test">
+                <p>hello</p>
+                <div>div-hello</div>
+                <data/>
+                <div>
+                    <div class="test data">
+                        data
+                    </div>
+                </div>
+            </div>
+        <html>
+        "#;
+        let dom = Dom::from(data);
+        let elements = dom.get_elements_by_class_name("test");
+        assert_eq!(
+            elements,
+            Some(vec![
+                XMLNode::from(
+                    r#"
+            <div class="test">
+                <p>hello</p>
+                <div>div-hello</div>
+                <data/>
+                <div>
+                    <div class="test data">
+                        data
+                    </div>
+                </div>
+            </div>
+                "#
+                ),
+                XMLNode::from(
+                    r#"
+                    <div class="test data">
+                        data
+                    </div>
+                "#
+                )
+            ])
+        )
+    }
     #[test]
 
     fn get_element_by_id_test() {
