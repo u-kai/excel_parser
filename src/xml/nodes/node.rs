@@ -72,60 +72,115 @@ impl ChildrenNode {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub enum NodeType {
+    Element,
+    SingleElement,
+    Character,
+}
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct XMLNode {
     value: NodeValue,
-    children: ChildrenNode,
+    node_type: NodeType,
+    children: Option<Box<Vec<XMLNode>>>,
 }
 
 impl XMLNode {
-    pub fn new(s: &str) -> Self {
+    pub fn new(s: &str, node_type: NodeType) -> Self {
         XMLNode {
             value: NodeValue::new(s),
-            children: ChildrenNode::new(),
+            children: None,
+            node_type,
         }
     }
-    pub fn get_child_nodes(&self) -> &Option<Box<Vec<XMLNode>>> {
-        &self.children.get_nodes()
-    }
-    pub fn get_child_charcter(&self, n: usize) -> Option<&String> {
-        self.children.get_child_charcter(n)
-    }
-    pub fn new_with_element(s: &str, element: Option<NodeElement>) -> Self {
-        if element.is_some() {
-            let mut node = XMLNode::new(s);
-            node.value.set_element(element.unwrap());
-            node
-        } else {
-            XMLNode::new(s)
-        }
-    }
-    pub fn add_node(&mut self, child: XMLNode) {
-        self.children.add_node(child);
-    }
-    pub fn add_charcter(&mut self, s: &str) {
-        self.children.add_charcters(s)
-    }
-    pub fn search_node(&self, search_value: &str) -> Option<&XMLNode> {
-        if self.children.has_nodes() {
-            return self
-                .get_child_nodes()
-                .as_ref()
+    pub fn get_child_nodes(&self) -> Option<Vec<&XMLNode>> {
+        if self.has_nodes() {
+            let nodes = self
+                .children
                 .unwrap()
                 .iter()
-                .filter(|child| child.get_value() == search_value)
-                .nth(0);
+                .filter(|node| {
+                    node.node_type == NodeType::SingleElement || node.node_type == NodeType::Element
+                })
+                .collect::<Vec<_>>();
+            if nodes.len() == 0 {
+                return None;
+            }
+            return Some(nodes);
         }
         None
     }
-    #[allow(dead_code)]
-    pub fn search_nodes(&self, search_value: &str) -> Option<Vec<&XMLNode>> {
-        if self.children.has_nodes() {
+    pub fn get_child_charcters(&self) -> Option<Vec<&str>> {
+        if self.has_characters() {
+            let chars = self
+                .children
+                .unwrap()
+                .iter()
+                .filter(|node| node.node_type == NodeType::Character)
+                .map(|c_node| c_node.get_value())
+                .collect::<Vec<_>>();
+            return Some(chars);
+        }
+        None
+    }
+    pub fn get_child_charcter(&self, n: usize) -> Option<&str> {
+        let maybe_charcters = self.get_child_charcters();
+        if maybe_charcters.is_some() {
+            if maybe_charcters.unwrap().len() >= (n - 1) {
+                return Some(maybe_charcters.unwrap()[n]);
+            }
+        }
+        None
+    }
+    pub fn new_with_element(s: &str, element: Option<NodeElement>, node_type: NodeType) -> Self {
+        if element.is_some() {
+            let mut node = XMLNode::new(s, node_type);
+            node.value.set_element(element.unwrap());
+            node
+        } else {
+            XMLNode::new(s, node_type)
+        }
+    }
+    pub fn add_node(&mut self, child: XMLNode) {
+        if self.has_nodes() {
+            self.children.as_mut().unwrap().push(child);
+            return;
+        }
+        self.children = Some(Box::new(vec![child]));
+    }
+    pub fn add_charcter(&mut self, s: &str) {
+        if self.has_characters() {
+            self.children
+                .as_mut()
+                .unwrap()
+                .push(XMLNode::new(s, NodeType::Character));
+            return;
+        }
+        self.children = Some(Box::new(vec![XMLNode::new(s, NodeType::Character)]));
+    }
+    pub fn search_node(&self, search_value: &str) -> Option<&XMLNode> {
+        if self.has_nodes() {
             return Some(
                 self.get_child_nodes()
                     .as_ref()
                     .unwrap()
                     .iter()
                     .filter(|child| child.get_value() == search_value)
+                    .collect::<Vec<_>>()[0],
+            );
+            //.nth(0);
+        }
+        None
+    }
+    #[allow(dead_code)]
+    pub fn search_nodes(&self, search_value: &str) -> Option<Vec<&XMLNode>> {
+        if self.has_nodes() {
+            return Some(
+                self.get_child_nodes()
+                    .as_ref()
+                    .unwrap()
+                    .iter()
+                    .filter(|child| child.get_value() == search_value)
+                    .map(|node| *node)
                     .collect(),
             );
         }
@@ -133,21 +188,22 @@ impl XMLNode {
     }
     #[allow(dead_code)]
     pub fn nth_child_node(&mut self, n: usize) -> Option<&XMLNode> {
-        if self.children.has_nodes() {
-            let result = self.children.get_n_node(n);
-            return result;
+        if self.has_nodes() {
+            let result = self.get_child_nodes().unwrap()[n];
+            return Some(result);
         }
         None
     }
     #[allow(dead_code)]
     pub fn element_all(&self, key: &str, value: &str) -> Option<Vec<&XMLNode>> {
-        if self.children.has_nodes() {
+        if self.has_nodes() {
             let maybe = self
                 .get_child_nodes()
                 .as_ref()
                 .unwrap()
                 .iter()
                 .filter(|node| node.is_containe_key_value(key, value))
+                .map(|node| *node)
                 .collect::<Vec<_>>();
             if maybe.len() == 0 {
                 return None;
@@ -193,6 +249,33 @@ impl XMLNode {
     #[allow(dead_code)]
     pub fn get_node_value(&mut self) -> &mut NodeValue {
         &mut self.value
+    }
+    fn has_characters(&self) -> bool {
+        if self.has_children() {
+            return self
+                .children
+                .unwrap()
+                .iter()
+                .find(|node| node.node_type == NodeType::Character)
+                .is_some();
+        }
+        false
+    }
+    fn has_nodes(&self) -> bool {
+        if self.has_children() {
+            return self
+                .children
+                .unwrap()
+                .iter()
+                .find(|node| {
+                    node.node_type == NodeType::Element || node.node_type == NodeType::SingleElement
+                })
+                .is_some();
+        }
+        false
+    }
+    fn has_children(&self) -> bool {
+        self.children.is_some()
     }
 }
 impl From<&str> for XMLNode {

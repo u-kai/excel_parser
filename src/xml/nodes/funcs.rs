@@ -2,7 +2,7 @@ pub mod from_token {
     use std::collections::HashMap;
 
     use crate::xml::{
-        nodes::node::XMLNode,
+        nodes::node::{self, NodeType, XMLNode},
         tokens::{states::TokenType, token::Token},
     };
 
@@ -10,7 +10,8 @@ pub mod from_token {
         match token.get_token_type() {
             TokenType::StartToken => start_or_single_token_to_node(token),
             TokenType::SingleToken => start_or_single_token_to_node(token),
-            _ => XMLNode::new(token.get_value()),
+            TokenType::Character => XMLNode::new(token.get_value(), NodeType::Character),
+            _ => panic!("not consider end type"),
         }
     }
     fn start_or_single_token_to_node(token: Token) -> XMLNode {
@@ -70,7 +71,12 @@ pub mod from_token {
                 },
             }
         }
-        XMLNode::new_with_element(&node_value, element.get_element())
+        let node_type = match token.get_token_type() {
+            TokenType::SingleToken => NodeType::SingleElement,
+            TokenType::StartToken => NodeType::Element,
+            _ => panic!("not consider end and character type"),
+        };
+        XMLNode::new_with_element(&node_value, element.get_element(), node_type)
     }
 
     #[derive(Debug, PartialEq, Eq, Clone)]
