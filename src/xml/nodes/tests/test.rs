@@ -1,6 +1,6 @@
 #[cfg(test)]
 pub mod xml_node_test {
-    use crate::xml::nodes::node::XMLNode;
+    use crate::xml::{nodes::node::XMLNode, tokens::token_array::TokenArray};
     #[test]
     fn get_nth_child_test() {
         let data = r#"<div id="1180" name="kai"><div>div-first
@@ -73,6 +73,17 @@ pub mod xml_node_test {
             div-data</div>
             <div/>"#
             )]
+        );
+        println!(
+            "##################{:?}",
+            &XMLNode::from(
+                r#"<div>div-first
+            <p>p-data</p>
+            <p>p-data-2</p>
+            <data/>
+            div-data</div>
+            "#
+            )
         );
         let search_node = search_node[0];
         let search_node = search_node.search_nodes("p").unwrap();

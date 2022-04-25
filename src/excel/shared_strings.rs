@@ -15,9 +15,9 @@ impl SharedStrings {
             .iter()
             .map(|node| {
                 if let Some(child) = node.search_node("t") {
-                    child.get_child_charcter(0).unwrap()
+                    child.get_child_charcter(0).unwrap().to_string()
                 } else {
-                    ""
+                    "".to_string()
                 }
             })
             .collect::<Vec<_>>();

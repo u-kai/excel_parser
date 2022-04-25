@@ -1,3 +1,5 @@
+use std::fs::set_permissions;
+
 use crate::xml::tokens::{states::TokenType, token::Token, token_array::TokenArray};
 
 use super::{
@@ -96,6 +98,7 @@ impl XMLNode {
         if self.has_nodes() {
             let nodes = self
                 .children
+                .as_ref()
                 .unwrap()
                 .iter()
                 .filter(|node| {
@@ -113,6 +116,7 @@ impl XMLNode {
         if self.has_characters() {
             let chars = self
                 .children
+                .as_ref()
                 .unwrap()
                 .iter()
                 .filter(|node| node.node_type == NodeType::Character)
@@ -125,9 +129,11 @@ impl XMLNode {
     pub fn get_child_charcter(&self, n: usize) -> Option<&str> {
         let maybe_charcters = self.get_child_charcters();
         if maybe_charcters.is_some() {
-            if maybe_charcters.unwrap().len() >= (n - 1) {
-                return Some(maybe_charcters.unwrap()[n]);
-            }
+            return if maybe_charcters.unwrap().get(n).is_some() {
+                Some("")
+            } else {
+                None
+            };
         }
         None
     }
@@ -141,14 +147,14 @@ impl XMLNode {
         }
     }
     pub fn add_node(&mut self, child: XMLNode) {
-        if self.has_nodes() {
+        if self.has_children() {
             self.children.as_mut().unwrap().push(child);
             return;
         }
         self.children = Some(Box::new(vec![child]));
     }
     pub fn add_charcter(&mut self, s: &str) {
-        if self.has_characters() {
+        if self.has_children() {
             self.children
                 .as_mut()
                 .unwrap()
@@ -254,6 +260,7 @@ impl XMLNode {
         if self.has_children() {
             return self
                 .children
+                .as_ref()
                 .unwrap()
                 .iter()
                 .find(|node| node.node_type == NodeType::Character)
@@ -265,6 +272,7 @@ impl XMLNode {
         if self.has_children() {
             return self
                 .children
+                .as_ref()
                 .unwrap()
                 .iter()
                 .find(|node| {
@@ -309,6 +317,7 @@ impl From<TokenArray> for XMLNode {
                     match child {
                         Some(node) => {
                             if parent_stack.len() == 0 {
+                                println!("{:?}", node.children);
                                 return node;
                             }
                             parent_stack.last_mut().unwrap().add_node(node)

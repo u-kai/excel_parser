@@ -3,6 +3,7 @@ use super::{
     token::Token,
 };
 
+#[derive(Debug)]
 pub struct TokenArray {
     value: Vec<Token>,
     tmp_token: Token,
@@ -72,8 +73,8 @@ impl TokenArray {
 mod create_node {
     use std::collections::HashMap;
 
+    use crate::xml::nodes::node::NodeType;
     use crate::xml::{nodes::node::XMLNode, tokens::token_array::TokenArray};
-
     #[test]
     fn from_token_array_test() {
         let data = "<div>
@@ -82,9 +83,9 @@ mod create_node {
         </div>";
         let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p");
+        let mut p = XMLNode::new("p", NodeType::Element);
         p.add_charcter("p-data");
-        let mut div = XMLNode::new("div");
+        let mut div = XMLNode::new("div", NodeType::Element);
         div.add_node(p);
         div.add_charcter("div-data");
         assert_eq!(expect, div);
@@ -94,10 +95,10 @@ mod create_node {
         </div>";
         let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p");
+        let mut p = XMLNode::new("p", NodeType::Element);
         p.add_charcter("p-data");
-        let mut div = XMLNode::new("div");
-        let mut child_div = XMLNode::new("div");
+        let mut div = XMLNode::new("div", NodeType::Element);
+        let mut child_div = XMLNode::new("div", NodeType::Element);
         child_div.add_charcter("div-first");
         child_div.add_node(p);
         child_div.add_charcter("div-data");
@@ -110,18 +111,18 @@ mod create_node {
             div-data</div>
         </div>"#;
         let expect = XMLNode::from(data);
-        let mut root = XMLNode::new("?xml");
+        let mut root = XMLNode::new("?xml", NodeType::Element);
         let mut root_element = HashMap::new();
         root_element.insert("standalone".to_string(), vec![r#"yes"#.to_string()]);
         root_element.insert("encoding".to_string(), vec![r#"UTF-8"#.to_string()]);
         root_element.insert("version".to_string(), vec![r#"1.0"#.to_string()]);
 
         root.get_node_value().set_element(root_element);
-        let mut p = XMLNode::new("p");
+        let mut p = XMLNode::new("p", NodeType::Element);
         p.add_charcter("p-data");
-        let single_data = XMLNode::new("data");
-        let mut div = XMLNode::new("div");
-        let mut child_div = XMLNode::new("div");
+        let single_data = XMLNode::new("data", NodeType::SingleElement);
+        let mut div = XMLNode::new("div", NodeType::Element);
+        let mut child_div = XMLNode::new("div", NodeType::Element);
         child_div.add_charcter("div-first");
         child_div.add_node(p);
         child_div.add_node(single_data);
@@ -140,16 +141,16 @@ mod create_node {
 
         let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p");
+        let mut p = XMLNode::new("p", NodeType::Element);
         p.add_charcter("p-data");
-        let single_data = XMLNode::new("data");
-        let mut div = XMLNode::new("div");
+        let single_data = XMLNode::new("data", NodeType::Element);
+        let mut div = XMLNode::new("div", NodeType::Element);
         let mut element = HashMap::new();
 
         element.insert("name".to_string(), vec![r#"kai"#.to_string()]);
         element.insert("id".to_string(), vec![r#"1180"#.to_string()]);
         div.get_node_value().set_element(element);
-        let mut child_div = XMLNode::new("div");
+        let mut child_div = XMLNode::new("div", NodeType::Element);
         child_div.add_charcter("div-first");
         child_div.add_node(p);
         child_div.add_node(single_data);
@@ -163,10 +164,10 @@ mod create_node {
         </div>"#;
         let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p");
+        let mut p = XMLNode::new("p", NodeType::Element);
         p.add_charcter("p-data");
-        let single_data = XMLNode::new("data");
-        let mut div = XMLNode::new("div");
+        let single_data = XMLNode::new("data", NodeType::SingleElement);
+        let mut div = XMLNode::new("div", NodeType::Element);
         let mut element = HashMap::new();
 
         element.insert("name".to_string(), vec![r#"kai"#.to_string()]);
@@ -176,7 +177,7 @@ mod create_node {
             vec!["style1".to_string(), "style2".to_string()],
         );
         div.get_node_value().set_element(element);
-        let mut child_div = XMLNode::new("div");
+        let mut child_div = XMLNode::new("div", NodeType::Element);
         child_div.add_charcter("div-first");
         child_div.add_node(p);
         child_div.add_node(single_data);
