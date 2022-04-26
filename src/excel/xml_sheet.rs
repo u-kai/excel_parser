@@ -5,8 +5,8 @@ use super::cell::Cell;
 #[derive(Debug, PartialEq, Eq)]
 pub struct XMLSheet {
     name: String,
-    shared_values: Vec<Cell>,
-    refarence_values: Vec<Cell>,
+    shared_values: Vec<Cell<String>>,
+    refarence_values: Vec<Cell<usize>>,
 }
 impl XMLSheet {
     pub fn new(sheet_name: impl Into<String>) -> Self {
@@ -33,7 +33,7 @@ impl XMLSheet {
             refarence_values: XMLSheet::get_refarence_values(&c_nodes),
         }
     }
-    fn get_refarence_values(c_nodes: &Vec<&XMLNode>) -> Vec<Cell> {
+    fn get_refarence_values(c_nodes: &Vec<&XMLNode>) -> Vec<Cell<usize>> {
         c_nodes
             .iter()
             .filter(|c_node| c_node.is_containe_key_value("t", "s"))
@@ -42,7 +42,12 @@ impl XMLSheet {
                 let v_node = c_node.search_node("v");
                 if v_node.is_some() {
                     Some(Cell::new(
-                        v_node.unwrap().get_child_charcter(0).unwrap(),
+                        v_node
+                            .unwrap()
+                            .get_child_charcter(0)
+                            .unwrap()
+                            .parse::<usize>()
+                            .unwrap(),
                         cell_index,
                     ))
                 } else {
@@ -51,7 +56,7 @@ impl XMLSheet {
             })
             .collect()
     }
-    fn get_shared_values(c_nodes: &Vec<&XMLNode>) -> Vec<Cell> {
+    fn get_shared_values(c_nodes: &Vec<&XMLNode>) -> Vec<Cell<String>> {
         c_nodes
             .iter()
             .filter(|c_node| {
@@ -63,7 +68,7 @@ impl XMLSheet {
                 let v_node = c_node.search_node("v");
                 if v_node.is_some() {
                     Some(Cell::new(
-                        v_node.unwrap().get_child_charcter(0).unwrap(),
+                        v_node.unwrap().get_child_charcter(0).unwrap().to_string(),
                         cell_index,
                     ))
                 } else {
@@ -72,10 +77,10 @@ impl XMLSheet {
             })
             .collect()
     }
-    pub fn add_refarence_value(&mut self, cell: Cell) {
+    pub fn add_refarence_value(&mut self, cell: Cell<usize>) {
         self.refarence_values.push(cell)
     }
-    pub fn add_shared_value(&mut self, cell: Cell) {
+    pub fn add_shared_value(&mut self, cell: Cell<String>) {
         self.shared_values.push(cell)
     }
 }
@@ -130,13 +135,13 @@ mod xml_sheet_test {
         "#;
         let expect = XMLSheet::new_with_source("sheet1", source);
         let mut to_be = XMLSheet::new("sheet1");
-        to_be.add_shared_value(Cell::new("50", "F6"));
-        to_be.add_refarence_value(Cell::new("43", "B2"));
-        to_be.add_refarence_value(Cell::new("44", "J2"));
-        to_be.add_refarence_value(Cell::new("59", "P2"));
-        to_be.add_refarence_value(Cell::new("0", "C3"));
-        to_be.add_refarence_value(Cell::new("68", "E3"));
-        to_be.add_shared_value(Cell::new("shared_value", "H4"));
+        to_be.add_shared_value(Cell::new("50".to_string(), "F6"));
+        to_be.add_refarence_value(Cell::new(43, "B2"));
+        to_be.add_refarence_value(Cell::new(44, "J2"));
+        to_be.add_refarence_value(Cell::new(59, "P2"));
+        to_be.add_refarence_value(Cell::new(0, "C3"));
+        to_be.add_refarence_value(Cell::new(68, "E3"));
+        to_be.add_shared_value(Cell::new("shared_value".to_string(), "H4"));
         assert_eq!(expect, to_be);
     }
 }

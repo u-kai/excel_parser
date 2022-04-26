@@ -1,13 +1,13 @@
 #[derive(PartialEq, Eq, Debug)]
-pub struct Cell {
-    value: String,
+pub struct Cell<T: PartialEq + Eq> {
+    value: T,
     index: CellIndex,
 }
-impl Cell {
+impl<T: PartialEq + Eq> Cell<T> {
     #[allow(warnings)]
-    pub fn new(value: &str, cell_index: &str) -> Self {
+    pub fn new(value: T, cell_index: &str) -> Self {
         Cell {
-            value: value.to_string(),
+            value,
             index: CellIndex::new(cell_index),
         }
     }
@@ -85,7 +85,7 @@ mod cell_tests {
         assert_eq!(
             cell,
             Cell {
-                value: "test".to_string(),
+                value: "test",
                 index: CellIndex {
                     column: 1,
                     row: 123
@@ -96,7 +96,7 @@ mod cell_tests {
         assert_eq!(
             cell,
             Cell {
-                value: "test".to_string(),
+                value: "test",
                 index: CellIndex { column: 27, row: 1 }
             }
         );
@@ -104,7 +104,7 @@ mod cell_tests {
         assert_eq!(
             cell,
             Cell {
-                value: "test".to_string(),
+                value: "test",
                 index: CellIndex {
                     column: 8595,
                     row: 1
@@ -115,7 +115,7 @@ mod cell_tests {
         assert_eq!(
             cell,
             Cell {
-                value: "test2".to_string(),
+                value: "test2",
                 index: CellIndex { column: 2, row: 1 }
             }
         )
