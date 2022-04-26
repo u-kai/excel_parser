@@ -21,27 +21,25 @@ impl XMLSheet {
         let work_sheet = xml_node.search_node("worksheet").unwrap();
         let sheet_data = work_sheet.search_node("sheetData").unwrap();
         let rows = sheet_data.search_nodes("row").unwrap();
-        let shared_values = rows
+        let c_nodes = rows
             .iter()
             .filter_map(|node| node.search_nodes("c"))
-            .map(|c_nodes| XMLSheet::get_shared_value(c_nodes))
             .flatten()
             .collect::<Vec<_>>();
+
         XMLSheet {
             name: sheet_name.into(),
-            shared_values,
-            refarence_values: Vec::new(),
+            shared_values: XMLSheet::get_shared_values(&c_nodes),
+            refarence_values: XMLSheet::get_refarence_values(&c_nodes),
         }
     }
-    fn get_shared_value<'a>(nodes: Vec<&XMLNode>) -> Vec<Cell> {
-        let d = nodes
+    fn get_refarence_values(c_nodes: &Vec<&XMLNode>) -> Vec<Cell> {
+        c_nodes
             .iter()
-            .filter(|node| {
-                node.is_containe_key_value("t", "str") || !(node.is_containe_key_value("t", "s"))
-            })
-            .filter_map(|node| {
-                let cell_index = node.search_element("r").unwrap();
-                let v_node = node.search_node("v");
+            .filter(|c_node| c_node.is_containe_key_value("t", "s"))
+            .filter_map(|c_node| {
+                let cell_index = c_node.search_element("r").unwrap();
+                let v_node = c_node.search_node("v");
                 if v_node.is_some() {
                     Some(Cell::new(
                         v_node.unwrap().get_child_charcter(0).unwrap(),
@@ -51,8 +49,28 @@ impl XMLSheet {
                     None
                 }
             })
-            .collect();
-        d
+            .collect()
+    }
+    fn get_shared_values(c_nodes: &Vec<&XMLNode>) -> Vec<Cell> {
+        c_nodes
+            .iter()
+            .filter(|c_node| {
+                c_node.is_containe_key_value("t", "str")
+                    || !(c_node.is_containe_key_value("t", "s"))
+            })
+            .filter_map(|c_node| {
+                let cell_index = c_node.search_element("r").unwrap();
+                let v_node = c_node.search_node("v");
+                if v_node.is_some() {
+                    Some(Cell::new(
+                        v_node.unwrap().get_child_charcter(0).unwrap(),
+                        cell_index,
+                    ))
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
     pub fn add_refarence_value(&mut self, cell: Cell) {
         self.refarence_values.push(cell)
@@ -115,6 +133,7 @@ mod xml_sheet_test {
         to_be.add_shared_value(Cell::new("50", "F6"));
         to_be.add_refarence_value(Cell::new("43", "B2"));
         to_be.add_refarence_value(Cell::new("44", "J2"));
+        to_be.add_refarence_value(Cell::new("59", "P2"));
         to_be.add_refarence_value(Cell::new("0", "C3"));
         to_be.add_refarence_value(Cell::new("68", "E3"));
         to_be.add_shared_value(Cell::new("shared_value", "H4"));
