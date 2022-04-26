@@ -6,20 +6,15 @@ pub struct SharedStrings {
 
 impl SharedStrings {
     pub fn new(s: &str) -> Self {
-        let mut xml_node = XMLNode::from(s);
+        let xml_node = XMLNode::from(s);
         let sst = xml_node.nth_child_node(0).unwrap();
 
-        let vec = sst.search_nodes("si").unwrap();
-        println!("{:?}", vec);
-        let values = vec
+        let si_vec = sst.search_nodes("si").unwrap();
+        let values = si_vec
             .iter()
-            .map(|node| {
-                if let Some(child) = node.search_node("t") {
-                    child.get_child_charcter(0).unwrap().to_string()
-                } else {
-                    "".to_string()
-                }
-            })
+            .filter_map(|node| node.search_node("t"))
+            .filter_map(|node| node.get_child_charcter(0))
+            .map(|str| str.into())
             .collect::<Vec<_>>();
         SharedStrings { values }
     }

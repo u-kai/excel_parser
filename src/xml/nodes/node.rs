@@ -124,7 +124,7 @@ impl XMLNode {
         None
     }
     #[allow(dead_code)]
-    pub fn nth_child_node(&mut self, n: usize) -> Option<&XMLNode> {
+    pub fn nth_child_node(&self, n: usize) -> Option<&XMLNode> {
         if self.has_nodes() {
             return self.get_child_nodes().unwrap().get(n).map(|c| *c);
         }
