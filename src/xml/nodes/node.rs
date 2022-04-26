@@ -129,11 +129,7 @@ impl XMLNode {
     pub fn get_child_charcter(&self, n: usize) -> Option<&str> {
         let maybe_charcters = self.get_child_charcters();
         if maybe_charcters.is_some() {
-            return if maybe_charcters.unwrap().get(n).is_some() {
-                Some("")
-            } else {
-                None
-            };
+            return maybe_charcters.unwrap().get(n).map(|c| *c);
         }
         None
     }
@@ -195,8 +191,7 @@ impl XMLNode {
     #[allow(dead_code)]
     pub fn nth_child_node(&mut self, n: usize) -> Option<&XMLNode> {
         if self.has_nodes() {
-            let result = self.get_child_nodes().unwrap()[n];
-            return Some(result);
+            return self.get_child_nodes().unwrap().get(n).map(|c| *c);
         }
         None
     }
@@ -317,7 +312,6 @@ impl From<TokenArray> for XMLNode {
                     match child {
                         Some(node) => {
                             if parent_stack.len() == 0 {
-                                println!("{:?}", node.children);
                                 return node;
                             }
                             parent_stack.last_mut().unwrap().add_node(node)

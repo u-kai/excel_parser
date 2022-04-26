@@ -143,7 +143,7 @@ mod create_node {
         let expect = XMLNode::from(token_array);
         let mut p = XMLNode::new("p", NodeType::Element);
         p.add_charcter("p-data");
-        let single_data = XMLNode::new("data", NodeType::Element);
+        let single_data = XMLNode::new("data", NodeType::SingleElement);
         let mut div = XMLNode::new("div", NodeType::Element);
         let mut element = HashMap::new();
 
