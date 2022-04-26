@@ -123,6 +123,9 @@ impl XMLNode {
         }
         None
     }
+    pub fn search_element(&self, key: &str) -> Option<&str> {
+        self.value.search_element(key)
+    }
     #[allow(dead_code)]
     pub fn nth_child_node(&self, n: usize) -> Option<&XMLNode> {
         if self.has_nodes() {
