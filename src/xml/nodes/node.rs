@@ -1,77 +1,9 @@
-use std::fs::set_permissions;
-
 use crate::xml::tokens::{states::TokenType, token::Token, token_array::TokenArray};
 
 use super::{
     funcs::from_token::token_to_node,
     parts::{NodeElement, NodeValue},
 };
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct ChildrenNode {
-    nodes: Option<Box<Vec<XMLNode>>>,
-    characters: Option<Vec<String>>,
-}
-impl ChildrenNode {
-    pub fn new() -> Self {
-        ChildrenNode {
-            nodes: None,
-            characters: None,
-        }
-    }
-    pub fn add_charcters(&mut self, s: &str) {
-        if self.has_characters() {
-            self.characters.as_mut().unwrap().push(s.to_string());
-            return;
-        }
-        self.characters = Some(vec![s.to_string()])
-    }
-    pub fn add_node(&mut self, node: XMLNode) {
-        if self.has_nodes() {
-            self.nodes.as_mut().unwrap().push(node);
-            return;
-        }
-        self.nodes = Some(Box::new(vec![node]));
-    }
-    pub fn init_characters(&mut self) {
-        self.characters = None;
-    }
-    pub fn init_nodes(&mut self) {
-        self.nodes = None;
-    }
-    pub fn get_nodes(&self) -> &Option<Box<Vec<XMLNode>>> {
-        &self.nodes
-    }
-    pub fn get_charcters(&self) -> &Option<Vec<String>> {
-        &self.characters
-    }
-    pub fn get_child_charcter(&self, n: usize) -> Option<&String> {
-        if self.has_characters() {
-            return self.get_charcters().as_ref().unwrap().get(n);
-        }
-        None
-    }
-    pub fn get_n_node(&self, n: usize) -> Option<&XMLNode> {
-        if self.has_nodes() {
-            self.get_nodes().as_ref().unwrap().get(n)
-        } else {
-            None
-        }
-    }
-    pub fn get_n_charcters(&self, n: usize) -> Option<&String> {
-        if self.has_characters() {
-            self.get_charcters().as_ref().unwrap().get(n)
-        } else {
-            None
-        }
-    }
-    fn has_nodes(&self) -> bool {
-        self.nodes.is_some()
-    }
-    fn has_characters(&self) -> bool {
-        self.characters.is_some()
-    }
-}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum NodeType {
@@ -112,6 +44,7 @@ impl XMLNode {
         }
         None
     }
+    #[allow(dead_code)]
     pub fn get_child_charcters(&self) -> Option<Vec<&str>> {
         if self.has_characters() {
             let chars = self
@@ -126,6 +59,7 @@ impl XMLNode {
         }
         None
     }
+    #[allow(dead_code)]
     pub fn get_child_charcter(&self, n: usize) -> Option<&str> {
         let maybe_charcters = self.get_child_charcters();
         if maybe_charcters.is_some() {
@@ -159,17 +93,18 @@ impl XMLNode {
         }
         self.children = Some(Box::new(vec![XMLNode::new(s, NodeType::Character)]));
     }
+    #[allow(dead_code)]
     pub fn search_node(&self, search_value: &str) -> Option<&XMLNode> {
         if self.has_nodes() {
-            return Some(
-                self.get_child_nodes()
-                    .as_ref()
-                    .unwrap()
-                    .iter()
-                    .filter(|child| child.get_value() == search_value)
-                    .collect::<Vec<_>>()[0],
-            );
-            //.nth(0);
+            return self
+                .get_child_nodes()
+                .as_ref()
+                .unwrap()
+                .iter()
+                .filter(|child| child.get_value() == search_value)
+                .collect::<Vec<_>>()
+                .get(0)
+                .map(|child| **child);
         }
         None
     }
@@ -226,6 +161,7 @@ impl XMLNode {
     }
     // search_child_rec is search all children that one parent has.
     //
+    #[allow(dead_code)]
     pub fn serach_child_rec(&self, key: &str, value: &str) -> Option<&XMLNode> {
         match self.get_child_nodes() {
             Some(children) => {
@@ -251,6 +187,7 @@ impl XMLNode {
     pub fn get_node_value(&mut self) -> &mut NodeValue {
         &mut self.value
     }
+    #[allow(dead_code)]
     fn has_characters(&self) -> bool {
         if self.has_children() {
             return self
