@@ -11,9 +11,15 @@ impl<T: PartialEq + Eq> Cell<T> {
             index: CellIndex::new(cell_index),
         }
     }
+    pub fn get_value(&self) -> &T {
+        &self.value
+    }
+    pub fn is_index(&self, cell_index: &CellIndex) -> bool {
+        &self.index == cell_index
+    }
 }
 #[derive(PartialEq, Eq, Debug)]
-struct CellIndex {
+pub struct CellIndex {
     column: usize,
     row: usize,
 }

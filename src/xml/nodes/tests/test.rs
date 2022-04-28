@@ -1,6 +1,6 @@
 #[cfg(test)]
 pub mod xml_node_test {
-    use crate::xml::{nodes::node::XMLNode, tokens::token_array::TokenArray};
+    use crate::xml::nodes::node::XMLNode;
     #[test]
     fn get_nth_child_test() {
         let data = r#"<div id="1180" name="kai"><div>div-first
@@ -8,7 +8,7 @@ pub mod xml_node_test {
             <data/>
             div-data</div>
         </div>"#;
-        let mut root_node = XMLNode::from(data);
+        let root_node = XMLNode::from(data);
         let child = root_node.nth_child_node(0).unwrap();
         assert_eq!(
             child,

@@ -123,6 +123,7 @@ impl XMLNode {
         }
         None
     }
+    #[allow(dead_code)]
     pub fn search_element(&self, key: &str) -> Option<&str> {
         self.value.search_element(key)
     }
