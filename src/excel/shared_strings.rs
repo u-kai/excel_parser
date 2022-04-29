@@ -1,5 +1,8 @@
 use crate::xml::nodes::node::XMLNode;
 
+pub trait SharedStore {
+    fn get_shared_value(&self, index: usize) -> &str;
+}
 pub struct SharedStrings {
     values: Vec<String>,
 }
@@ -22,9 +25,16 @@ impl SharedStrings {
         &self.values[index]
     }
 }
+impl SharedStore for SharedStrings {
+    fn get_shared_value(&self, index: usize) -> &str {
+        &self.values[index]
+    }
+}
 
 #[cfg(test)]
 mod shared_strings_test {
+    use crate::excel::shared_strings::SharedStore;
+
     use super::SharedStrings;
 
     #[test]
@@ -57,8 +67,8 @@ mod shared_strings_test {
 </sst>
 "#,
         );
-        assert_eq!(ss.get_value(0), "詳細画面レイアウト");
-        assert_eq!(ss.get_value(1), "会社名");
-        assert_eq!(ss.get_value(2), "タイトル");
+        assert_eq!(ss.get_shared_value(0), "詳細画面レイアウト");
+        assert_eq!(ss.get_shared_value(1), "会社名");
+        assert_eq!(ss.get_shared_value(2), "タイトル");
     }
 }

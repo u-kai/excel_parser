@@ -125,6 +125,12 @@ impl XMLSheet {
         }
     }
 }
+pub trait Refarences {
+    fn get_refarence_cell(&self, cell_index: &CellIndex) -> Option<usize>;
+}
+pub trait Shareds {
+    fn get_shared_cell(&self, cell_index: &CellIndex) -> Option<&str>;
+}
 #[cfg(test)]
 mod xml_sheet_test {
     use crate::excel::{
