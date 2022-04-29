@@ -100,7 +100,6 @@ impl XMLSheet {
             refarence_values: RefarenceValues::new(),
         }
     }
-
     pub fn new_with_source(sheet_name: impl Into<String>, source: &str) -> Self {
         let xml_node = XMLNode::from(source);
         let work_sheet = xml_node.search_node("worksheet").unwrap();
