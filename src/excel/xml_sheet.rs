@@ -100,12 +100,6 @@ impl XMLSheet {
             refarence_values: RefarenceValues::new(),
         }
     }
-    pub fn get_refarence_cell(&self, cell_index: CellIndex) -> Option<usize> {
-        self.refarence_values.get_cell(&cell_index)
-    }
-    pub fn get_shared_cell(&self, cell_index: CellIndex) -> Option<&str> {
-        self.shared_values.get_cell(&cell_index)
-    }
 
     pub fn new_with_source(sheet_name: impl Into<String>, source: &str) -> Self {
         let xml_node = XMLNode::from(source);
@@ -128,14 +122,24 @@ impl XMLSheet {
 pub trait Refarences {
     fn get_refarence_cell(&self, cell_index: &CellIndex) -> Option<usize>;
 }
+impl Refarences for XMLSheet {
+    fn get_refarence_cell(&self, cell_index: &CellIndex) -> Option<usize> {
+        self.refarence_values.get_cell(&cell_index)
+    }
+}
 pub trait Shareds {
     fn get_shared_cell(&self, cell_index: &CellIndex) -> Option<&str>;
+}
+impl Shareds for XMLSheet {
+    fn get_shared_cell(&self, cell_index: &CellIndex) -> Option<&str> {
+        self.shared_values.get_cell(&cell_index)
+    }
 }
 #[cfg(test)]
 mod xml_sheet_test {
     use crate::excel::{
         cell::{Cell, CellIndex},
-        xml_sheet::{RefarenceValues, SharedValues},
+        xml_sheet::*,
     };
 
     use super::XMLSheet;
@@ -248,10 +252,10 @@ mod xml_sheet_test {
             </worksheet>
         "#;
         let sheet = XMLSheet::new_with_source("sheet1", source);
-        assert_eq!(sheet.get_shared_cell(CellIndex::new("F6")), Some("50"));
-        assert_eq!(sheet.get_refarence_cell(CellIndex::new("P2")), Some(59));
-        assert_eq!(sheet.get_shared_cell(CellIndex::new("P2")), None);
-        assert_eq!(sheet.get_refarence_cell(CellIndex::new("F6")), None);
-        assert_eq!(sheet.get_refarence_cell(CellIndex::new("P100")), None);
+        assert_eq!(sheet.get_shared_cell(&CellIndex::new("F6")), Some("50"));
+        assert_eq!(sheet.get_refarence_cell(&CellIndex::new("P2")), Some(59));
+        assert_eq!(sheet.get_shared_cell(&CellIndex::new("P2")), None);
+        assert_eq!(sheet.get_refarence_cell(&CellIndex::new("F6")), None);
+        assert_eq!(sheet.get_refarence_cell(&CellIndex::new("P100")), None);
     }
 }

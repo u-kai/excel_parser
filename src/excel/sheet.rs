@@ -5,16 +5,16 @@ use super::{
 };
 
 #[derive(PartialEq, Eq, Debug)]
-pub struct Sheet<S: SharedStore, T: Refarences + Shareds> {
-    name: String,
+pub struct Sheet<'a, S: SharedStore, T: Refarences + Shareds> {
+    name: &'a str,
     cells: Vec<Cell<String>>,
     shared: T,
     shared_store: S,
 }
-impl<S: SharedStore, T: Refarences + Shareds> Sheet<S, T> {
-    fn new(name: &str, source: &str, shared_store: S, shared: T) -> Self {
+impl<'a, S: SharedStore, T: Refarences + Shareds> Sheet<'a, S, T> {
+    fn new(name: &'a str, shared_store: S, shared: T) -> Self {
         Sheet {
-            name: name.into(),
+            name,
             cells: Vec::new(),
             shared,
             shared_store,
@@ -152,7 +152,7 @@ mod sheet_test {
         shareds.set_ref(Cell::new(2, "P2"));
         shareds.set_ref(Cell::new(3, "C3"));
         shareds.set_ref(Cell::new(4, "E3"));
-        let sheet = Sheet::new("sheet1", source, shared_store, shareds);
+        let sheet = Sheet::new("sheet1", shared_store, shareds);
         assert_eq!(sheet.get_cell(CellIndex::new("B2")), Some("zero"));
     }
 }
