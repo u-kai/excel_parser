@@ -11,7 +11,6 @@ impl SharedStrings {
     pub fn new(s: &str) -> Self {
         let xml_node = XMLNode::from(s);
         let sst = xml_node.nth_child_node(0).unwrap();
-
         let si_vec = sst.search_nodes("si").unwrap();
         let values = si_vec
             .iter()

@@ -44,16 +44,17 @@ impl CellIndex {
         (alphabet_number, number)
     }
 }
-struct ColumnAlphabet(String);
-impl ColumnAlphabet {
-    pub fn new(s: &str) -> Self {
-        let s = s
+pub struct ColumnAlphabet<'a>(&'a str);
+impl<'a> ColumnAlphabet<'a> {
+    pub fn new(s: &'a str) -> Self {
+        let len = s
             .chars()
-            .filter(|c| c.is_uppercase())
-            .collect::<Vec<_>>()
-            .iter()
-            .fold("".to_string(), |acc, cur| format!("{}{}", acc, cur));
-        ColumnAlphabet(s)
+            .enumerate()
+            .filter(|(_, c)| c.is_uppercase())
+            .map(|(i, _)| i)
+            .max()
+            .unwrap();
+        ColumnAlphabet(s.get(0..=len).unwrap())
     }
     pub fn to_number(&self) -> usize {
         self.0

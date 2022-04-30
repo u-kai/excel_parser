@@ -8,16 +8,16 @@ use super::{
 pub struct Sheet<'a, S: SharedStore, T: Refarences + Shareds> {
     name: &'a str,
     cells: Vec<Cell<String>>,
-    shared: T,
     shared_store: S,
+    shared: T,
 }
 impl<'a, S: SharedStore, T: Refarences + Shareds> Sheet<'a, S, T> {
     fn new(name: &'a str, shared_store: S, shared: T) -> Self {
         Sheet {
             name,
             cells: Vec::new(),
-            shared,
             shared_store,
+            shared,
         }
     }
     fn get_cell(&self, cell_index: CellIndex) -> Option<&str> {

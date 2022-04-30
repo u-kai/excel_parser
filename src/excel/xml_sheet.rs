@@ -8,6 +8,32 @@ pub struct XMLSheet {
     shared_values: SharedValues,
     refarence_values: RefarenceValues,
 }
+impl XMLSheet {
+    pub fn new(sheet_name: impl Into<String>) -> Self {
+        XMLSheet {
+            name: sheet_name.into(),
+            shared_values: SharedValues::new(),
+            refarence_values: RefarenceValues::new(),
+        }
+    }
+    pub fn new_with_source(sheet_name: impl Into<String>, source: &str) -> Self {
+        let xml_node = XMLNode::from(source);
+        let work_sheet = xml_node.search_node("worksheet").unwrap();
+        let sheet_data = work_sheet.search_node("sheetData").unwrap();
+        let rows = sheet_data.search_nodes("row").unwrap();
+        let c_nodes = rows
+            .iter()
+            .filter_map(|node| node.search_nodes("c"))
+            .flatten()
+            .collect::<Vec<_>>();
+
+        XMLSheet {
+            name: sheet_name.into(),
+            shared_values: SharedValues::from_c_nodes(&c_nodes),
+            refarence_values: RefarenceValues::from_c_nodes(&c_nodes),
+        }
+    }
+}
 #[derive(Debug, PartialEq, Eq)]
 struct SharedValues {
     values: Vec<Cell<String>>,
@@ -89,32 +115,6 @@ impl RefarenceValues {
             Some(*s.get_value())
         } else {
             None
-        }
-    }
-}
-impl XMLSheet {
-    pub fn new(sheet_name: impl Into<String>) -> Self {
-        XMLSheet {
-            name: sheet_name.into(),
-            shared_values: SharedValues::new(),
-            refarence_values: RefarenceValues::new(),
-        }
-    }
-    pub fn new_with_source(sheet_name: impl Into<String>, source: &str) -> Self {
-        let xml_node = XMLNode::from(source);
-        let work_sheet = xml_node.search_node("worksheet").unwrap();
-        let sheet_data = work_sheet.search_node("sheetData").unwrap();
-        let rows = sheet_data.search_nodes("row").unwrap();
-        let c_nodes = rows
-            .iter()
-            .filter_map(|node| node.search_nodes("c"))
-            .flatten()
-            .collect::<Vec<_>>();
-
-        XMLSheet {
-            name: sheet_name.into(),
-            shared_values: SharedValues::from_c_nodes(&c_nodes),
-            refarence_values: RefarenceValues::from_c_nodes(&c_nodes),
         }
     }
 }
