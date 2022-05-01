@@ -1,5 +1,5 @@
 use super::{
-    cell::CellIndex,
+    cell::{CellIndex, ColumnAlphabet},
     shared_strings::SharedStore,
     xml_sheet::{Refarences, Shareds},
 };
@@ -18,7 +18,9 @@ impl<'a, S: SharedStore, T: Refarences + Shareds> Sheet<'a, S, T> {
             shared,
         }
     }
-    pub fn get_cell(&self, cell_index: CellIndex) -> Option<&str> {
+}
+impl<'a, S: SharedStore, T: Refarences + Shareds> WorkSheet for Sheet<'a, S, T> {
+    fn get_cell(&self, cell_index: CellIndex) -> Option<&str> {
         if self.shared.get_shared_cell(&cell_index).is_some() {
             return self.shared.get_shared_cell(&cell_index);
         }
@@ -29,12 +31,18 @@ impl<'a, S: SharedStore, T: Refarences + Shareds> Sheet<'a, S, T> {
         None
     }
 }
-
+pub trait WorkSheet {
+    fn get_cell(&self, cell_index: CellIndex) -> Option<&str>;
+    //fn get_row(&self, u: usize) -> Vec<Option<&str>>;
+    //fn get_column(&self, s: ColumnAlphabet) -> Vec<Option<&str>>;
+    //fn get_all_cell(&self) -> Vec<Vec<Option<&str>>>;
+}
 #[cfg(test)]
 mod sheet_test {
     use crate::excel::{
         cell::{Cell, CellIndex},
         shared_strings::SharedStore,
+        sheet::WorkSheet,
         xml_sheet::{Refarences, Shareds},
     };
 

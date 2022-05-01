@@ -1,7 +1,6 @@
 use crate::xml::nodes::node::XMLNode;
 
 use super::{
-    cell::{CellIndex, ColumnAlphabet},
     shared_strings::SharedStrings,
     sheet::Sheet,
     sheet_names::sheet_names::{ExcelDefineSheetName, SheetName, SheetNames, UserDefineSheetName},
@@ -53,18 +52,12 @@ impl<'a, T: XLSXOperator<'a>> Drop for Excel<'a, T> {
         self.close()
     }
 }
-trait WorkSheet {
-    fn get_cell(&self, cell_index: CellIndex) -> Option<&str>;
-    fn get_row(&self, u: usize) -> Vec<Option<&str>>;
-    fn get_column(&self, s: ColumnAlphabet) -> Vec<Option<&str>>;
-    fn get_all_cell(&self) -> Vec<Vec<Option<&str>>>;
-}
 pub trait XLSXOperator<'a> {
     fn to_zip(&self) -> ();
     fn to_excel(&self) -> ();
     fn decompress(&self) -> ();
-    fn get_sheet(&self, sheet: &ExcelDefineSheetName) -> Option<String>;
     fn read_content(&mut self) -> ();
+    fn get_sheet(&self, sheet: &ExcelDefineSheetName) -> Option<String>;
     fn get_shared_strings(&'a self) -> &'a XMLNode;
     fn get_workbook(&'a self) -> &'a XMLNode;
 }
@@ -74,6 +67,7 @@ mod excel_tests {
     use crate::{
         excel::{
             cell::CellIndex,
+            sheet::WorkSheet,
             sheet_names::sheet_names::{ExcelDefineSheetName, UserDefineSheetName},
         },
         xml::nodes::node::XMLNode,

@@ -1,5 +1,6 @@
+use crate::excel::sheet::WorkSheet;
 use excel::cell::CellIndex;
-use excel::excel::{Excel, XLSXOperator};
+use excel::excel::Excel;
 use excel::file_operator::XLSXFile;
 use excel::sheet_names::sheet_names::UserDefineSheetName;
 
