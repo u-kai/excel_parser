@@ -7,20 +7,18 @@ use super::{
 #[derive(PartialEq, Eq, Debug)]
 pub struct Sheet<'a, S: SharedStore, T: Refarences + Shareds> {
     name: &'a str,
-    cells: Vec<Cell<String>>,
-    shared_store: S,
+    shared_store: &'a S,
     shared: T,
 }
 impl<'a, S: SharedStore, T: Refarences + Shareds> Sheet<'a, S, T> {
-    fn new(name: &'a str, shared_store: S, shared: T) -> Self {
+    pub fn new(name: &'a str, shared_store: &'a S, shared: T) -> Self {
         Sheet {
             name,
-            cells: Vec::new(),
             shared_store,
             shared,
         }
     }
-    fn get_cell(&self, cell_index: CellIndex) -> Option<&str> {
+    pub fn get_cell(&self, cell_index: CellIndex) -> Option<&str> {
         if self.shared.get_shared_cell(&cell_index).is_some() {
             return self.shared.get_shared_cell(&cell_index);
         }
@@ -152,7 +150,7 @@ mod sheet_test {
         shareds.set_ref(Cell::new(2, "P2"));
         shareds.set_ref(Cell::new(3, "C3"));
         shareds.set_ref(Cell::new(4, "E3"));
-        let sheet = Sheet::new("sheet1", shared_store, shareds);
+        let sheet = Sheet::new("sheet1", &shared_store, shareds);
         assert_eq!(sheet.get_cell(CellIndex::new("B2")), Some("zero"));
     }
 }

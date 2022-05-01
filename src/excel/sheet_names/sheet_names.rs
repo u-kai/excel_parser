@@ -28,6 +28,7 @@ impl<'a> SheetNames<'a> {
         self.0.get(sheet_name).iter().map(|s| *s).next()
     }
 }
+
 impl<'a> From<&'a XMLNode> for SheetNames<'a> {
     fn from(sheets_node: &'a XMLNode) -> Self {
         let mut sheet_names = SheetNames::new();

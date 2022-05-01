@@ -4,19 +4,17 @@ use super::cell::{Cell, CellIndex};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct XMLSheet {
-    name: String,
     shared_values: SharedValues,
     refarence_values: RefarenceValues,
 }
 impl XMLSheet {
-    pub fn new(sheet_name: impl Into<String>) -> Self {
+    pub fn new() -> Self {
         XMLSheet {
-            name: sheet_name.into(),
             shared_values: SharedValues::new(),
             refarence_values: RefarenceValues::new(),
         }
     }
-    pub fn new_with_source(sheet_name: impl Into<String>, source: &str) -> Self {
+    pub fn new_with_source(source: &str) -> Self {
         let xml_node = XMLNode::from(source);
         let work_sheet = xml_node.search_node("worksheet").unwrap();
         let sheet_data = work_sheet.search_node("sheetData").unwrap();
@@ -28,7 +26,6 @@ impl XMLSheet {
             .collect::<Vec<_>>();
 
         XMLSheet {
-            name: sheet_name.into(),
             shared_values: SharedValues::from_c_nodes(&c_nodes),
             refarence_values: RefarenceValues::from_c_nodes(&c_nodes),
         }
@@ -185,7 +182,7 @@ mod xml_sheet_test {
                 </sheetData>
             </worksheet>
         "#;
-        let expect = XMLSheet::new_with_source("sheet1", source);
+        let expect = XMLSheet::new_with_source(source);
         let shared = SharedValues {
             values: vec![
                 Cell::new("50".to_string(), "F6"),
@@ -202,7 +199,6 @@ mod xml_sheet_test {
             ],
         };
         let to_be = XMLSheet {
-            name: "sheet1".to_string(),
             shared_values: shared,
             refarence_values: refarence,
         };
@@ -250,7 +246,7 @@ mod xml_sheet_test {
                 </sheetData>
             </worksheet>
         "#;
-        let sheet = XMLSheet::new_with_source("sheet1", source);
+        let sheet = XMLSheet::new_with_source(source);
         assert_eq!(sheet.get_shared_cell(&CellIndex::new("F6")), Some("50"));
         assert_eq!(sheet.get_refarence_cell(&CellIndex::new("P2")), Some(59));
         assert_eq!(sheet.get_shared_cell(&CellIndex::new("P2")), None);
