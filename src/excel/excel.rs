@@ -15,9 +15,11 @@ pub struct Excel<'a, T: XLSXOperator<'a>> {
     shared_strings: SharedStrings,
 }
 impl<'a, XOpe: XLSXOperator<'a>> Excel<'a, XOpe> {
-    pub fn new(xlsx_operator: &'a XOpe) -> Self {
+    pub fn new(xlsx_operator: &'a mut XOpe) -> Self {
         xlsx_operator.to_zip();
-        let work_book = xlsx_operator.read_workbook();
+        xlsx_operator.decompress();
+        xlsx_operator.read_content();
+        let work_book = xlsx_operator.get_workbook();
         let sheet_names = SheetNames::from(
             work_book
                 .search_node("workbook")
@@ -25,7 +27,8 @@ impl<'a, XOpe: XLSXOperator<'a>> Excel<'a, XOpe> {
                 .search_node("sheets")
                 .unwrap(),
         );
-        let shared_strings = SharedStrings::from(&xlsx_operator.read_shared_strings());
+        let shared_strings = xlsx_operator.get_shared_strings();
+        let shared_strings = SharedStrings::from(shared_strings);
         Excel {
             xlsx_operator,
             sheet_names,
@@ -37,12 +40,17 @@ impl<'a, XOpe: XLSXOperator<'a>> Excel<'a, XOpe> {
         sheet: &'a UserDefineSheetName<'a>,
     ) -> Sheet<'a, SharedStrings, XMLSheet> {
         let e_sheet_name = self.sheet_names.get_excel_sheet_name(&sheet).unwrap();
-        let source = self.xlsx_operator.read_sheet(e_sheet_name);
-        let sheet_source = XMLSheet::new_with_source(source.unwrap());
+        let source = self.xlsx_operator.get_sheet(e_sheet_name);
+        let sheet_source = XMLSheet::new_with_source(source.unwrap().as_str());
         Sheet::new(sheet.get_sheet_name(), &self.shared_strings, sheet_source)
     }
     pub fn close(&self) {
         self.xlsx_operator.to_excel()
+    }
+}
+impl<'a, T: XLSXOperator<'a>> Drop for Excel<'a, T> {
+    fn drop(&mut self) {
+        self.close()
     }
 }
 trait WorkSheet {
@@ -54,9 +62,11 @@ trait WorkSheet {
 pub trait XLSXOperator<'a> {
     fn to_zip(&self) -> ();
     fn to_excel(&self) -> ();
-    fn read_sheet(&'a self, sheet: &ExcelDefineSheetName) -> Option<&'a str>;
-    fn read_shared_strings(&'a self) -> XMLNode;
-    fn read_workbook(&'a self) -> XMLNode;
+    fn decompress(&self) -> ();
+    fn get_sheet(&self, sheet: &ExcelDefineSheetName) -> Option<String>;
+    fn read_content(&mut self) -> ();
+    fn get_shared_strings(&'a self) -> &'a XMLNode;
+    fn get_workbook(&'a self) -> &'a XMLNode;
 }
 
 #[cfg(test)]
@@ -95,22 +105,22 @@ mod excel_tests {
         fn to_excel(&self) -> () {
             println!("exceled!")
         }
-        fn read_sheet(&'a self, sheet: &ExcelDefineSheetName) -> Option<&'a str> {
-            self.sheet_nodes.iter().next().map(|s| *s)
+        fn decompress(&self) -> () {
+            println!("decompress")
         }
-        fn read_shared_strings(&'a self) -> XMLNode {
-            self.shared_strings.clone()
+        fn get_sheet(&self, _: &ExcelDefineSheetName) -> Option<String> {
+            self.sheet_nodes.iter().next().map(|s| s.to_string())
         }
-        fn read_workbook(&'a self) -> XMLNode {
-            self.workbook.clone()
+        fn read_content(&mut self) -> () {
+            println!("read content")
+        }
+        fn get_shared_strings(&'a self) -> &'a XMLNode {
+            &self.shared_strings
+        }
+        fn get_workbook(&'a self) -> &'a XMLNode {
+            &self.workbook
         }
     }
-    impl<'a> Drop for XLSXOperatorMock<'a> {
-        fn drop(&mut self) {
-            self.to_excel()
-        }
-    }
-
     #[test]
     fn excel_test() {
         let shared_strings = r#"
@@ -230,14 +240,13 @@ mod excel_tests {
                 </worksheet>
                         "#;
         let sheets = vec![sheet1];
-        let oprator = XLSXOperatorMock::new(shared_strings, workbook, sheets);
-        let excel = Excel::new(&oprator);
+        let mut oprator = XLSXOperatorMock::new(shared_strings, workbook, sheets);
+        let excel = Excel::new(&mut oprator);
         let n = UserDefineSheetName::new("term1");
         let sheet = excel.get_sheet(&n);
         assert_eq!(
             Some("詳細画面レイアウト"),
             sheet.get_cell(CellIndex::new("B2"))
         );
-        assert_eq!(1, 2)
     }
 }

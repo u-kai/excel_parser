@@ -1,5 +1,5 @@
 use super::{
-    cell::{Cell, CellIndex},
+    cell::CellIndex,
     shared_strings::SharedStore,
     xml_sheet::{Refarences, Shareds},
 };
@@ -96,46 +96,6 @@ mod sheet_test {
     }
     #[test]
     fn sheet_new_test() {
-        let source = r#"
-            <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-            <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{44FEEDED-D128-4496-B199-BCD526D1EB2C}">
-                <sheetData>
-                    <row r="2" spans="2:19" x14ac:dyDescent="0.4">
-                        <c r="B2" s="15" t="s">
-                            <v>0</v>
-                        </c>
-                        <c r="C2" s="12"/>
-                        <c r="D2" s="16"/>
-                        <c r="E2" s="13"/>
-                        <c r="J2" s="15" t="s">
-                            <v>1</v>
-                        </c>
-                        <c r="K2" s="13"/>
-                        <c r="P2" s="15" t="s">
-                            <v>2</v>
-                        </c>
-                        <c r="Q2" s="13"/>
-                    </row>
-                    <row r="3" spans="2:19" x14ac:dyDescent="0.4">
-                        <c r="B3" s="4"/>
-                        <c r="C3" s="15" t="s">
-                            <v>3</v>
-                        </c>
-                        <c r="F6">
-                            <v>50</v>
-                        </c>
-                        <c r="D3" s="16"/>
-                        <c r="E3" s="3" t="s">
-                            <v>4</v>
-                        </c>
-                        <c r="H4" t="str">
-                            <f>$E$3&amp;G4</f>
-                            <v>shared_value</v>
-                        </c>
-                    </row>
-                </sheetData>
-            </worksheet>
-        "#;
         let mut shared_store = SharedStoreMock::new();
         shared_store.set_value("zero");
         shared_store.set_value("one");

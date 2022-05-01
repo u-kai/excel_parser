@@ -2,7 +2,7 @@ pub mod from_token {
     use std::collections::HashMap;
 
     use crate::xml::{
-        nodes::node::{self, NodeType, XMLNode},
+        nodes::node::{NodeType, XMLNode},
         tokens::{states::TokenType, token::Token},
     };
 
