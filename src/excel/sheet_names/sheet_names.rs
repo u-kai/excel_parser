@@ -47,9 +47,6 @@ impl<'a> From<&'a XMLNode> for SheetNames<'a> {
 }
 pub trait SheetName {
     fn get_sheet_name(&self) -> &str;
-    fn get_sheet_path(&self, zip_root: &str) -> String {
-        format!("{}/xl/worksheets/{}.xml", zip_root, self.get_sheet_name())
-    }
 }
 #[derive(PartialEq, Eq, Debug)]
 pub struct UserDefineSheetName<'a>(&'a str);
