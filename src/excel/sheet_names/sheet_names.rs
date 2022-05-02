@@ -34,7 +34,7 @@ impl<'a> From<&'a XMLNode> for SheetNames<'a> {
     fn from(sheets_node: &'a XMLNode) -> Self {
         let mut sheet_names = SheetNames::new();
         let sheets = sheets_node
-            .search_nodes("sheet")
+            .search_all_nodes("sheet")
             .expect(format!("invalid node {:?}", sheets_node).as_str());
         sheets.iter().for_each(|sheet| {
             let e_sheet_id = sheet.search_element("sheetId").unwrap();

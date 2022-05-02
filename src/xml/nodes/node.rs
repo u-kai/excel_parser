@@ -26,6 +26,15 @@ impl XMLNode {
             node_type,
         }
     }
+    pub fn new_with_element(s: &str, element: Option<NodeElement>, node_type: NodeType) -> Self {
+        if element.is_some() {
+            let mut node = XMLNode::new(s, node_type);
+            node.value.set_element(element.unwrap());
+            node
+        } else {
+            XMLNode::new(s, node_type)
+        }
+    }
     pub fn get_child_nodes(&self) -> Option<Vec<&XMLNode>> {
         if self.has_nodes() {
             let nodes = self
@@ -45,7 +54,15 @@ impl XMLNode {
         None
     }
     #[allow(dead_code)]
-    pub fn get_child_charcters(&self) -> Option<Vec<&str>> {
+    pub fn get_child_charcter(&self, n: usize) -> Option<&str> {
+        let maybe_charcters = self.get_all_charcters();
+        if maybe_charcters.is_some() {
+            return maybe_charcters.unwrap().get(n).map(|c| *c);
+        }
+        None
+    }
+    #[allow(dead_code)]
+    pub fn get_all_charcters(&self) -> Option<Vec<&str>> {
         if self.has_characters() {
             let chars = self
                 .children
@@ -58,40 +75,6 @@ impl XMLNode {
             return Some(chars);
         }
         None
-    }
-    #[allow(dead_code)]
-    pub fn get_child_charcter(&self, n: usize) -> Option<&str> {
-        let maybe_charcters = self.get_child_charcters();
-        if maybe_charcters.is_some() {
-            return maybe_charcters.unwrap().get(n).map(|c| *c);
-        }
-        None
-    }
-    pub fn new_with_element(s: &str, element: Option<NodeElement>, node_type: NodeType) -> Self {
-        if element.is_some() {
-            let mut node = XMLNode::new(s, node_type);
-            node.value.set_element(element.unwrap());
-            node
-        } else {
-            XMLNode::new(s, node_type)
-        }
-    }
-    pub fn add_node(&mut self, child: XMLNode) {
-        if self.has_children() {
-            self.children.as_mut().unwrap().push(child);
-            return;
-        }
-        self.children = Some(Box::new(vec![child]));
-    }
-    pub fn add_charcter(&mut self, s: &str) {
-        if self.has_children() {
-            self.children
-                .as_mut()
-                .unwrap()
-                .push(XMLNode::new(s, NodeType::Character));
-            return;
-        }
-        self.children = Some(Box::new(vec![XMLNode::new(s, NodeType::Character)]));
     }
     #[allow(dead_code)]
     pub fn search_node(&self, search_value: &str) -> Option<&XMLNode> {
@@ -109,7 +92,7 @@ impl XMLNode {
         None
     }
     #[allow(dead_code)]
-    pub fn search_nodes(&self, search_value: &str) -> Option<Vec<&XMLNode>> {
+    pub fn search_all_nodes(&self, search_value: &str) -> Option<Vec<&XMLNode>> {
         if self.has_nodes() {
             return Some(
                 self.get_child_nodes()
@@ -133,6 +116,23 @@ impl XMLNode {
             return self.get_child_nodes().unwrap().get(n).map(|c| *c);
         }
         None
+    }
+    pub fn add_node(&mut self, child: XMLNode) {
+        if self.has_children() {
+            self.children.as_mut().unwrap().push(child);
+            return;
+        }
+        self.children = Some(Box::new(vec![child]));
+    }
+    pub fn add_charcter(&mut self, s: &str) {
+        if self.has_children() {
+            self.children
+                .as_mut()
+                .unwrap()
+                .push(XMLNode::new(s, NodeType::Character));
+            return;
+        }
+        self.children = Some(Box::new(vec![XMLNode::new(s, NodeType::Character)]));
     }
     #[allow(dead_code)]
     pub fn element_all(&self, key: &str, value: &str) -> Option<Vec<&XMLNode>> {

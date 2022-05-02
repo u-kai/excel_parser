@@ -18,10 +18,10 @@ impl XMLSheet {
         let xml_node = XMLNode::from(source);
         let work_sheet = xml_node.search_node("worksheet").unwrap();
         let sheet_data = work_sheet.search_node("sheetData").unwrap();
-        let rows = sheet_data.search_nodes("row").unwrap();
+        let rows = sheet_data.search_all_nodes("row").unwrap();
         let c_nodes = rows
             .iter()
-            .filter_map(|node| node.search_nodes("c"))
+            .filter_map(|node| node.search_all_nodes("c"))
             .flatten()
             .collect::<Vec<_>>();
 

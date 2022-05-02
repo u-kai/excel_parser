@@ -62,7 +62,7 @@ pub mod xml_node_test {
             div-data</div>
         </div>"#;
         let root_node = XMLNode::from(data);
-        let search_node = root_node.search_nodes("div").unwrap();
+        let search_node = root_node.search_all_nodes("div").unwrap();
         assert_eq!(
             search_node,
             vec![&XMLNode::from(
@@ -86,7 +86,7 @@ pub mod xml_node_test {
             )
         );
         let search_node = search_node[0];
-        let search_node = search_node.search_nodes("p").unwrap();
+        let search_node = search_node.search_all_nodes("p").unwrap();
         assert_eq!(
             search_node,
             vec![

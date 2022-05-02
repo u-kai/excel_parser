@@ -11,7 +11,7 @@ pub struct SharedStrings {
 impl<'a> From<&'a XMLNode> for SharedStrings {
     fn from(xml_node: &'a XMLNode) -> Self {
         let sst = xml_node.nth_child_node(0).unwrap();
-        let si_vec = sst.search_nodes("si").unwrap();
+        let si_vec = sst.search_all_nodes("si").unwrap();
         let values = si_vec
             .iter()
             .filter_map(|node| node.search_node("t"))
@@ -25,7 +25,7 @@ impl SharedStrings {
     pub fn new(s: &str) -> Self {
         let xml_node = XMLNode::from(s);
         let sst = xml_node.nth_child_node(0).unwrap();
-        let si_vec = sst.search_nodes("si").unwrap();
+        let si_vec = sst.search_all_nodes("si").unwrap();
         let values = si_vec
             .iter()
             .filter_map(|node| node.search_node("t"))
