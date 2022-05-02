@@ -73,8 +73,10 @@ impl TokenArray {
 mod create_node {
     use std::collections::HashMap;
 
-    use crate::xml::nodes::node::NodeType;
-    use crate::xml::{nodes::node::XMLNode, tokens::token_array::TokenArray};
+    use crate::xml::{
+        nodes::{node::XMLNode, node_type::NodeType},
+        tokens::token_array::TokenArray,
+    };
     #[test]
     fn from_token_array_test() {
         let data = "<div>

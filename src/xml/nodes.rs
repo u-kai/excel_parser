@@ -1,4 +1,5 @@
-pub mod funcs;
+pub mod generators;
 pub mod node;
-pub mod parts;
-pub mod tests;
+pub mod node_type;
+pub mod node_value;
+//pub mod element;

@@ -1,16 +1,7 @@
-use crate::xml::tokens::{states::TokenType, token::Token, token_array::TokenArray};
-
 use super::{
-    funcs::from_token::token_to_node,
-    parts::{NodeElement, NodeValue},
+    node_type::NodeType,
+    node_value::{NodeElement, NodeValue},
 };
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum NodeType {
-    Element,
-    SingleElement,
-    Character,
-}
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct XMLNode {
     value: NodeValue,
@@ -134,6 +125,7 @@ impl XMLNode {
         }
         self.children = Some(Box::new(vec![XMLNode::new(s, NodeType::Character)]));
     }
+    #[allow(dead_code)]
     pub fn add_element(&mut self, key: &str, value: Vec<&str>) {
         self.value.add_element(key, value)
     }
@@ -166,8 +158,6 @@ impl XMLNode {
             false
         }
     }
-    // search_child_rec is search all children that one parent has.
-    //
     #[allow(dead_code)]
     pub fn serach_child_rec(&self, key: &str, value: &str) -> Option<&XMLNode> {
         match self.get_child_nodes() {
@@ -225,50 +215,134 @@ impl XMLNode {
         self.children.is_some()
     }
 }
-impl From<&str> for XMLNode {
-    fn from(s: &str) -> Self {
-        let token_array = TokenArray::new(s);
-        XMLNode::from(token_array)
+
+/// test code
+
+#[cfg(test)]
+pub mod xml_node_test {
+    use std::collections::HashMap;
+
+    use crate::xml::nodes::node::{NodeType, XMLNode};
+    #[test]
+    fn get_nth_child_test() {
+        let data = r#"<div id="1180" name="kai"><div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+        </div>"#;
+        let root_node = XMLNode::from(data);
+        let child = root_node.nth_child_node(0).unwrap();
+        assert_eq!(
+            child,
+            &XMLNode::from(
+                r#"<div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+            <div/>"#
+            )
+        );
+
+        let char = child.get_child_charcter(0);
+        assert_eq!(char, Some("div-first"));
+        let char = child.get_child_charcter(1);
+        assert_eq!(char, Some("div-data"));
+        let char = child.get_child_charcter(2);
+        assert_eq!(char, None);
+        let child = root_node.nth_child_node(2);
+        assert_eq!(child, None);
     }
-}
-impl From<Token> for XMLNode {
-    fn from(token: Token) -> Self {
-        token_to_node(token)
+    #[test]
+    fn search_node_test() {
+        let data = r#"<div id="1180" name="kai"><div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+        </div>"#;
+        let root_node = XMLNode::from(data);
+        let search_node = root_node.search_node("div").unwrap().clone();
+        assert_eq!(
+            search_node,
+            XMLNode::from(
+                r#"<div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+            <div/>"#
+            )
+        );
+        let search_node = search_node.search_node("p").unwrap();
+        assert_eq!(search_node, &XMLNode::from(r#"<p>p-data</p>"#));
     }
-}
-impl From<TokenArray> for XMLNode {
-    fn from(token_array: TokenArray) -> Self {
-        let token_array = token_array.drain();
-        let mut parent_stack = Vec::new();
-        for token in token_array {
-            match token.get_token_type() {
-                TokenType::StartToken => parent_stack.push(XMLNode::from(token)),
-                TokenType::Character => parent_stack
-                    .last_mut()
-                    .unwrap()
-                    .add_charcter(token.get_value()),
-                TokenType::SingleToken => {
-                    let node = XMLNode::from(token);
-                    parent_stack.last_mut().unwrap().add_node(node);
-                }
-                TokenType::EndToken => {
-                    let child = parent_stack.pop();
-                    match child {
-                        Some(node) => {
-                            if parent_stack.len() == 0 {
-                                return node;
-                            }
-                            parent_stack.last_mut().unwrap().add_node(node)
-                        }
-                        None => panic!("error: this case is not parse"),
-                    }
-                }
-            }
-        }
-        // case exist declear line
-        if parent_stack.len() == 1 {
-            return parent_stack.pop().unwrap();
-        }
-        panic!("not had end tag this stack : {:?}", parent_stack)
+    #[test]
+
+    fn search_nodes_test() {
+        let data = r#"<div id="1180" name="kai"><div>div-first
+            <p>p-data</p>
+            <p>p-data-2</p>
+            <data/>
+            div-data</div>
+        </div>"#;
+        let root_node = XMLNode::from(data);
+        let search_node = root_node.search_all_nodes("div").unwrap();
+        assert_eq!(
+            search_node,
+            vec![&XMLNode::from(
+                r#"<div>div-first
+            <p>p-data</p>
+            <p>p-data-2</p>
+            <data/>
+            div-data</div>
+            <div/>"#
+            )]
+        );
+        println!(
+            "##################{:?}",
+            &XMLNode::from(
+                r#"<div>div-first
+            <p>p-data</p>
+            <p>p-data-2</p>
+            <data/>
+            div-data</div>
+            "#
+            )
+        );
+        let search_node = search_node[0];
+        let search_node = search_node.search_all_nodes("p").unwrap();
+        assert_eq!(
+            search_node,
+            vec![
+                &XMLNode::from(r#"<p>p-data</p>"#),
+                &XMLNode::from(r#"<p>p-data-2</p>"#)
+            ]
+        );
+    }
+    #[test]
+    fn element_all_test() {
+        let data = r#"<div id="1180" name="kai">
+            <p class="p1">p-data</p>
+            <p class="p1">p-data-2</p>
+            <data/>
+        </div>"#;
+        let root_node = XMLNode::from(data);
+        assert_eq!(
+            root_node.element_all("class", "p1"),
+            Some(vec![
+                &XMLNode::from(r#"<p class="p1">p-data</p>"#),
+                &XMLNode::from(r#"<p class="p1">p-data-2</p>"#)
+            ])
+        );
+    }
+    #[test]
+    fn add_element_test() {
+        let mut node = XMLNode::new("div", NodeType::Element);
+
+        node.add_element("class", vec!["big"]);
+        let mut tobe_element = HashMap::new();
+        tobe_element.insert("class".to_string(), vec!["big".to_string()]);
+        assert_eq!(
+            node,
+            XMLNode::new_with_element("div", Some(tobe_element), NodeType::Element)
+        )
     }
 }
