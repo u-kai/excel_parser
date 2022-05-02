@@ -225,7 +225,8 @@ pub mod xml_node_test {
     use crate::xml::nodes::node::{NodeType, XMLNode};
     #[test]
     fn get_nth_child_test() {
-        let data = r#"<div id="1180" name="kai"><div>div-first
+        let data = r#"
+        <div id="1180" name="kai"><div>div-first
             <p>p-data</p>
             <data/>
             div-data</div>
@@ -235,11 +236,12 @@ pub mod xml_node_test {
         assert_eq!(
             child,
             &XMLNode::from(
-                r#"<div>div-first
-            <p>p-data</p>
-            <data/>
-            div-data</div>
-            <div/>"#
+                r#"
+            <div>div-first
+                <p>p-data</p>
+                <data/>
+                div-data
+            </div>"#
             )
         );
 
@@ -254,21 +256,25 @@ pub mod xml_node_test {
     }
     #[test]
     fn search_node_test() {
-        let data = r#"<div id="1180" name="kai"><div>div-first
-            <p>p-data</p>
-            <data/>
-            div-data</div>
+        let data = r#"
+        <div id="1180" name="kai">
+            <div>div-first
+                <p>p-data</p>
+                <data/>
+                div-data
+            </div>
         </div>"#;
         let root_node = XMLNode::from(data);
         let search_node = root_node.search_node("div").unwrap().clone();
         assert_eq!(
             search_node,
             XMLNode::from(
-                r#"<div>div-first
-            <p>p-data</p>
-            <data/>
-            div-data</div>
-            <div/>"#
+                r#"
+            <div>div-first
+                <p>p-data</p>
+                <data/>
+                div-data
+            </div>"#
             )
         );
         let search_node = search_node.search_node("p").unwrap();
@@ -277,34 +283,39 @@ pub mod xml_node_test {
     #[test]
 
     fn search_nodes_test() {
-        let data = r#"<div id="1180" name="kai"><div>div-first
-            <p>p-data</p>
-            <p>p-data-2</p>
-            <data/>
-            div-data</div>
+        let data = r#"
+        <div id="1180" name="kai">
+            <div>div-first
+                <p>p-data</p>
+                <p>p-data-2</p>
+                <data/>
+                div-data
+            </div>
         </div>"#;
         let root_node = XMLNode::from(data);
         let search_node = root_node.search_all_nodes("div").unwrap();
         assert_eq!(
             search_node,
             vec![&XMLNode::from(
-                r#"<div>div-first
-            <p>p-data</p>
-            <p>p-data-2</p>
-            <data/>
-            div-data</div>
-            <div/>"#
+                r#"
+            <div>div-first
+                <p>p-data</p>
+                <p>p-data-2</p>
+                <data/>
+                div-data
+            </div>"#
             )]
         );
         println!(
             "##################{:?}",
             &XMLNode::from(
-                r#"<div>div-first
-            <p>p-data</p>
-            <p>p-data-2</p>
-            <data/>
-            div-data</div>
-            "#
+                r#"
+            <div>div-first
+                <p>p-data</p>
+                <p>p-data-2</p>
+                <data/>
+                div-data
+            </div>"#
             )
         );
         let search_node = search_node[0];
@@ -319,7 +330,8 @@ pub mod xml_node_test {
     }
     #[test]
     fn element_all_test() {
-        let data = r#"<div id="1180" name="kai">
+        let data = r#"
+        <div id="1180" name="kai">
             <p class="p1">p-data</p>
             <p class="p1">p-data-2</p>
             <data/>
