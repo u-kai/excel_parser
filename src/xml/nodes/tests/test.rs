@@ -1,6 +1,8 @@
 #[cfg(test)]
 pub mod xml_node_test {
-    use crate::xml::nodes::node::XMLNode;
+    use std::collections::HashMap;
+
+    use crate::xml::nodes::node::{NodeType, XMLNode};
     #[test]
     fn get_nth_child_test() {
         let data = r#"<div id="1180" name="kai"><div>div-first
@@ -110,5 +112,17 @@ pub mod xml_node_test {
                 &XMLNode::from(r#"<p class="p1">p-data-2</p>"#)
             ])
         );
+    }
+    #[test]
+    fn add_element_test() {
+        let mut node = XMLNode::new("div", NodeType::Element);
+
+        node.add_element("class", vec!["big"]);
+        let mut tobe_element = HashMap::new();
+        tobe_element.insert("class".to_string(), vec!["big".to_string()]);
+        assert_eq!(
+            node,
+            XMLNode::new_with_element("div", Some(tobe_element), NodeType::Element)
+        )
     }
 }

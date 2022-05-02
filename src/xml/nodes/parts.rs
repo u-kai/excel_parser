@@ -19,7 +19,7 @@ impl NodeValue {
     pub fn get_element(&self) -> &Option<NodeElement> {
         &self.element
     }
-    pub fn search_element_all(&self, key: &str) -> Option<Vec<&str>> {
+    pub fn search_all_element(&self, key: &str) -> Option<Vec<&str>> {
         let d = self
             .element
             .iter()
@@ -32,13 +32,28 @@ impl NodeValue {
         None
     }
     pub fn search_element(&self, key: &str) -> Option<&str> {
-        if self.search_element_all(key).is_some() {
-            return Some(self.search_element_all(key).unwrap()[0]);
+        if self.search_all_element(key).is_some() {
+            return Some(self.search_all_element(key).unwrap()[0]);
         }
         None
     }
     pub fn set_element(&mut self, element: NodeElement) {
         self.element = Some(element)
+    }
+    pub fn add_element(&mut self, key: &str, value: Vec<&str>) {
+        if self.element.is_some() {
+            self.element.as_mut().unwrap().insert(
+                key.to_string(),
+                value.iter().map(|s| s.to_string()).collect::<Vec<_>>(),
+            );
+        } else {
+            let mut element = HashMap::new();
+            element.insert(
+                key.to_string(),
+                value.iter().map(|s| s.to_string()).collect::<Vec<_>>(),
+            );
+            self.set_element(element)
+        }
     }
 }
 
@@ -58,5 +73,14 @@ mod node_value_test {
         node_value.set_element(hash);
         assert_eq!(node_value.search_element("id"), Some("yeah"));
         assert_eq!(node_value.search_element("non"), None);
+    }
+    #[test]
+    fn add_element_test() {
+        let mut node = NodeValue::new("test");
+        let mut hash_map = HashMap::new();
+        hash_map.insert("class".to_string(), vec!["big".to_string()]);
+        node.add_element("class", vec!["big"]);
+        assert_eq!(node.search_element("class"), Some("big"));
+        assert_eq!(node.search_element("non"), None);
     }
 }

@@ -134,6 +134,9 @@ impl XMLNode {
         }
         self.children = Some(Box::new(vec![XMLNode::new(s, NodeType::Character)]));
     }
+    pub fn add_element(&mut self, key: &str, value: Vec<&str>) {
+        self.value.add_element(key, value)
+    }
     #[allow(dead_code)]
     pub fn element_all(&self, key: &str, value: &str) -> Option<Vec<&XMLNode>> {
         if self.has_nodes() {
