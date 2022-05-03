@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::{
     node_type::NodeType,
     node_value::{NodeElement, NodeValue},
@@ -5,7 +7,7 @@ use super::{
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct XMLNode {
     value: NodeValue,
-    node_type: NodeType,
+    pub node_type: NodeType,
     children: Option<Box<Vec<XMLNode>>>,
 }
 
@@ -24,6 +26,13 @@ impl XMLNode {
             node
         } else {
             XMLNode::new(s, node_type)
+        }
+    }
+    pub fn get_children(&self) -> Option<Vec<&XMLNode>> {
+        if self.has_children() {
+            Some(self.children.as_ref().unwrap().iter().collect())
+        } else {
+            None
         }
     }
     pub fn get_child_nodes(&self) -> Option<Vec<&XMLNode>> {
@@ -208,8 +217,11 @@ impl XMLNode {
         &self.value.get_value()
     }
     #[allow(dead_code)]
-    pub fn get_node_value(&mut self) -> &mut NodeValue {
-        &mut self.value
+    pub fn get_node_value(&self) -> &NodeValue {
+        &self.value
+    }
+    pub fn set_element(&mut self, element: HashMap<String, Vec<String>>) {
+        self.value.set_element(element)
     }
     #[allow(dead_code)]
     fn has_characters(&self) -> bool {
@@ -238,7 +250,7 @@ impl XMLNode {
         }
         false
     }
-    fn has_children(&self) -> bool {
+    pub fn has_children(&self) -> bool {
         self.children.is_some()
     }
 }

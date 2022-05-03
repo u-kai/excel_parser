@@ -113,13 +113,13 @@ mod create_node {
             div-data</div>
         </div>"#;
         let expect = XMLNode::from(data);
-        let mut root = XMLNode::new("?xml", NodeType::Element);
+        let mut root = XMLNode::new("?xml", NodeType::SingleElement);
         let mut root_element = HashMap::new();
         root_element.insert("standalone".to_string(), vec![r#"yes"#.to_string()]);
         root_element.insert("encoding".to_string(), vec![r#"UTF-8"#.to_string()]);
         root_element.insert("version".to_string(), vec![r#"1.0"#.to_string()]);
 
-        root.get_node_value().set_element(root_element);
+        root.set_element(root_element);
         let mut p = XMLNode::new("p", NodeType::Element);
         p.add_text("p-data");
         let single_data = XMLNode::new("data", NodeType::SingleElement);
@@ -151,7 +151,7 @@ mod create_node {
 
         element.insert("name".to_string(), vec![r#"kai"#.to_string()]);
         element.insert("id".to_string(), vec![r#"1180"#.to_string()]);
-        div.get_node_value().set_element(element);
+        div.set_element(element);
         let mut child_div = XMLNode::new("div", NodeType::Element);
         child_div.add_text("div-first");
         child_div.add_node(p);
@@ -178,7 +178,7 @@ mod create_node {
             "class".to_string(),
             vec!["style1".to_string(), "style2".to_string()],
         );
-        div.get_node_value().set_element(element);
+        div.set_element(element);
         let mut child_div = XMLNode::new("div", NodeType::Element);
         child_div.add_text("div-first");
         child_div.add_node(p);
