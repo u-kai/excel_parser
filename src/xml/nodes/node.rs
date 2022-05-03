@@ -195,14 +195,14 @@ impl XMLNode {
         }
     }
     #[allow(dead_code)]
-    pub fn serach_child_rec(&self, key: &str, value: &str) -> Option<&XMLNode> {
+    pub fn search_child_by_id(&self, key: &str, value: &str) -> Option<&XMLNode> {
         match self.get_child_nodes() {
             Some(children) => {
                 for child in children.iter() {
                     if child.is_containe_key_value(key, value) {
                         return Some(child);
                     }
-                    let result_rec = child.serach_child_rec(key, value);
+                    let result_rec = child.search_child_by_id(key, value);
                     if let Some(node) = result_rec {
                         return Some(node);
                     }
@@ -252,6 +252,23 @@ impl XMLNode {
     }
     pub fn has_children(&self) -> bool {
         self.children.is_some()
+    }
+    pub fn search_all_child(&self, key: &str, value: &str) -> Vec<&XMLNode> {
+        let mut buf = Vec::new();
+        if self.is_containe_key_value(key, value) {
+            buf.push(self);
+        }
+        if self.has_nodes() {
+            self.get_child_nodes().unwrap().iter().for_each(|child| {
+                child
+                    .search_all_child(key, value)
+                    .iter()
+                    .for_each(|v| buf.push(*v));
+            });
+            buf
+        } else {
+            buf
+        }
     }
 }
 
@@ -406,5 +423,37 @@ pub mod xml_node_test {
         node.change_text("hello world rust");
         tobe_node.add_text("rust");
         assert_eq!(node, tobe_node);
+    }
+    #[test]
+    fn search_all_child_test() {
+        let data = r#"
+        <xml>
+        <div id="1180" name="kai" class="blue">
+            <div>div-first
+                <p class="blue">p-data</p>
+                <p>p-data-2</p>
+                <data/>
+                div-data
+            </div>
+        </div>"#;
+        let node = XMLNode::from(data);
+        let buf = node.search_all_child("class", "blue");
+        let node1 = r#"
+        <div id="1180" name="kai" class="blue">
+            <div>div-first
+                <p class="blue">p-data</p>
+                <p>p-data-2</p>
+                <data/>
+                div-data
+            </div>
+        </div>"#;
+        let node2 = r#"
+                <p class="blue">p-data</p>
+                "#;
+        let node1 = XMLNode::from(node1);
+        let node2 = XMLNode::from(node2);
+        let tobe = vec![&node1, &node2];
+        println!("{:?}", buf[1]);
+        assert_eq!(buf, tobe)
     }
 }

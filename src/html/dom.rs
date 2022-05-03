@@ -26,7 +26,7 @@ impl Dom {
         if node.get_value() == id {
             return Some(node);
         }
-        node.serach_child_rec("id", id)
+        node.search_child_by_id("id", id)
     }
     //pub fn get_elements_by_class_name(&self,class_name:&str)->Option<Vec<&HTMLNode>>{
     //let node = self.get_node();
