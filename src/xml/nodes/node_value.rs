@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, net::ToSocketAddrs};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct NodeValue {
@@ -18,6 +18,9 @@ impl NodeValue {
     }
     pub fn get_element(&self) -> &Option<NodeElement> {
         &self.element
+    }
+    pub fn change_value(&mut self, value: &str) {
+        self.value = value.to_string()
     }
     pub fn search_all_element(&self, key: &str) -> Option<Vec<&str>> {
         let d = self

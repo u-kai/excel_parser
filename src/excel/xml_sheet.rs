@@ -51,7 +51,7 @@ impl SharedValues {
                 let v_node = c_node.search_node("v");
                 if v_node.is_some() {
                     Some(Cell::new(
-                        v_node.unwrap().get_child_charcter(0).unwrap().to_string(),
+                        v_node.unwrap().get_child_text(0).unwrap().to_string(),
                         cell_index,
                     ))
                 } else {
@@ -91,7 +91,7 @@ impl RefarenceValues {
                     Some(Cell::new(
                         v_node
                             .unwrap()
-                            .get_child_charcter(0)
+                            .get_child_text(0)
                             .unwrap()
                             .parse::<usize>()
                             .unwrap(),

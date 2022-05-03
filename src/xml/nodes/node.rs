@@ -45,15 +45,15 @@ impl XMLNode {
         None
     }
     #[allow(dead_code)]
-    pub fn get_child_charcter(&self, n: usize) -> Option<&str> {
-        let maybe_charcters = self.get_all_charcters();
-        if maybe_charcters.is_some() {
-            return maybe_charcters.unwrap().get(n).map(|c| *c);
+    pub fn get_child_text(&self, n: usize) -> Option<&str> {
+        let maybe_texts = self.get_all_texts();
+        if maybe_texts.is_some() {
+            return maybe_texts.unwrap().get(n).map(|c| *c);
         }
         None
     }
     #[allow(dead_code)]
-    pub fn get_all_charcters(&self) -> Option<Vec<&str>> {
+    pub fn get_all_texts(&self) -> Option<Vec<&str>> {
         if self.has_characters() {
             let chars = self
                 .children
@@ -115,15 +115,44 @@ impl XMLNode {
         }
         self.children = Some(Box::new(vec![child]));
     }
-    pub fn add_charcter(&mut self, s: &str) {
+    pub fn add_text(&mut self, s: &str) {
         if self.has_children() {
-            self.children
-                .as_mut()
-                .unwrap()
-                .push(XMLNode::new(s, NodeType::Character));
+            s.split(' ').for_each(|s| {
+                self.children
+                    .as_mut()
+                    .unwrap()
+                    .push(XMLNode::new(s, NodeType::Character))
+            });
             return;
         }
         self.children = Some(Box::new(vec![XMLNode::new(s, NodeType::Character)]));
+    }
+    pub fn change_text(&mut self, s: &str) {
+        fn _push_text_node(node: &mut XMLNode, s: &str) {
+            let _ = s.split(' ').filter(|s| s.len() > 0).for_each(|splited| {
+                node.children
+                    .as_mut()
+                    .unwrap()
+                    .push(XMLNode::new(splited, NodeType::Character));
+            });
+        }
+        // todo not use clone
+        if self.has_children() {
+            let mut new_child = self
+                .children
+                .as_ref()
+                .unwrap()
+                .iter()
+                .filter(|node| node.node_type != NodeType::Character)
+                .map(|node| node.clone())
+                .collect::<Vec<_>>();
+            let _ = s
+                .split(' ')
+                .for_each(|splited| new_child.push(XMLNode::new(splited, NodeType::Character)));
+            self.children = Some(Box::new(new_child));
+        }
+        self.children = Some(Box::new(vec![]));
+        _push_text_node(self, s);
     }
     #[allow(dead_code)]
     pub fn add_element(&mut self, key: &str, value: Vec<&str>) {
@@ -245,11 +274,11 @@ pub mod xml_node_test {
             )
         );
 
-        let char = child.get_child_charcter(0);
+        let char = child.get_child_text(0);
         assert_eq!(char, Some("div-first"));
-        let char = child.get_child_charcter(1);
+        let char = child.get_child_text(1);
         assert_eq!(char, Some("div-data"));
-        let char = child.get_child_charcter(2);
+        let char = child.get_child_text(2);
         assert_eq!(char, None);
         let child = root_node.nth_child_node(2);
         assert_eq!(child, None);
@@ -348,7 +377,6 @@ pub mod xml_node_test {
     #[test]
     fn add_element_test() {
         let mut node = XMLNode::new("div", NodeType::Element);
-
         node.add_element("class", vec!["big"]);
         let mut tobe_element = HashMap::new();
         tobe_element.insert("class".to_string(), vec!["big".to_string()]);
@@ -356,5 +384,17 @@ pub mod xml_node_test {
             node,
             XMLNode::new_with_element("div", Some(tobe_element), NodeType::Element)
         )
+    }
+    #[test]
+    fn change_text_test() {
+        let mut node = XMLNode::new("div", NodeType::Element);
+        node.change_text("hello world");
+        let mut tobe_node = XMLNode::new("div", NodeType::Element);
+        tobe_node.add_text("hello");
+        tobe_node.add_text("world");
+        assert_eq!(node, tobe_node);
+        node.change_text("hello world rust");
+        tobe_node.add_text("rust");
+        assert_eq!(node, tobe_node);
     }
 }

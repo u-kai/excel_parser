@@ -15,7 +15,7 @@ impl<'a> From<&'a XMLNode> for SharedStrings {
         let values = si_vec
             .iter()
             .filter_map(|node| node.search_node("t"))
-            .filter_map(|node| node.get_child_charcter(0))
+            .filter_map(|node| node.get_child_text(0))
             .map(|str| str.into())
             .collect::<Vec<_>>();
         SharedStrings { values }
@@ -29,7 +29,7 @@ impl SharedStrings {
         let values = si_vec
             .iter()
             .filter_map(|node| node.search_node("t"))
-            .filter_map(|node| node.get_child_charcter(0))
+            .filter_map(|node| node.get_child_text(0))
             .map(|str| str.into())
             .collect::<Vec<_>>();
         SharedStrings { values }

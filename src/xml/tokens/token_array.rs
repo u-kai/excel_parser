@@ -86,10 +86,10 @@ mod create_node {
         let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array);
         let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_charcter("p-data");
+        p.add_text("p-data");
         let mut div = XMLNode::new("div", NodeType::Element);
         div.add_node(p);
-        div.add_charcter("div-data");
+        div.add_text("div-data");
         assert_eq!(expect, div);
         let data = "<div><div>div-first
             <p>p-data</p>
@@ -98,12 +98,12 @@ mod create_node {
         let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array);
         let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_charcter("p-data");
+        p.add_text("p-data");
         let mut div = XMLNode::new("div", NodeType::Element);
         let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_charcter("div-first");
+        child_div.add_text("div-first");
         child_div.add_node(p);
-        child_div.add_charcter("div-data");
+        child_div.add_text("div-data");
         div.add_node(child_div);
         assert_eq!(expect, div);
         let data = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -121,14 +121,14 @@ mod create_node {
 
         root.get_node_value().set_element(root_element);
         let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_charcter("p-data");
+        p.add_text("p-data");
         let single_data = XMLNode::new("data", NodeType::SingleElement);
         let mut div = XMLNode::new("div", NodeType::Element);
         let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_charcter("div-first");
+        child_div.add_text("div-first");
         child_div.add_node(p);
         child_div.add_node(single_data);
-        child_div.add_charcter("div-data");
+        child_div.add_text("div-data");
         div.add_node(child_div);
         root.add_node(div);
         assert_eq!(expect, root)
@@ -144,7 +144,7 @@ mod create_node {
         let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array);
         let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_charcter("p-data");
+        p.add_text("p-data");
         let single_data = XMLNode::new("data", NodeType::SingleElement);
         let mut div = XMLNode::new("div", NodeType::Element);
         let mut element = HashMap::new();
@@ -153,10 +153,10 @@ mod create_node {
         element.insert("id".to_string(), vec![r#"1180"#.to_string()]);
         div.get_node_value().set_element(element);
         let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_charcter("div-first");
+        child_div.add_text("div-first");
         child_div.add_node(p);
         child_div.add_node(single_data);
-        child_div.add_charcter("div-data");
+        child_div.add_text("div-data");
         div.add_node(child_div);
         assert_eq!(expect, div);
         let data = r#"<div id="1180" name="kai" class="style1 style2"><div>div-first
@@ -167,7 +167,7 @@ mod create_node {
         let token_array = TokenArray::new(data);
         let expect = XMLNode::from(token_array);
         let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_charcter("p-data");
+        p.add_text("p-data");
         let single_data = XMLNode::new("data", NodeType::SingleElement);
         let mut div = XMLNode::new("div", NodeType::Element);
         let mut element = HashMap::new();
@@ -180,10 +180,10 @@ mod create_node {
         );
         div.get_node_value().set_element(element);
         let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_charcter("div-first");
+        child_div.add_text("div-first");
         child_div.add_node(p);
         child_div.add_node(single_data);
-        child_div.add_charcter("div-data");
+        child_div.add_text("div-data");
         div.add_node(child_div);
         assert_eq!(expect, div)
     }

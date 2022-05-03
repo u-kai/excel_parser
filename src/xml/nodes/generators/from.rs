@@ -23,10 +23,9 @@ impl From<TokenArray> for XMLNode {
         for token in token_array {
             match token.get_token_type() {
                 TokenType::StartToken => parent_stack.push(XMLNode::from(token)),
-                TokenType::Character => parent_stack
-                    .last_mut()
-                    .unwrap()
-                    .add_charcter(token.get_value()),
+                TokenType::Character => {
+                    parent_stack.last_mut().unwrap().add_text(token.get_value())
+                }
                 TokenType::SingleToken => {
                     let node = XMLNode::from(token);
                     parent_stack.last_mut().unwrap().add_node(node);
