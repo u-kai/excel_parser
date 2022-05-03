@@ -28,7 +28,14 @@ impl Dom {
         }
         node.search_child_by_id("id", id)
     }
-    //pub fn get_elements_by_class_name(&self,class_name:&str)->Option<Vec<&HTMLNode>>{
+    pub fn get_elements_by_class_name(&self, class_name: &str) -> Option<Vec<&HTMLNode>> {
+        let nodes = self.node.search_all_child("class", class_name);
+        if nodes.len() == 0 {
+            None
+        } else {
+            Some(nodes)
+        }
+    }
     //let node = self.get_node();
     //if node.get_child().is_some() {
     //node.get_child().unwrap().iter().filter(|child|{child.is_containe_key_value("class", )})
@@ -72,52 +79,50 @@ impl From<XMLNode> for Dom {
 #[cfg(test)]
 mod dom_test {
     use crate::{html::dom::Dom, xml::nodes::node::XMLNode};
-    //#[test]
-    //fn get_elements_by_class_name_test() {
-    //let data = r#"
-    //<!DOCUMENT TYPE>
-    //<html>
-    //<div class="test">
-    //<p>hello</p>
-    //<div>div-hello</div>
-    //<data/>
-    //<div>
-    //<div class="test data">
-    //data
-    //</div>
-    //</div>
-    //</div>
-    //<html>
-    //"#;
-    //let dom = Dom::from(data);
-    //let elements = dom.get_elements_by_class_name("test");
-    //assert_eq!(
-    //elements,
-    //Some(vec![
-    //XMLNode::from(
-    //r#"
-    //<div class="test">
-    //<p>hello</p>
-    //<div>div-hello</div>
-    //<data/>
-    //<div>
-    //<div class="test data">
-    //data
-    //</div>
-    //</div>
-    //</div>
-    //"#
-    //),
-    //XMLNode::from(
-    //r#"
-    //<div class="test data">
-    //data
-    //</div>
-    //"#
-    //)
-    //])
-    //)
-    //}
+    #[test]
+    fn get_elements_by_class_name_test() {
+        let data = r#"
+    <!DOCUMENT TYPE>
+    <html>
+        <div class="test">
+             <p>hello</p>
+            <div>div-hello</div>
+            <data/>
+            <div>
+                <div class="test data">
+                data
+                </div>
+            </div>
+        </div>
+    </html>
+    "#;
+        let dom = Dom::from(data);
+        let elements = dom.get_elements_by_class_name("test");
+        let node1 = XMLNode::from(
+            r#"
+    <div class="test">
+        <p>hello</p>
+        <div>
+            div-hello
+        </div>
+        <data/>
+        <div>
+            <div class="test data">
+                data
+            </div>
+        </div>
+    </div>
+    "#,
+        );
+        let node2 = XMLNode::from(
+            r#"
+    <div class="test data">
+        data
+    </div>
+    "#,
+        );
+        assert_eq!(elements, Some(vec![&node1, &node2]))
+    }
     #[test]
 
     fn get_element_by_id_test() {
