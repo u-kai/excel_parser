@@ -68,8 +68,15 @@ impl NodeValue {
 impl Into<String> for NodeValue {
     fn into(self) -> String {
         if let Some(element) = self.element {
-            element.iter().for_each(|s| println!("{:?}", s));
-            "".to_string()
+            let result = element.iter().fold(self.value, |acc, cur| {
+                let mut values = cur
+                    .1
+                    .iter()
+                    .fold(String::new(), |acc, cur| format!("{}{} ", acc, cur));
+                values.pop();
+                format!(r#"{} {}="{}""#, acc, cur.0, values)
+            });
+            result
         } else {
             self.value
         }
@@ -121,8 +128,12 @@ mod node_value_test {
         assert_eq!(expect, r#"test key1="value1""#.to_string());
         let mut node = NodeValue::new("test");
         node.add_element("key1", vec!["value1"]);
-        node.add_element("key1", vec!["value1 value2"]);
+        node.add_element("key2", vec!["value1 value2"]);
+        println!("{:?}", node);
         let expect: String = node.into();
-        assert_eq!(expect, r#"test key1="value1 value2""#.to_string());
+        assert_eq!(
+            expect,
+            r#"test key1="value1" key2="value1 value2""#.to_string()
+        );
     }
 }
