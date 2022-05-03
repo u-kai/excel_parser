@@ -54,7 +54,7 @@ mod shared_strings_test {
     fn get_value_test() {
         let ss = SharedStrings::new(
             r#"
-<?xml version="1.0" e                                                   ncoding="UTF-8" standalone="yes"?>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="938" uniqueCount="265">
     <si>
         <t>詳細画面レイアウト</t>
