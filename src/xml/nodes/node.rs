@@ -138,7 +138,7 @@ impl XMLNode {
         }
         // todo not use clone
         if self.has_children() {
-            let mut new_child = self
+            let new_child = self
                 .children
                 .as_ref()
                 .unwrap()
@@ -146,10 +146,8 @@ impl XMLNode {
                 .filter(|node| node.node_type != NodeType::Character)
                 .map(|node| node.clone())
                 .collect::<Vec<_>>();
-            let _ = s
-                .split(' ')
-                .for_each(|splited| new_child.push(XMLNode::new(splited, NodeType::Character)));
             self.children = Some(Box::new(new_child));
+            _push_text_node(self, s)
         }
         self.children = Some(Box::new(vec![]));
         _push_text_node(self, s);
