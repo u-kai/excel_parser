@@ -3,7 +3,7 @@ use crate::xml::nodes::{node::XMLNode, node_type::NodeType};
 impl XMLNode {
     pub fn to_string(&self) -> String {
         let mut result = String::new();
-        match self.node_type {
+        match self.get_node_type() {
             NodeType::Character => format!("{}", self.get_value()),
             NodeType::Element => {
                 if let Some(children) = self.get_children() {

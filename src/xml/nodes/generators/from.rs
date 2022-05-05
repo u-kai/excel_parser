@@ -47,7 +47,7 @@ impl From<TokenArray> for XMLNode {
         // case exist declear line
         if parent_stack.len() == 1 {
             let mut single_parent = parent_stack.pop().unwrap();
-            single_parent.node_type = NodeType::SingleElement;
+            single_parent.set_node_type(NodeType::SingleElement);
             return single_parent;
         }
         panic!("not had end tag this stack : {:?}", parent_stack)

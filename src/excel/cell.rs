@@ -4,7 +4,7 @@ pub struct Cell<T: PartialEq + Eq> {
     index: CellIndex,
 }
 impl<T: PartialEq + Eq> Cell<T> {
-    #[allow(warnings)]
+    #[allow(dead_code)]
     pub fn new(value: T, cell_index: &str) -> Self {
         Cell {
             value,
@@ -16,6 +16,12 @@ impl<T: PartialEq + Eq> Cell<T> {
     }
     pub fn is_index(&self, cell_index: &CellIndex) -> bool {
         &self.index == cell_index
+    }
+    pub fn get_column_index(&self) -> usize {
+        self.index.get_column_index()
+    }
+    pub fn get_row_index(&self) -> usize {
+        self.index.get_row_index()
     }
 }
 #[derive(PartialEq, Eq, Debug)]
@@ -30,6 +36,12 @@ impl CellIndex {
             column: split.0,
             row: split.1,
         }
+    }
+    pub fn get_column_index(&self) -> usize {
+        self.column
+    }
+    pub fn get_row_index(&self) -> usize {
+        self.row
     }
     fn split_alphabet_number(s: &str) -> (usize, usize) {
         let alphabet_number = ColumnAlphabet::new(s).to_number();

@@ -36,20 +36,6 @@ impl Dom {
             Some(nodes)
         }
     }
-    //let node = self.get_node();
-    //if node.get_child().is_some() {
-    //node.get_child().unwrap().iter().filter(|child|{child.is_containe_key_value("class", )})
-    //}
-    //None
-    //}
-    //fn searche_rec(&mut self,key:&str,value:&str)->&Option<Vec<&HTMLNode>> {
-    //let node =self.get_node();
-    //if node.get_child().is_some() {
-    //for
-    //}
-    //&None
-
-    //}
 }
 impl From<File> for Dom {
     fn from(f: File) -> Self {

@@ -7,7 +7,7 @@ use super::{
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct XMLNode {
     value: NodeValue,
-    pub node_type: NodeType,
+    node_type: NodeType,
     children: Option<Box<Vec<XMLNode>>>,
 }
 
@@ -27,6 +27,12 @@ impl XMLNode {
         } else {
             XMLNode::new(s, node_type)
         }
+    }
+    pub fn get_node_type(&self) -> NodeType {
+        self.node_type.clone()
+    }
+    pub fn set_node_type(&mut self, node_type: NodeType) {
+        self.node_type = node_type
     }
     pub fn get_children(&self) -> Option<Vec<&XMLNode>> {
         if self.has_children() {

@@ -117,18 +117,26 @@ impl RefarenceValues {
 }
 pub trait Refarences {
     fn get_refarence_cell(&self, cell_index: &CellIndex) -> Option<usize>;
+    fn get_all_cell(&self) -> &Vec<Cell<usize>>;
 }
 impl Refarences for XMLSheet {
     fn get_refarence_cell(&self, cell_index: &CellIndex) -> Option<usize> {
         self.refarence_values.get_cell(&cell_index)
     }
+    fn get_all_cell(&self) -> &Vec<Cell<usize>> {
+        &self.refarence_values.values
+    }
 }
 pub trait Shareds {
     fn get_shared_cell(&self, cell_index: &CellIndex) -> Option<&str>;
+    fn get_all_cell(&self) -> &Vec<Cell<String>>;
 }
 impl Shareds for XMLSheet {
     fn get_shared_cell(&self, cell_index: &CellIndex) -> Option<&str> {
         self.shared_values.get_cell(&cell_index)
+    }
+    fn get_all_cell(&self) -> &Vec<Cell<String>> {
+        &self.shared_values.values
     }
 }
 #[cfg(test)]
