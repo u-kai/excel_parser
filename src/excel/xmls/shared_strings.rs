@@ -10,11 +10,6 @@ pub trait SharedStringsInterface {
     fn get_shared_string(&self, index: usize) -> &str;
     fn add_shared_string(&mut self, value: &str) -> ();
 }
-impl<'a> XL<'a> for SharedStrings {
-    fn get_xml_node(&'a self) -> &'a XMLNode {
-        &self.node
-    }
-}
 impl SharedStrings {
     pub fn new(source: &str) -> Self {
         let node = XMLNode::from(source);
@@ -35,48 +30,25 @@ impl SharedStrings {
     }
 }
 
-//impl<'a> From<&'a XMLNode> for SharedStrings {
-//fn from(xml_node: &'a XMLNode) -> Self {
-//let sst = xml_node.nth_child_node(0).unwrap();
-//let si_vec = sst.search_all_nodes("si").unwrap();
-//let values = si_vec
-//.iter()
-//.filter_map(|node| node.search_node("t"))
-//.filter_map(|node| node.get_child_text(0))
-//.map(|str| str.into())
-//.collect::<Vec<_>>();
-//SharedStrings { values }
-//}
-//}
-//impl SharedStrings {
-//pub fn new(s: &str) -> Self {
-//let xml_node = XMLNode::from(s);
-//let sst = xml_node.nth_child_node(0).unwrap();
-//let si_vec = sst.search_all_nodes("si").unwrap();
-//let values = si_vec
-//.iter()
-//.filter_map(|node| node.search_node("t"))
-//.filter_map(|node| node.get_child_text(0))
-//.map(|str| str.into())
-//.collect::<Vec<_>>();
-//SharedStrings { values }
-//}
-//pub fn get_value(&self, index: usize) -> &str {
-//&self.values[index]
-//}
-//}
-//impl SharedStore for SharedStrings {
-//fn get_shared_value(&self, index: usize) -> &str {
-//&self.values[index]
-//}
-//}
-
+impl<'a> XL<'a> for SharedStrings {
+    fn get_xml_node(&'a self) -> &'a XMLNode {
+        &self.node
+    }
+}
+impl SharedStringsInterface for SharedStrings {
+    fn get_shared_string(&self, index: usize) -> &str {
+        &self.values[index]
+    }
+    fn add_shared_string(&mut self, value: &str) -> () {
+        ()
+    }
+}
 #[cfg(test)]
 mod shared_strings_test {
     use crate::{
         excel::{
             shared_strings::{self, SharedStore},
-            xmls::xl::XL,
+            xmls::{shared_strings::SharedStringsInterface, xl::XL},
         },
         xml::nodes::node::XMLNode,
     };
@@ -144,8 +116,8 @@ mod shared_strings_test {
 </sst>
 "#,
         );
-        //assert_eq!(ss.get_shared_string(0), "詳細画面レイアウト");
-        //assert_eq!(ss.get_shared_string(1), "会社名");
-        //assert_eq!(ss.get_shared_string(2), "タイトル");
+        assert_eq!(ss.get_shared_string(0), "詳細画面レイアウト");
+        assert_eq!(ss.get_shared_string(1), "会社名");
+        assert_eq!(ss.get_shared_string(2), "タイトル");
     }
 }
