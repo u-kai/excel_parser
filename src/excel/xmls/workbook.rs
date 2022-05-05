@@ -2,6 +2,8 @@ use crate::xml::nodes::node::XMLNode;
 
 use self::sheet_map::*;
 
+use super::xl::XL;
+
 pub struct WorkBook {
     node: XMLNode,
     sheet_map: SheetMap,
@@ -9,7 +11,10 @@ pub struct WorkBook {
 impl WorkBook {
     pub fn new(source: &str) -> Self {
         let node = XMLNode::from(source);
-        let sheet_map = SheetMap::from(&node);
+        let workbook_node = node.search_node("workbook").unwrap();
+        let sheets_node = workbook_node.search_node("sheets").unwrap();
+        let sheet_map = SheetMap::from(sheets_node);
+        println!("{:?}", sheet_map);
         WorkBook { node, sheet_map }
     }
     pub fn get_excel_sheet_name(&self, sheet_name: &str) -> &str {
@@ -17,9 +22,49 @@ impl WorkBook {
         self.sheet_map.get_excel_sheet_name(sheet_name).unwrap()
     }
 }
+impl<'a> XL<'a> for WorkBook {
+    fn get_xml_node(&'a self) -> &'a XMLNode {
+        &self.node
+    }
+}
 mod workbook_test {
-    use super::WorkBook;
+    use crate::{excel::xmls::xl::XL, xml::nodes::node::XMLNode};
 
+    use super::WorkBook;
+    #[test]
+    fn new_test() {
+        let source = r#"
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x15 xr xr6 xr10 xr2" xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr6="http://schemas.microsoft.com/office/spreadsheetml/2016/revision6" xmlns:xr10="http://schemas.microsoft.com/office/spreadsheetml/2016/revision10" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2">
+                    <fileVersion appName="xl" lastEdited="7" lowestEdited="7" rupBuild="20372"/>
+                    <workbookPr defaultThemeVersion="166925"/>
+                    <mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
+                        <mc:Choice Requires="x15">
+                            <x15ac:absPath url="dist" xmlns:x15ac="http://schemas.microsoft.com/office/spreadsheetml/2010/11/ac"/>
+                        </mc:Choice>
+                    </mc:AlternateContent>
+                    <xr:revisionPtr revIDLastSave="0" documentId="13_ncr:1_{23D3C209-A72C-406C-978A-0FFFF7F72B00}" xr6:coauthVersionLast="36" xr6:coauthVersionMax="36" xr10:uidLastSave="{00000000-0000-0000-0000-000000000000}"/>
+                    <bookViews>
+                        <workbookView xWindow="0" yWindow="0" windowWidth="28800" windowHeight="12135" firstSheet="6" activeTab="9" xr2:uid="{EFD3C6D3-98FA-468E-8050-FFAA76D4661F}"/>
+                    </bookViews>
+                    <sheets>
+                        <sheet name="term1" sheetId="1" state="hidden" r:id="rId1"/>
+                        <sheet name="term2" sheetId="2" state="hidden" r:id="rId2"/>
+                        <sheet name="table" sheetId="3" r:id="rId3"/>
+                    </sheets>
+                    <calcPr calcId="191029"/>
+                    <extLst>
+                        <ext uri="{140A7094-0E35-4892-8432-C4D2E57EDEB5}" xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main">
+                            <x15:workbookPr chartTrackingRefBase="1"/>
+                        </ext>
+                    </extLst>
+                </workbook>
+        "#;
+        let node = XMLNode::from(source);
+        let workbook = WorkBook::new(source);
+        assert_eq!(workbook.get_xml_node(), &node);
+    }
+    #[test]
     fn get_excel_sheet_name_test() {
         let source = r#"
                 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -51,7 +96,7 @@ mod workbook_test {
         let workbook = WorkBook::new(source);
         assert_eq!(workbook.get_excel_sheet_name("term1"), "sheet1");
         assert_eq!(workbook.get_excel_sheet_name("term2"), "sheet2");
-        assert_eq!(workbook.get_excel_sheet_name("table3"), "sheet3");
+        assert_eq!(workbook.get_excel_sheet_name("table"), "sheet3");
     }
 }
 
@@ -91,6 +136,7 @@ mod sheet_map {
             let sheets = sheets_node
                 .search_all_nodes("sheet")
                 .expect(format!("invalid node {:?}", sheets_node).as_str());
+            println!("{:?}", sheets);
             sheets.iter().for_each(|sheet| {
                 let e_sheet_id = sheet.search_element("sheetId").unwrap();
                 let u_sheet = UserDefineSheetName::new(sheet.search_element("name").unwrap());
