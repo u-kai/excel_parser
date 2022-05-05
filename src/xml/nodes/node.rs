@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{borrow::BorrowMut, collections::HashMap};
 
 use super::{
     node_type::NodeType,
@@ -142,6 +142,18 @@ impl XMLNode {
         }
         self.children = Some(Box::new(vec![XMLNode::new(s, NodeType::Character)]));
     }
+    pub fn change_child_node(&mut self, new_node: XMLNode) {
+        if self.has_children() {
+            for (i, mut child) in &mut self.children.as_mut().unwrap().iter().enumerate() {
+                if child.get_value() == new_node.get_value() {
+                    self.children.as_mut().unwrap()[i] = new_node;
+                    break;
+                }
+            }
+        } else {
+            self.add_node(new_node)
+        }
+    }
     pub fn change_text(&mut self, s: &str) {
         fn _push_text_node(node: &mut XMLNode, s: &str) {
             let _ = s.split(' ').filter(|s| s.len() > 0).for_each(|splited| {
@@ -278,6 +290,59 @@ impl XMLNode {
     }
 }
 
+//pub trait MutXMLNode {
+//fn search_element_mut(&mut self, search_value: &str) -> Option<&mut &XMLNode>;
+//}
+//impl MutXMLNode for XMLNode {
+//fn search_element_mut(&mut self, search_value: &str) -> Option<&mut &XMLNode> {
+//let mut d = &mut self.search_node(search_value).unwrap();
+//Some(d)
+////let d = self
+////.children
+////.as_ref()
+////.unwrap()
+////.iter()
+////.filter(|child| child.get_value() == search_value)
+////.map(|child| &mut *child)
+////.collect::<Vec<_>>()
+////.get(0)
+////.map(|node| *node);
+////d
+//}
+//}
+//if self.has_children() {
+//let  d = self
+//.children
+//.as_mut()
+//.unwrap()
+//.iter()
+//.filter(|child| child.get_value() == search_value)
+//.map(|child| *child.borrow_mut())
+//.collect::<Vec<_>>()[0];
+//} else {
+//None
+//}
+////if self.has_nodes() {
+
+////let nodes = self
+////.children
+////.as_mut()
+////.unwrap()
+////.iter()
+////.filter(|node| {
+////node.node_type == NodeType::SingleElement || node.node_type == NodeType::Element
+////})
+////.filter(|child| child.get_value() == search_value)
+////.collect::<Vec<_>>()
+////.get(0)
+////.as_mut()
+////.map(|child| *child);
+
+////return nodes;
+////}
+////None
+//}
+//}
 /// test code
 
 #[cfg(test)]
