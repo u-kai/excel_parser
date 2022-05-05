@@ -150,7 +150,7 @@ mod excel_tests {
                     <workbookPr defaultThemeVersion="166925"/>
                     <mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
                         <mc:Choice Requires="x15">
-                            <x15ac:absPath url="C:\仕事関係\ゼクス様作業フォルダ\ゼクス様\Logiso-co.staff\2.設計\" xmlns:x15ac="http://schemas.microsoft.com/office/spreadsheetml/2010/11/ac"/>
+                            <x15ac:absPath url="dist" xmlns:x15ac="http://schemas.microsoft.com/office/spreadsheetml/2010/11/ac"/>
                         </mc:Choice>
                     </mc:AlternateContent>
                     <xr:revisionPtr revIDLastSave="0" documentId="13_ncr:1_{23D3C209-A72C-406C-978A-0FFFF7F72B00}" xr6:coauthVersionLast="36" xr6:coauthVersionMax="36" xr10:uidLastSave="{00000000-0000-0000-0000-000000000000}"/>
