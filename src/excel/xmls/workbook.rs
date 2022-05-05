@@ -27,6 +27,7 @@ impl<'a> XL<'a> for WorkBook {
         &self.node
     }
 }
+#[cfg(test)]
 mod workbook_test {
     use crate::{excel::xmls::xl::XL, xml::nodes::node::XMLNode};
 
