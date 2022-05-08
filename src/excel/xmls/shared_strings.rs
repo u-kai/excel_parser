@@ -1,5 +1,3 @@
-use std::borrow::BorrowMut;
-
 use super::xl::XL;
 use crate::xml::nodes::{node::XMLNode, node_type::NodeType};
 
@@ -29,6 +27,9 @@ impl SharedStrings {
             Vec::new()
         };
         SharedStrings { node, values }
+    }
+    pub fn get_mut(&mut self) -> &mut SharedStrings {
+        self
     }
 }
 
@@ -65,10 +66,7 @@ impl SharedStringsInterface for SharedStrings {
 #[cfg(test)]
 mod shared_strings_test {
     use crate::{
-        excel::{
-            shared_strings::{self, SharedStore},
-            xmls::{shared_strings::SharedStringsInterface, xl::XL},
-        },
+        excel::xmls::{shared_strings::SharedStringsInterface, xl::XL},
         xml::nodes::node::XMLNode,
     };
 

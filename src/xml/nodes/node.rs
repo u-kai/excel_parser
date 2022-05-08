@@ -59,6 +59,24 @@ impl XMLNode {
         }
         None
     }
+    pub fn get_child_nodes_mut(&mut self) -> Option<Vec<&mut XMLNode>> {
+        if self.has_nodes() {
+            let nodes = self
+                .children
+                .as_mut()
+                .unwrap()
+                .iter_mut()
+                .filter(|node| {
+                    node.node_type == NodeType::SingleElement || node.node_type == NodeType::Element
+                })
+                .collect::<Vec<_>>();
+            if nodes.len() == 0 {
+                return None;
+            }
+            return Some(nodes);
+        }
+        None
+    }
     #[allow(dead_code)]
     pub fn get_child_text(&self, n: usize) -> Option<&str> {
         let maybe_texts = self.get_all_texts();
@@ -81,6 +99,37 @@ impl XMLNode {
             return Some(chars);
         }
         None
+    }
+
+    #[allow(dead_code)]
+    pub fn search_node_mut(&mut self, search_value: &str) -> Option<&mut XMLNode> {
+        if self.has_nodes() {
+            let d = self
+                .children
+                .as_mut()
+                .unwrap()
+                .iter_mut()
+                .filter(|child| child.get_value() == search_value)
+                .next();
+            d
+        } else {
+            None
+        }
+    }
+    #[allow(dead_code)]
+    pub fn search_all_nodes_mut(&mut self, search_value: &str) -> Option<Vec<&mut XMLNode>> {
+        if self.has_nodes() {
+            Some(
+                self.children
+                    .as_mut()
+                    .unwrap()
+                    .iter_mut()
+                    .filter(|child| child.get_value() == search_value)
+                    .collect::<Vec<_>>(),
+            )
+        } else {
+            None
+        }
     }
     #[allow(dead_code)]
     pub fn search_node(&self, search_value: &str) -> Option<&XMLNode> {
@@ -213,6 +262,7 @@ impl XMLNode {
         }
     }
     #[allow(dead_code)]
+
     pub fn search_child_by_id(&self, key: &str, value: &str) -> Option<&XMLNode> {
         match self.get_child_nodes() {
             Some(children) => {
@@ -290,61 +340,6 @@ impl XMLNode {
     }
 }
 
-//pub trait MutXMLNode {
-//fn search_element_mut(&mut self, search_value: &str) -> Option<&mut &XMLNode>;
-//}
-//impl MutXMLNode for XMLNode {
-//fn search_element_mut(&mut self, search_value: &str) -> Option<&mut &XMLNode> {
-//let mut d = &mut self.search_node(search_value).unwrap();
-//Some(d)
-////let d = self
-////.children
-////.as_ref()
-////.unwrap()
-////.iter()
-////.filter(|child| child.get_value() == search_value)
-////.map(|child| &mut *child)
-////.collect::<Vec<_>>()
-////.get(0)
-////.map(|node| *node);
-////d
-//}
-//}
-//if self.has_children() {
-//let  d = self
-//.children
-//.as_mut()
-//.unwrap()
-//.iter()
-//.filter(|child| child.get_value() == search_value)
-//.map(|child| *child.borrow_mut())
-//.collect::<Vec<_>>()[0];
-//} else {
-//None
-//}
-////if self.has_nodes() {
-
-////let nodes = self
-////.children
-////.as_mut()
-////.unwrap()
-////.iter()
-////.filter(|node| {
-////node.node_type == NodeType::SingleElement || node.node_type == NodeType::Element
-////})
-////.filter(|child| child.get_value() == search_value)
-////.collect::<Vec<_>>()
-////.get(0)
-////.as_mut()
-////.map(|child| *child);
-
-////return nodes;
-////}
-////None
-//}
-//}
-/// test code
-
 #[cfg(test)]
 pub mod xml_node_test {
     use std::collections::HashMap;
@@ -406,6 +401,60 @@ pub mod xml_node_test {
         );
         let search_node = search_node.search_node("p").unwrap();
         assert_eq!(search_node, &XMLNode::from(r#"<p>p-data</p>"#));
+    }
+    #[test]
+    fn search_node_mut_test() {
+        let data = r#"
+        <div id="1180" name="kai">
+            <div>div-first
+                <p>p-data</p>
+                <p>p-data-2</p>
+                <data/>
+                div-data
+            </div>
+        </div>"#;
+        let mut root_node = XMLNode::from(data);
+        let search_node = root_node.search_node_mut("div").unwrap();
+
+        assert_eq!(
+            search_node,
+            &XMLNode::from(
+                r#"
+            <div>div-first
+                <p>p-data</p>
+                <p>p-data-2</p>
+                <data/>
+                div-data
+            </div>"#
+            )
+        );
+    }
+    #[test]
+    fn search_all_nodes_mut_test() {
+        let data = r#"
+        <div id="1180" name="kai">
+            <div>div-first
+                <p>p-data</p>
+                <p>p-data-2</p>
+                <data/>
+                div-data
+            </div>
+        </div>"#;
+        let mut root_node = XMLNode::from(data);
+        let search_node = root_node.search_all_nodes_mut("div").unwrap();
+
+        assert_eq!(
+            search_node,
+            vec![&XMLNode::from(
+                r#"
+            <div>div-first
+                <p>p-data</p>
+                <p>p-data-2</p>
+                <data/>
+                div-data
+            </div>"#
+            )]
+        );
     }
     #[test]
 

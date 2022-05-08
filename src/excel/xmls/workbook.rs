@@ -4,6 +4,7 @@ use self::sheet_map::*;
 
 use super::xl::XL;
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct WorkBook {
     node: XMLNode,
     sheet_map: SheetMap,

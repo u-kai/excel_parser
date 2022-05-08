@@ -26,6 +26,7 @@ impl<T: PartialEq + Eq> Cell<T> {
 }
 #[derive(PartialEq, Eq, Debug)]
 pub struct CellIndex {
+    excel_index: String,
     column: usize,
     row: usize,
 }
@@ -33,9 +34,13 @@ impl CellIndex {
     pub fn new(s: &str) -> Self {
         let split = CellIndex::split_alphabet_number(s);
         CellIndex {
+            excel_index: s.to_string(),
             column: split.0,
             row: split.1,
         }
+    }
+    pub fn get_value(&self) -> &str {
+        &self.excel_index
     }
     pub fn get_column_index(&self) -> usize {
         self.column
@@ -88,9 +93,23 @@ mod cell_index_tests {
     #[test]
     fn new_test() {
         let cell_index = CellIndex::new("A1");
-        assert_eq!(cell_index, CellIndex { column: 1, row: 1 });
+        assert_eq!(
+            cell_index,
+            CellIndex {
+                excel_index: "A1".to_string(),
+                column: 1,
+                row: 1
+            }
+        );
         let cell_index = CellIndex::new("B1");
-        assert_eq!(cell_index, CellIndex { column: 2, row: 1 })
+        assert_eq!(
+            cell_index,
+            CellIndex {
+                excel_index: "B1".to_string(),
+                column: 2,
+                row: 1
+            }
+        )
     }
 }
 #[cfg(test)]
@@ -106,6 +125,7 @@ mod cell_tests {
             Cell {
                 value: "test",
                 index: CellIndex {
+                    excel_index: "A123".to_string(),
                     column: 1,
                     row: 123
                 }
@@ -116,7 +136,11 @@ mod cell_tests {
             cell,
             Cell {
                 value: "test",
-                index: CellIndex { column: 27, row: 1 }
+                index: CellIndex {
+                    excel_index: "AA1".to_string(),
+                    column: 27,
+                    row: 1
+                }
             }
         );
         let cell = Cell::new("test", "LRO1");
@@ -125,6 +149,7 @@ mod cell_tests {
             Cell {
                 value: "test",
                 index: CellIndex {
+                    excel_index: "LRO1".to_string(),
                     column: 8595,
                     row: 1
                 }
@@ -135,7 +160,11 @@ mod cell_tests {
             cell,
             Cell {
                 value: "test2",
-                index: CellIndex { column: 2, row: 1 }
+                index: CellIndex {
+                    excel_index: "B1".to_string(),
+                    column: 2,
+                    row: 1
+                }
             }
         )
     }
