@@ -76,16 +76,10 @@ impl<'a> Excel<'a, XLSXFile<'a>> {
         }
     }
 }
-//impl<'a, X: XLSXOperator> Drop for Excel<'a, X> {
-//fn drop(&mut self) {
-//print!("")
-//}
-//}
 
 #[cfg(test)]
 mod excel_tests {
     use crate::excel::{
-        cell::Cell,
         file_operator::XLSXOperator,
         xmls::{
             shared_strings::{self, SharedStrings, SharedStringsInterface},

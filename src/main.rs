@@ -1,6 +1,5 @@
 use std::net::ToSocketAddrs;
 
-use excel::cell::{Cell, CellIndex};
 use excel::excel::Excel;
 use excel::file_operator::XLSXFile;
 use excel::xmls::sheet::WorkSheet;

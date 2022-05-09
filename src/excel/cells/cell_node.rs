@@ -1,7 +1,9 @@
 use crate::{
-    excel::{cell::CellIndex, xmls::shared_strings::SharedStringsInterface},
+    excel::xmls::shared_strings::SharedStringsInterface,
     xml::nodes::{node::XMLNode, node_type::NodeType},
 };
+
+use super::cell::CellIndex;
 #[derive(Debug, PartialEq, Eq)]
 pub enum CellType {
     Str,
@@ -32,20 +34,20 @@ impl<'a, T: SharedStringsInterface> CellNode<'a, T> {
         c_node.add_node(v_node);
         c_node
     }
-    pub fn get_v_text(&self) -> String {
+    pub fn get_v_text(&self) -> Option<String> {
         if let Some(v_node) = self.node.search_node("v") {
             if let Some(text) = v_node.get_child_text(0) {
                 if self.is_use_raw_data() {
-                    return text.to_string();
+                    return Some(text.to_string());
                 }
                 if self.is_use_shared_strings() {
                     let index = text.parse::<usize>().unwrap();
-                    return self.shared_strings.get_shared_string(index).to_string();
+                    return Some(self.shared_strings.get_shared_string(index).to_string());
                 }
             }
-            return "".to_string();
+            return None;
         }
-        "".to_string()
+        None
     }
     fn is_use_shared_strings(&self) -> bool {
         self.node.is_containe_key_value("t", "s")

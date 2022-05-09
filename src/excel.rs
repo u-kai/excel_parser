@@ -1,5 +1,4 @@
-pub mod cell;
+pub mod cells;
 pub mod excel;
 pub mod file_operator;
-pub mod sheet;
 pub mod xmls;
