@@ -162,17 +162,6 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
             cell.set_node_type(NodeType::Element);
             return;
         }
-        //let mut rows = self.node.search_all_nodes_mut("row").unwrap();
-        //for row in rows.drain(..) {
-        ////if index.get_row_index() == row.search_element("r").unwrap().parse::<usize>().unwrap() {
-        ////for c in row.search_all_nodes_mut("c").unwrap() {
-        ////let cell_index = c.search_element("r").unwrap();
-        ////if cell_index == index.get_value() {
-        ////c = &mut XMLNode::from(r#""#);
-        ////}
-        ////}
-        ////}
-        //}
     }
 }
 pub trait WorkSheet {
@@ -201,7 +190,7 @@ mod xml_sheet_test {
     use super::mock_shared_strings::SharedStringsMock;
 
     //use super::SheetData;
-    const source1: &str = r#"
+    const SOURCE1: &str = r#"
     <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
     <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{44FEEDED-D128-4496-B199-BCD526D1EB2C}">
         <sheetData>
@@ -241,7 +230,7 @@ mod xml_sheet_test {
         </sheetData>
     </worksheet>
     "#;
-    const source2: &str = r#"
+    const SOURCE2: &str = r#"
     <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
     <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{44FEEDED-D128-4496-B199-BCD526D1EB2C}">
         <sheetData>
@@ -290,7 +279,7 @@ mod xml_sheet_test {
         mock.add_shared_string("one");
         mock.add_shared_string("two");
         mock.add_shared_string("three");
-        let expect = Sheet::new("test", source1.to_string(), &mut mock);
+        let expect = Sheet::new("test", SOURCE1.to_string(), &mut mock);
         assert_eq!(
             expect.get_cell(CellIndex::new("B2")),
             Some("zero".to_string())
@@ -309,7 +298,7 @@ mod xml_sheet_test {
         mock.add_shared_string("two");
         mock.add_shared_string("three");
         mock.add_shared_string("four");
-        let sheet = Sheet::new("test", source1.to_string(), &mut mock);
+        let sheet = Sheet::new("test", SOURCE1.to_string(), &mut mock);
         assert_eq!(
             sheet.get_row(2),
             vec![
@@ -358,7 +347,7 @@ mod xml_sheet_test {
     fn get_column_test() {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
-        let sheet = Sheet::new("test", source2.to_string(), &mut shareds);
+        let sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
         assert_eq!(
             sheet.get_column(ColumnAlphabet::new("A")),
             vec![
@@ -390,7 +379,7 @@ mod xml_sheet_test {
     fn get_all_cell_test() {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
-        let sheet = Sheet::new("test", source2.to_string(), &mut shareds);
+        let sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
         assert_eq!(
             sheet.get_all_cell(),
             vec![
@@ -422,7 +411,7 @@ mod xml_sheet_test {
     fn get_column_range_test() {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
-        let sheet = Sheet::new("test", source2.to_string(), &mut shareds);
+        let sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
         assert_eq!(
             sheet.get_column_range(ColumnAlphabet::new("B"), ColumnAlphabet::new("E")),
             vec![
@@ -438,14 +427,14 @@ mod xml_sheet_test {
     fn get_max_column_index_test() {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
-        let sheet = Sheet::new("test", source2.to_string(), &mut shareds);
+        let sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
         assert_eq!(sheet.get_max_column_index(), 7);
     }
     #[test]
     fn set_cell_test() {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
-        let mut sheet = Sheet::new("test", source2.to_string(), &mut shareds);
+        let mut sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
         let new_cell = Cell::new("new-data", "A2");
         sheet.set_cell(new_cell);
         println!("{}", sheet.to_xml());
