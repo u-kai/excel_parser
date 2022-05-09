@@ -1,20 +1,14 @@
-use std::net::ToSocketAddrs;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
-
 use excel::cells::cell::ColumnAlphabet;
 use excel::excel::Excel;
-use excel::file_operator::XLSXFile;
 use excel::xmls::sheet::WorkSheet;
-use html::dom::Dom;
-use xml::nodes::node::XMLNode;
+use std::time::Instant;
 
 mod excel;
 mod html;
 mod xml;
 fn main() {
     let mut excel = Excel::open("test_buf.xlsx");
-    let mut now = Instant::now();
+    let now = Instant::now();
     println!(
         "{:?}",
         excel

@@ -17,6 +17,9 @@ impl<T: PartialEq + Eq> Cell<T> {
     pub fn is_index(&self, cell_index: &CellIndex) -> bool {
         &self.index == cell_index
     }
+    pub fn get_index(&self) -> CellIndex {
+        self.index.clone()
+    }
     pub fn get_column_index(&self) -> usize {
         self.index.get_column_index()
     }
@@ -24,7 +27,7 @@ impl<T: PartialEq + Eq> Cell<T> {
         self.index.get_row_index()
     }
 }
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct CellIndex {
     excel_index: String,
     column: usize,
