@@ -89,6 +89,8 @@ impl<'a> ColumnAlphabet<'a> {
 
 #[cfg(test)]
 mod cell_index_tests {
+    use crate::excel::cells::cell::ColumnAlphabet;
+
     use super::CellIndex;
     #[test]
     fn new_test() {
@@ -109,7 +111,9 @@ mod cell_index_tests {
                 column: 2,
                 row: 1
             }
-        )
+        );
+        let alphabet = ColumnAlphabet::new("A");
+        assert_eq!(alphabet.to_number(), 1)
     }
 }
 #[cfg(test)]
