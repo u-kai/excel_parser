@@ -32,10 +32,25 @@ impl<'a, T: SharedStringsInterface> CellNode<'a, T> {
         c_node.add_node(v_node);
         c_node
     }
-    pub fn is_use_shared_strings(&self) -> bool {
+    pub fn get_v_text(&self) -> String {
+        if let Some(v_node) = self.node.search_node("v") {
+            if let Some(text) = v_node.get_child_text(0) {
+                if self.is_use_raw_data() {
+                    return text.to_string();
+                }
+                if self.is_use_shared_strings() {
+                    let index = text.parse::<usize>().unwrap();
+                    return self.shared_strings.get_shared_string(index).to_string();
+                }
+            }
+            return "".to_string();
+        }
+        "".to_string()
+    }
+    fn is_use_shared_strings(&self) -> bool {
         self.node.is_containe_key_value("t", "s")
     }
-    pub fn is_use_raw_data(&self) -> bool {
+    fn is_use_raw_data(&self) -> bool {
         self.node.is_containe_key_value("t", "str") || !(self.node.is_containe_key_value("t", "s"))
     }
     pub fn is_index(&self, index: CellIndex) -> bool {
@@ -43,20 +58,5 @@ impl<'a, T: SharedStringsInterface> CellNode<'a, T> {
     }
     pub fn change_text(&mut self, text: &str) {
         self.node.change_text(text)
-    }
-    pub fn get_v_text(&mut self) -> &str {
-        if let Some(v_node) = self.node.search_node("v") {
-            if let Some(text) = v_node.get_child_text(0) {
-                if self.is_use_raw_data() {
-                    return text;
-                }
-                if self.is_use_shared_strings() {
-                    let index = text.parse::<usize>().unwrap();
-                    return self.shared_strings.get_shared_string(index);
-                }
-            }
-            return "";
-        }
-        ""
     }
 }

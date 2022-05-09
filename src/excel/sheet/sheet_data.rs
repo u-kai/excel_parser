@@ -1,74 +1,9 @@
 use crate::{
     excel::{cell::CellIndex, xmls::shared_strings::SharedStringsInterface},
-    xml::nodes::{node::XMLNode, node_type::NodeType},
+    xml::nodes::node::XMLNode,
 };
 
 use super::cell_node::CellNode;
-
-#[derive(Debug, PartialEq, Eq)]
-struct SheetDataNode<'a>(&'a mut XMLNode);
-impl<'a> SheetDataNode<'a> {
-    pub fn new(node: &'a mut XMLNode) -> Self {
-        SheetDataNode(node)
-    }
-    pub fn get_node(&mut self) -> &mut XMLNode {
-        self.0
-    }
-}
-
-pub struct Rows<'a>(Vec<&'a mut XMLNode>);
-impl<'a> Rows<'a> {
-    pub fn new(node: Vec<&'a mut XMLNode>) -> Self {
-        Rows(node)
-    }
-    pub fn get_index_row(&mut self, index: CellIndex) -> Option<&XMLNode> {
-        let row_index = index.get_row_index().to_string();
-        for row in self.get_rows() {
-            if row.is_containe_key_value("r", row_index.as_str()) {
-                return Some(row);
-            }
-        }
-        None
-    }
-    pub fn get_index_row_mut(&mut self, index: CellIndex) -> Option<&&mut XMLNode> {
-        let row_index = index.get_row_index().to_string();
-        for row in self.get_rows() {
-            if row.is_containe_key_value("r", row_index.as_str()) {
-                return Some(row);
-            }
-        }
-        None
-    }
-    pub fn get_index_cell(&mut self, index: CellIndex) -> Option<&str> {
-        None
-        //let row_node = self.get_index_row_mut(index);
-        //if let Some(row) = row_node.map(|node| *node) {
-        //let mut c_nodes = row.search_all_nodes_mut("c");
-        //if let Some(c_nodes) = c_nodes {
-        ////let cells = c_nodes
-        ////.iter_mut()
-        ////.map(|node|CellNode::new(node))
-        //None
-        //} else {
-        //None
-        //}
-        //} else {
-        //None
-        //}
-    }
-    //pub fn get_index_cell_mut(&mut self, index: CellIndex) -> Option<&str> {
-    //let row_node = self.get_index_row_mut(index);
-    //if let Some(row) = row_node {
-    //row.search_all_nodes_mut("c");
-    //None
-    //} else {
-    //None
-    //}
-    //}
-    pub fn get_rows(&self) -> &Vec<&mut XMLNode> {
-        &self.0
-    }
-}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct SheetData<'a, T: SharedStringsInterface> {
@@ -84,211 +19,31 @@ impl<'a, T: SharedStringsInterface> SheetData<'a, T> {
             shared_strings,
         }
     }
-    fn get_cell_v(&'a self, index: CellIndex) -> &str {
-        //let c_node = self
-        //.node
-        //.search_child_by_id_mut("r", index.get_value())
-        //.unwrap();
-        //let c_node = CellNode::new(c_node, self.shared_strings);
-        //c_node.get_v_text()
-        ""
-    }
-    //fn get_index_row(&'a mut self, index: CellIndex) -> Option<&'a mut XMLNode> {
-    ////let rows = self.node.search_all_nodes_mut("row");
-    ////let row_index = index.get_row_index().to_string();
-    ////if let Some(mut rows) = rows {
-    ////for row in rows.iter_mut() {
-    ////if row.is_containe_key_value("c", index.get_value()) {
-    ////return Some(*row);
-    ////}
-    ////}
-    ////return None;
-    //////let row = rows
-    //////.iter()
-    //////.filter(|row| row.is_containe_key_value("r", row_index.as_str()))
-    //////.map(|node| *node)
-    //////.take(0);
-    //////let r = row.next();
-
-    //////for row in rows.iter_mut() {
-    //////return  Some(row)  ;
-    //////}
-    ////}
-    ////None
-    //}
-}
-
-impl<'a, T: SharedStringsInterface> SheetOperator for SheetData<'a, T> {
-    fn get_cell(&mut self, index: CellIndex) -> &str {
-        let rows = self.node.search_all_nodes_mut("row");
-        let row_index = index.get_row_index().to_string();
-        if let Some(mut rows) = rows {
-            let row = rows
-                .iter_mut()
-                .filter(|row| row.is_containe_key_value("r", row_index.as_str()))
-                .next();
-            if let Some(row) = row {
-                let mut r = &mut *row;
-                let mut cell_nodes = row.search_all_nodes_mut("c");
-                if let Some(mut cell_nodes) = cell_nodes {
-                    for node in cell_nodes.iter_mut() {
-                        let cell_node = CellNode::new(node, self.shared_strings);
-                    }
-                    ""
-                } else {
-                    ""
-                }
-            } else {
-                ""
-            }
+    fn get_cell_v(&mut self, index: CellIndex) -> String {
+        let c_node = self.node.search_child_by_id_mut("r", index.get_value());
+        if let Some(c_node) = c_node {
+            let c_node = CellNode::new(c_node, self.shared_strings);
+            c_node.get_v_text()
         } else {
-            ""
+            "".to_string()
         }
     }
 }
-pub trait SheetOperator {
-    fn get_cell(&mut self, index: CellIndex) -> &str;
+
+impl<'a, T: SharedStringsInterface> SheetOperator for SheetData<'a, T> {
+    fn get_cell(&mut self, index: CellIndex) -> String {
+        self.get_cell_v(index)
+    }
 }
-//impl SheetData {
-//pub fn new(sheet: &str) -> Self {
-//let sheet_node = XMLNode::from(sheet);
-//let work_sheet = sheet_node.search_node("worksheet").unwrap();
-//let sheet_data = work_sheet.search_node("sheetData").unwrap();
-//let node = sheet_data.drain();
-//SheetData { node }
-//}
-//}
-//impl SheetValue {
-//pub fn new(sheet_node: &XMLNode) -> Self {
-//let work_sheet = sheet_node.search_node("worksheet").unwrap();
-//let sheet_data = work_sheet.search_node("sheetData").unwrap();
-//let rows = sheet_data.search_all_nodes("row").unwrap();
-//let c_nodes = rows
-//.iter()
-//.filter_map(|node| node.search_all_nodes("c"))
-//.flatten()
-//.collect::<Vec<_>>();
-//SheetValue {
-//shared_values: SharedValues::from_c_nodes(&c_nodes),
-//refarence_values: RefarenceValues::from_c_nodes(&c_nodes),
-//}
-//}
-//}
-//#[derive(Debug, PartialEq, Eq)]
-//struct SharedValues {
-//values: Vec<Cell<String>>,
-//}
-//impl SharedValues {
-//pub fn new() -> Self {
-//SharedValues { values: Vec::new() }
-//}
-//pub fn from_c_nodes(c_nodes: &Vec<&XMLNode>) -> Self {
-//let values = c_nodes
-//.iter()
-//.filter(|c_node| {
-//c_node.is_containe_key_value("t", "str")
-//|| !(c_node.is_containe_key_value("t", "s"))
-//})
-//.filter_map(|c_node| {
-//let cell_index = c_node.search_element("r").unwrap();
-//let v_node = c_node.search_node("v");
-//if v_node.is_some() {
-//Some(Cell::new(
-//v_node.unwrap().get_child_text(0).unwrap().to_string(),
-//cell_index,
-//))
-//} else {
-//None
-//}
-//})
-//.collect::<Vec<_>>();
-//SharedValues { values }
-//}
-//pub fn add_value(&mut self, cell: Cell<String>) {
-//self.values.push(cell)
-//}
-//fn get_cell(&self, cell_index: &CellIndex) -> Option<&str> {
-//if let Some(s) = self.values.iter().find(|cell| cell.is_index(cell_index)) {
-//Some(s.get_value().as_str())
-//} else {
-//None
-//}
-//}
-//}
-//#[derive(Debug, PartialEq, Eq)]
-//struct RefarenceValues {
-//values: Vec<Cell<usize>>,
-//}
-//impl RefarenceValues {
-//pub fn new() -> Self {
-//RefarenceValues { values: Vec::new() }
-//}
-//pub fn from_c_nodes(c_nodes: &Vec<&XMLNode>) -> Self {
-//let values = c_nodes
-//.iter()
-//.filter(|c_node| c_node.is_containe_key_value("t", "s"))
-//.filter_map(|c_node| {
-//let cell_index = c_node.search_element("r").unwrap();
-//let v_node = c_node.search_node("v");
-//if v_node.is_some() {
-//Some(Cell::new(
-//v_node
-//.unwrap()
-//.get_child_text(0)
-//.unwrap()
-//.parse::<usize>()
-//.unwrap(),
-//cell_index,
-//))
-//} else {
-//None
-//}
-//})
-//.collect::<Vec<_>>();
-//RefarenceValues { values }
-//}
-//pub fn add_value(&mut self, cell: Cell<usize>) {
-//self.values.push(cell)
-//}
-//fn get_cell(&self, cell_index: &CellIndex) -> Option<usize> {
-//if let Some(s) = self.values.iter().find(|cell| cell.is_index(cell_index)) {
-//Some(*s.get_value())
-//} else {
-//None
-//}
-//}
-//}
-//pub trait Refarences {
-//fn get_refarence_cell(&self, cell_index: &CellIndex) -> Option<usize>;
-//fn get_all_cell(&self) -> &Vec<Cell<usize>>;
-//}
-//impl Refarences for SheetValue {
-//fn get_refarence_cell(&self, cell_index: &CellIndex) -> Option<usize> {
-//self.refarence_values.get_cell(&cell_index)
-//}
-//fn get_all_cell(&self) -> &Vec<Cell<usize>> {
-//&self.refarence_values.values
-//}
-//}
-//pub trait Shareds {
-//fn get_shared_cell(&self, cell_index: &CellIndex) -> Option<&str>;
-//fn get_all_cell(&self) -> &Vec<Cell<String>>;
-//}
-//impl Shareds for SheetValue {
-//fn get_shared_cell(&self, cell_index: &CellIndex) -> Option<&str> {
-//self.shared_values.get_cell(&cell_index)
-//}
-//fn get_all_cell(&self) -> &Vec<Cell<String>> {
-//&self.shared_values.values
-//}
-//}
+pub trait SheetOperator {
+    fn get_cell(&mut self, index: CellIndex) -> String;
+}
 #[cfg(test)]
 mod xml_sheet_test {
     use crate::{
         excel::{
-            cell::{Cell, CellIndex},
+            cell::CellIndex,
             sheet::sheet_data::{SheetData, SheetOperator},
-            sheet_data::*,
             xmls::shared_strings::SharedStringsInterface,
         },
         xml::nodes::node::XMLNode,

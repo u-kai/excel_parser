@@ -262,7 +262,24 @@ impl XMLNode {
         }
     }
     #[allow(dead_code)]
-
+    pub fn search_child_by_id_mut(&mut self, key: &str, value: &str) -> Option<&mut XMLNode> {
+        match self.get_child_nodes_mut() {
+            Some(mut children) => {
+                for child in children.drain(..) {
+                    if child.is_containe_key_value(key, value) {
+                        return Some(child);
+                    }
+                    let result_rec = child.search_child_by_id_mut(key, value);
+                    if let Some(node) = result_rec {
+                        return Some(node);
+                    }
+                }
+                None
+            }
+            None => None,
+        }
+    }
+    #[allow(dead_code)]
     pub fn search_child_by_id(&self, key: &str, value: &str) -> Option<&XMLNode> {
         match self.get_child_nodes() {
             Some(children) => {
@@ -454,6 +471,37 @@ pub mod xml_node_test {
                 div-data
             </div>"#
             )]
+        );
+    }
+    fn search_child_id_mut_test() {
+        let data = r#"
+        <div id="1180" name="kai">
+            <div>div-first
+                <p id="test">p-data</p>
+                <p>p-data-2</p>
+                <data/>
+                div-data
+            </div>
+        </div>"#;
+        let mut root_node = XMLNode::from(data);
+        let search_node = root_node.search_child_by_id_mut("id", "test").unwrap();
+
+        assert_eq!(
+            search_node,
+            &mut XMLNode::from(
+                r#"
+                <p id="test">p-data</p>
+            "#
+            )
+        );
+        let search_node = root_node.search_child_by_id_mut("id", "test").unwrap();
+        assert_eq!(
+            search_node,
+            &mut XMLNode::from(
+                r#"
+                <p id="test">p-data</p>
+            "#
+            )
         );
     }
     #[test]
