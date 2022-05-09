@@ -49,6 +49,13 @@ impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
             None
         }
     }
+    fn get_max_column_index(&self) -> usize {
+        self.get_all_cell()
+            .iter()
+            .map(|row| row.len())
+            .max()
+            .unwrap()
+    }
 }
 impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
     fn get_cell(&self, cell_index: CellIndex) -> Option<String> {
@@ -59,10 +66,27 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
         start: ColumnAlphabet,
         end: ColumnAlphabet,
     ) -> Vec<Vec<Option<String>>> {
+        if end.to_number() > self.get_max_column_index() {
+            return self
+                .get_all_cell()
+                .iter_mut()
+                .map(|row| {
+                    let mut row = row
+                        .drain((start.to_number() - 1)..self.get_max_column_index())
+                        .collect::<Vec<_>>();
+                    row.append(
+                        &mut [0..(end.to_number() - self.get_max_column_index())]
+                            .map(|_| None)
+                            .to_vec(),
+                    );
+                    row
+                })
+                .collect();
+        }
         self.get_all_cell()
             .iter_mut()
             .map(|row| {
-                row.drain((start.to_number() - 1)..=end.to_number())
+                row.drain((start.to_number() - 1)..end.to_number())
                     .collect::<Vec<_>>()
             })
             .collect()
@@ -504,13 +528,61 @@ mod xml_sheet_test {
         assert_eq!(
             sheet.get_column_range(ColumnAlphabet::new("B"), ColumnAlphabet::new("E")),
             vec![
-                vec![None, None, None, None, None],
-                vec![Some("b".to_string()), None, None, None, None],
-                vec![None, Some("c".to_string()), None, None, None],
-                vec![None, None, Some("d".to_string()), None, None],
-                vec![None, None, None, Some("e".to_string()), None,],
+                vec![None, None, None, None],
+                vec![Some("b".to_string()), None, None, None],
+                vec![None, Some("c".to_string()), None, None],
+                vec![None, None, Some("d".to_string()), None],
+                vec![None, None, None, Some("e".to_string()),],
             ]
         );
+    }
+    #[test]
+    fn get_max_column_index_test() {
+        let source = r#"
+    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{44FEEDED-D128-4496-B199-BCD526D1EB2C}">
+        <sheetData>
+            <row r="1" spans="2:19" x14ac:dyDescent="0.4">
+                <c r="A1">
+                    <v>a</v>
+                </c>
+            </row>
+            <row r="2" spans="2:19" x14ac:dyDescent="0.4">
+                <c r="B2">
+                    <v>b</v>
+                </c>
+                <c r="C2" s="12"/>
+                <c r="D2" s="16"/>
+                <c r="E2" s="13"/>
+            </row>
+            <row r="3" spans="2:19" x14ac:dyDescent="0.4">
+                <c r="C3">
+                    <v>c</v>
+                </c>
+            </row>
+            <row r="4" spans="2:19" x14ac:dyDescent="0.4">
+                <c r="D4">
+                    <v>d</v>
+                </c>
+            </row>
+            <row r="5" spans="2:19" x14ac:dyDescent="0.4">
+                <c r="A5" s="15" t="s">
+                    <v>0</v>
+                </c>
+                <c r="E5">
+                    <v>e</v>
+                </c>
+                <c r="G5">
+                    <v>0</v>
+                </c>
+            </row>
+        </sheetData>
+    </worksheet>
+    "#;
+        let mut shareds = SharedStringsMock::new();
+        shareds.add_shared_string("あ");
+        let sheet = Sheet::new("test", source.to_string(), &mut shareds);
+        assert_eq!(sheet.get_max_column_index(), 7);
     }
 }
 

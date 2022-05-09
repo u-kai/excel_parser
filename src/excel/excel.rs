@@ -47,16 +47,16 @@ impl<'a, XOpe: XLSXOperator> Excel<'a, XOpe> {
             sheet_map,
         }
     }
-    pub fn close(&self) {
+    pub fn close(&'a mut self) {
         self.xlsx_operator.to_excel()
     }
-    pub fn get_sheet(&'a mut self, sheet_name: &str) -> &'a mut SheetA {
+    pub fn get_sheet(&mut self, sheet_name: &str) -> SheetA {
         let e_sheet_name = self.workbook.get_excel_sheet_name(&sheet_name);
         let source = self.xlsx_operator.read_sheet(e_sheet_name);
         let shared_strings = self.shared_strings.get_mut();
         let sheet = SheetA::new(sheet_name, source, shared_strings);
-        self.sheet_map.register_sheet(sheet_name, sheet);
-        let sheet = self.sheet_map.get_sheet(sheet_name).unwrap();
+        //self.sheet_map.register_sheet(sheet_name, sheet);
+        //let sheet = self.sheet_map.get_sheet(sheet_name).unwrap();
         sheet
     }
 }
@@ -79,13 +79,7 @@ impl<'a> Excel<'a, XLSXFile<'a>> {
 
 #[cfg(test)]
 mod excel_tests {
-    use crate::excel::{
-        file_operator::XLSXOperator,
-        xmls::{
-            shared_strings::{self, SharedStrings, SharedStringsInterface},
-            sheet::{self, WorkSheet},
-        },
-    };
+    use crate::excel::file_operator::XLSXOperator;
 
     use super::Excel;
     #[derive(Debug)]

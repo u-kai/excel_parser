@@ -43,7 +43,9 @@ impl<'a> XLSXFile<'a> {
     fn read_file(&self, filepath: &str) -> String {
         let mut buf = String::new();
         let filepath = self.decompress_root.join(filepath);
-        let mut reader = BufReader::new(File::open(filepath).unwrap());
+        let mut reader = BufReader::new(
+            File::open(&filepath).expect(format!("{:?} is not found", filepath.display()).as_str()),
+        );
         let _ = reader.read_to_string(&mut buf);
         buf
     }
@@ -98,7 +100,7 @@ impl<'a> XLSXOperator for XLSXFile<'a> {
         source
     }
     fn read_shared_strings(&self) -> String {
-        let path = "xl/sharedString.xml";
+        let path = "xl/sharedStrings.xml";
         let source = self.read_file(path);
         source
     }

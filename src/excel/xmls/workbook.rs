@@ -15,7 +15,6 @@ impl WorkBook {
         let workbook_node = node.search_node("workbook").unwrap();
         let sheets_node = workbook_node.search_node("sheets").unwrap();
         let sheet_map = SheetMap::from(sheets_node);
-        println!("{:?}", sheet_map);
         WorkBook { node, sheet_map }
     }
     pub fn get_excel_sheet_name(&self, sheet_name: &str) -> &str {
