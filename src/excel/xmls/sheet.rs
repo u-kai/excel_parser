@@ -66,19 +66,14 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
         start: ColumnAlphabet,
         end: ColumnAlphabet,
     ) -> Vec<Vec<Option<String>>> {
-        if end.to_number() > self.get_max_column_index() {
+        let max = self.get_max_column_index();
+        if end.to_number() > max {
             return self
                 .get_all_cell()
                 .iter_mut()
                 .map(|row| {
-                    let mut row = row
-                        .drain((start.to_number() - 1)..self.get_max_column_index())
-                        .collect::<Vec<_>>();
-                    row.append(
-                        &mut [0..(end.to_number() - self.get_max_column_index())]
-                            .map(|_| None)
-                            .to_vec(),
-                    );
+                    let mut row = row.drain((start.to_number() - 1)..max).collect::<Vec<_>>();
+                    row.append(&mut [0..(end.to_number() - max)].map(|_| None).to_vec());
                     row
                 })
                 .collect();

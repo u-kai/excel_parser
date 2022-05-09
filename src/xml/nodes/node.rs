@@ -193,7 +193,7 @@ impl XMLNode {
     }
     pub fn change_child_node(&mut self, new_node: XMLNode) {
         if self.has_children() {
-            for (i, mut child) in &mut self.children.as_mut().unwrap().iter().enumerate() {
+            for (i, child) in &mut self.children.as_mut().unwrap().iter().enumerate() {
                 if child.get_value() == new_node.get_value() {
                     self.children.as_mut().unwrap()[i] = new_node;
                     break;

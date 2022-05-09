@@ -153,7 +153,6 @@ mod node_value_test {
         let mut node = NodeValue::new("test");
         node.add_element("key1", vec!["value1"]);
         node.add_element("key2", vec!["value1 value2"]);
-        println!("{:?}", node);
         let expect: String = node.into();
         // key value の順番が安定していないので毎回実行結果が変わりうる
         // どうやってテストするべきか

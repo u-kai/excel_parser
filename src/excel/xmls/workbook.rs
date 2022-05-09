@@ -137,7 +137,6 @@ mod sheet_map {
             let sheets = sheets_node
                 .search_all_nodes("sheet")
                 .expect(format!("invalid node {:?}", sheets_node).as_str());
-            println!("{:?}", sheets);
             sheets.iter().for_each(|sheet| {
                 let e_sheet_id = sheet.search_element("sheetId").unwrap();
                 let u_sheet = UserDefineSheetName::new(sheet.search_element("name").unwrap());
