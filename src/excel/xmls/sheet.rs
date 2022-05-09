@@ -29,6 +29,17 @@ impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
     pub fn get_sheet_name(&self) -> &str {
         &self.sheet_name
     }
+    pub fn get_all_row_index(&self) -> Vec<usize> {
+        let rows = self.node.search_all_nodes("row");
+        if let Some(rows) = rows {
+            return rows
+                .iter()
+                .map(|row| row.search_element("r").unwrap())
+                .map(|index| index.parse::<usize>().unwrap())
+                .collect();
+        }
+        Vec::new()
+    }
     fn get_cell_v(&self, index: CellIndex) -> Option<String> {
         let c_node = self.node.search_child_by_id("r", index.get_value());
         if let Some(c_node) = c_node {
@@ -87,22 +98,31 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
 
         result
     }
-    fn get_all_cell(&self) -> Vec<Vec<Option<&str>>> {
-        let tobe = vec![
-            vec![Some("a"), None, None, None, None, None, None],
-            vec![None, Some("b"), None, None, None, None, None],
-            vec![None, None, Some("c"), None, None, None, None],
-            vec![None, None, None, Some("d"), None, None, None],
-            vec![Some("あ"), None, None, None, Some("e"), None, Some("0")],
-        ];
-        tobe
+    fn get_all_cell(&self) -> Vec<Vec<Option<String>>> {
+        let indexs = self.get_all_row_index();
+        let before_t = indexs.iter().map(|i| self.get_row(*i)).collect::<Vec<_>>();
+        let max_len = before_t.iter().map(|vec| vec.len()).max().unwrap();
+        let mut result = Vec::new();
+        for (_, row) in before_t.iter().enumerate() {
+            let mut buf = Vec::new();
+            for j in 0..max_len {
+                let cell = row.get(j);
+                if let Some(cell) = cell {
+                    buf.push(cell.clone());
+                } else {
+                    buf.push(None);
+                }
+            }
+            result.push(buf)
+        }
+        result
     }
 }
 pub trait WorkSheet {
     fn get_cell(&self, cell_index: CellIndex) -> Option<String>;
     fn get_row(&self, u: usize) -> Vec<Option<String>>;
     fn get_column(&self, s: ColumnAlphabet) -> Vec<Option<String>>;
-    fn get_all_cell(&self) -> Vec<Vec<Option<&str>>>;
+    fn get_all_cell(&self) -> Vec<Vec<Option<String>>>;
     //fn set_cell<T: PartialEq + Eq + Debug>(&mut self, cell: Cell<T>) -> ();
 }
 
@@ -329,6 +349,87 @@ mod xml_sheet_test {
                 None,
                 None,
                 Some("あ".to_string())
+            ]
+        );
+        assert_eq!(
+            sheet.get_column(ColumnAlphabet::new("G")),
+            vec![None, None, None, None, Some("0".to_string())]
+        );
+        assert_eq!(
+            sheet.get_column(ColumnAlphabet::new("D")),
+            vec![None, None, None, Some("d".to_string()), None]
+        );
+    }
+    #[test]
+    /// expect cell
+    /// | |A|B|C|D|E|F|G|
+    /// |-|-|-|-|-|-|-|-|
+    /// |1|a| | | | | | |
+    /// |2| |b| | | | | |
+    /// |3| | |c| | | | |
+    /// |4| | | |d| | | |
+    /// |5|あ| | | |e| |0|
+    fn get_all_cell_test() {
+        let source = r#"
+    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{44FEEDED-D128-4496-B199-BCD526D1EB2C}">
+        <sheetData>
+            <row r="1" spans="2:19" x14ac:dyDescent="0.4">
+                <c r="A1">
+                    <v>a</v>
+                </c>
+            </row>
+            <row r="2" spans="2:19" x14ac:dyDescent="0.4">
+                <c r="B2">
+                    <v>b</v>
+                </c>
+                <c r="C2" s="12"/>
+                <c r="D2" s="16"/>
+                <c r="E2" s="13"/>
+            </row>
+            <row r="3" spans="2:19" x14ac:dyDescent="0.4">
+                <c r="C3">
+                    <v>c</v>
+                </c>
+            </row>
+            <row r="4" spans="2:19" x14ac:dyDescent="0.4">
+                <c r="D4">
+                    <v>d</v>
+                </c>
+            </row>
+            <row r="5" spans="2:19" x14ac:dyDescent="0.4">
+                <c r="A5" s="15" t="s">
+                    <v>0</v>
+                </c>
+                <c r="E5">
+                    <v>e</v>
+                </c>
+                <c r="G5">
+                    <v>0</v>
+                </c>
+            </row>
+        </sheetData>
+    </worksheet>
+    "#;
+        let mut shareds = SharedStringsMock::new();
+        shareds.add_shared_string("あ");
+        let sheet = Sheet::new("test", source.to_string(), &mut shareds);
+        assert_eq!(
+            sheet.get_all_cell(),
+            vec![
+                vec![Some("a".to_string()), None, None, None, None, None, None],
+                vec![None, Some("b".to_string()), None, None, None, None, None],
+                vec![None, None, Some("c".to_string()), None, None, None, None],
+                vec![None, None, None, Some("d".to_string()), None, None, None],
+                vec![
+                    Some("あ".to_string()),
+                    None,
+                    None,
+                    None,
+                    Some("e".to_string()),
+                    None,
+                    Some("0".to_string())
+                ],
             ]
         );
     }
