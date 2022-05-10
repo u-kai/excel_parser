@@ -36,8 +36,7 @@ impl<XOpe: XLSXOperator> Excel<XOpe> {
     pub fn get_sheet(&self, sheet_name: &str) -> SheetA {
         let e_sheet_name = self.workbook.get_excel_sheet_name(&sheet_name);
         let source = self.xlsx_operator.read_sheet(e_sheet_name);
-        let shared_strings = self.shared_strings.get();
-        let sheet = SheetA::new(sheet_name, source, shared_strings);
+        let sheet = SheetA::new(sheet_name, source, &self.shared_strings);
         sheet
     }
 }

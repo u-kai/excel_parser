@@ -30,12 +30,6 @@ impl SharedStrings {
         };
         SharedStrings { node, values }
     }
-    pub fn get_mut(&mut self) -> &mut SharedStrings {
-        self
-    }
-    pub fn get(&self) -> &SharedStrings {
-        self
-    }
 }
 
 impl<'a> XL<'a> for SharedStrings {
