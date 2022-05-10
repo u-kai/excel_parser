@@ -1,11 +1,7 @@
-use std::{collections::HashMap, sync::Arc};
-
-use crate::xml::nodes::{generators, node::XMLNode};
-
 use super::{
     file_operator::{XLSXFile, XLSXOperator},
     xmls::{
-        shared_strings::{self, SharedStrings, SharedStringsInterface},
+        shared_strings::{SharedStrings, SharedStringsInterface},
         sheet::Sheet,
         workbook::WorkBook,
     },
@@ -13,71 +9,49 @@ use super::{
 
 type SheetA<'a> = Sheet<'a, SharedStrings>;
 #[derive(Debug, PartialEq, Eq)]
-pub struct Excel<'a, T: XLSXOperator> {
+pub struct Excel<T: XLSXOperator> {
     xlsx_operator: T,
     workbook: WorkBook,
     shared_strings: SharedStrings,
-    sheet_map: SheetMap<'a>,
 }
-#[derive(Debug, PartialEq, Eq)]
-struct SheetMap<'a>(HashMap<String, SheetA<'a>>);
-
-impl<'a> SheetMap<'a> {
-    pub fn new() -> Self {
-        SheetMap(HashMap::new())
-    }
-    pub fn register_sheet(&mut self, sheet_name: &str, sheet: SheetA<'a>) {
-        self.0.insert(sheet_name.to_string(), sheet);
-    }
-    pub fn get_sheet(&mut self, sheet_name: &str) -> Option<&'a mut SheetA> {
-        self.0.get_mut(sheet_name)
-    }
-}
-impl<'a, XOpe: XLSXOperator> Excel<'a, XOpe> {
+impl<XOpe: XLSXOperator> Excel<XOpe> {
     pub fn new(xlsx_operator: XOpe) -> Self {
         xlsx_operator.to_zip();
         xlsx_operator.decompress();
         let workbook = WorkBook::new(&xlsx_operator.read_workbook());
         let shared_strings = SharedStrings::new(&xlsx_operator.read_shared_strings());
-        let sheet_map = SheetMap::new();
         Excel {
             xlsx_operator,
             workbook,
             shared_strings,
-            sheet_map,
         }
     }
-    pub fn save(&mut self, sheet: SheetA) {
-        println!("{}", sheet.to_xml())
+    pub fn save(&self, sheet: SheetA) {
+        println!("{}", sheet.to_xml());
     }
-
     pub fn close(self) {
+        println!("{}", self.shared_strings.to_xml());
         self.xlsx_operator.to_excel()
     }
-    pub fn get_sheet(&mut self, sheet_name: &str) -> SheetA {
+    pub fn get_sheet(&self, sheet_name: &str) -> SheetA {
         let e_sheet_name = self.workbook.get_excel_sheet_name(&sheet_name);
         let source = self.xlsx_operator.read_sheet(e_sheet_name);
-        let shared_strings = self.shared_strings.get_mut();
+        let shared_strings = self.shared_strings.get();
         let sheet = SheetA::new(sheet_name, source, shared_strings);
-        //self.sheet_map.register_sheet(sheet_name, sheet);
         sheet
-        //let sheet = self.sheet_map.get_sheet(sheet_name).unwrap();
-        //sheet
     }
 }
-impl<'a> Excel<'a, XLSXFile<'a>> {
+impl<'a> Excel<XLSXFile<'a>> {
     pub fn open(xlsx_file: &'a str) -> Self {
         let xlsx_operator = XLSXFile::open(xlsx_file);
         xlsx_operator.to_zip();
         xlsx_operator.decompress();
         let workbook = WorkBook::new(&xlsx_operator.read_workbook());
         let shared_strings = SharedStrings::new(&xlsx_operator.read_shared_strings());
-        let sheet_map = SheetMap::new();
         Excel {
             xlsx_operator,
             workbook,
             shared_strings,
-            sheet_map,
         }
     }
 }
@@ -239,8 +213,5 @@ mod excel_tests {
                 </worksheet>
                         "#;
         let oprator = XLSXOperatorMock::new(sheet1, shared_strings, workbook);
-        let mut excel: Excel<XLSXOperatorMock> = Excel::new(oprator);
-        let sheet = excel.get_sheet("term1"); //.get_sheet("term1");
-                                              //sheet.set_cell(ECell::new("", "A1"));
     }
 }

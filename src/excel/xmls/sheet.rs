@@ -1,4 +1,7 @@
-use std::fmt::{Debug, Display};
+use std::{
+    cell::RefCell,
+    fmt::{Debug, Display},
+};
 
 use super::shared_strings::SharedStringsInterface;
 use crate::{
@@ -13,17 +16,17 @@ use crate::{
 pub struct Sheet<'a, S: SharedStringsInterface> {
     sheet_name: String,
     node: XMLNode,
-    shared_strings: &'a mut S,
+    shared_strings: RefCell<&'a S>,
 }
 impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
-    pub fn new(sheet_name: &str, source: String, shared_strings: &'a mut S) -> Self {
+    pub fn new(sheet_name: &str, source: String, shared_strings: &'a S) -> Self {
         let node = XMLNode::from(source.as_str());
         let node = node.search_node("worksheet").unwrap();
         let node = node.search_node("sheetData").unwrap().clone();
         Sheet {
             sheet_name: sheet_name.to_string(),
             node,
-            shared_strings,
+            shared_strings: RefCell::new(shared_strings),
         }
     }
     pub fn get_sheet_name(&self) -> &str {
@@ -43,7 +46,8 @@ impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
     fn get_cell_v(&self, index: CellIndex) -> Option<String> {
         let c_node = self.node.search_child_by_id("r", index.get_value());
         if let Some(c_node) = c_node {
-            let c_node = CellNode::new(c_node, self.shared_strings);
+            let shared_strings = self.shared_strings.borrow().get_values();
+            let c_node = CellNode::new(c_node, shared_strings);
             c_node.get_v_text()
         } else {
             None
@@ -101,7 +105,8 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
                 let column_index = cell_index.get_column_index();
                 let nones_range = (result.len() + 1)..column_index;
                 nones_range.for_each(|_| result.push(None));
-                let c_node = CellNode::new(c_node, self.shared_strings);
+                let shared_strings = self.shared_strings.borrow().get_values();
+                let c_node = CellNode::new(c_node, shared_strings);
                 result.push(c_node.get_v_text());
             }
             result
@@ -463,6 +468,12 @@ mod mock_shared_strings {
         }
     }
     impl SharedStringsInterface for SharedStringsMock {
+        fn to_xml(&self) -> String {
+            "".to_string()
+        }
+        fn get_values(&self) -> &Vec<String> {
+            &self.values
+        }
         fn get_shared_string(&self, index: usize) -> &str {
             self.values[index].as_str()
         }

@@ -11,12 +11,12 @@ pub enum CellType {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct CellNode<'a, T: SharedStringsInterface> {
+pub struct CellNode<'a> {
     node: &'a XMLNode,
-    shared_strings: &'a T,
+    shared_strings: &'a Vec<String>,
 }
-impl<'a, T: SharedStringsInterface> CellNode<'a, T> {
-    pub fn new(node: &'a XMLNode, shared_strings: &'a T) -> Self {
+impl<'a> CellNode<'a> {
+    pub fn new(node: &'a XMLNode, shared_strings: &'a Vec<String>) -> Self {
         CellNode {
             node,
             shared_strings,
@@ -42,7 +42,7 @@ impl<'a, T: SharedStringsInterface> CellNode<'a, T> {
                 }
                 if self.is_use_shared_strings() {
                     let index = text.parse::<usize>().unwrap();
-                    return Some(self.shared_strings.get_shared_string(index).to_string());
+                    return Some(self.shared_strings.get(index).unwrap().to_string());
                 }
             }
             return None;
