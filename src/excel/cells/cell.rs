@@ -1,12 +1,12 @@
 #[derive(PartialEq, Eq, Debug)]
-pub struct Cell<T: PartialEq + Eq> {
+pub struct ECell<T: PartialEq + Eq> {
     value: T,
     index: CellIndex,
 }
-impl<T: PartialEq + Eq> Cell<T> {
+impl<T: PartialEq + Eq> ECell<T> {
     #[allow(dead_code)]
     pub fn new(value: T, cell_index: &str) -> Self {
-        Cell {
+        ECell {
             value,
             index: CellIndex::new(cell_index),
         }
@@ -122,14 +122,14 @@ mod cell_index_tests {
 #[cfg(test)]
 mod cell_tests {
 
-    use super::{Cell, CellIndex};
+    use super::{CellIndex, ECell};
 
     #[test]
     fn new_cell_test() {
-        let cell = Cell::new("test", "A123");
+        let ECell = ECell::new("test", "A123");
         assert_eq!(
-            cell,
-            Cell {
+            ECell,
+            ECell {
                 value: "test",
                 index: CellIndex {
                     excel_index: "A123".to_string(),
@@ -138,10 +138,10 @@ mod cell_tests {
                 }
             }
         );
-        let cell = Cell::new("test", "AA1");
+        let ECell = ECell::new("test", "AA1");
         assert_eq!(
-            cell,
-            Cell {
+            ECell,
+            ECell {
                 value: "test",
                 index: CellIndex {
                     excel_index: "AA1".to_string(),
@@ -150,10 +150,10 @@ mod cell_tests {
                 }
             }
         );
-        let cell = Cell::new("test", "LRO1");
+        let ECell = ECell::new("test", "LRO1");
         assert_eq!(
-            cell,
-            Cell {
+            ECell,
+            ECell {
                 value: "test",
                 index: CellIndex {
                     excel_index: "LRO1".to_string(),
@@ -162,10 +162,10 @@ mod cell_tests {
                 }
             }
         );
-        let cell = Cell::new("test2", "B1");
+        let ECell = ECell::new("test2", "B1");
         assert_eq!(
-            cell,
-            Cell {
+            ECell,
+            ECell {
                 value: "test2",
                 index: CellIndex {
                     excel_index: "B1".to_string(),

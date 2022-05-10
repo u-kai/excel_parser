@@ -71,18 +71,6 @@ impl<'a, T: SharedStringsInterface> MutCellNode<'a, T> {
             shared_strings,
         }
     }
-    pub fn new_c_node(value: &'a str, index: CellIndex, value_type: CellType) -> XMLNode {
-        let mut c_node = XMLNode::new("c", NodeType::Element);
-        c_node.add_element("r", vec![index.get_value()]);
-        match value_type {
-            CellType::Num => (),
-            CellType::Str => c_node.add_element("t", vec!["s"]),
-        }
-        let mut v_node = XMLNode::new("v", NodeType::Element);
-        v_node.add_text(value);
-        c_node.add_node(v_node);
-        c_node
-    }
     pub fn get_v_text(&self) -> String {
         if let Some(v_node) = self.node.search_node("v") {
             if let Some(text) = v_node.get_child_text(0) {

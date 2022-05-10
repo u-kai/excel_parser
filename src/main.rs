@@ -1,20 +1,16 @@
-use excel::cells::cell::ColumnAlphabet;
+use crate::excel::cells::cell::ECell;
 use excel::excel::Excel;
 use excel::xmls::sheet::WorkSheet;
-use std::time::Instant;
 
 mod excel;
 mod html;
 mod xml;
 fn main() {
     let mut excel = Excel::open("test_buf.xlsx");
-    let now = Instant::now();
-    println!(
-        "{:?}",
-        excel
-            .get_sheet("term1")
-            .get_column_range(ColumnAlphabet::new("A"), ColumnAlphabet::new("ZZZ"))
-    );
-    println!("{:?}", now.elapsed());
+    let mut sheet = excel.get_sheet("term1");
+    println!("{:?}", sheet.get_all_cell());
+    sheet.set_cell(ECell::new("new-data", "C2"));
+    sheet.set_cell(ECell::new("new3", "A1"));
+    //    excel.save(sheet);
     excel.close();
 }

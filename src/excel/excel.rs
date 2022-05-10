@@ -47,7 +47,11 @@ impl<'a, XOpe: XLSXOperator> Excel<'a, XOpe> {
             sheet_map,
         }
     }
-    pub fn close(&'a mut self) {
+    pub fn save(&mut self, sheet: SheetA) {
+        println!("{}", sheet.to_xml())
+    }
+
+    pub fn close(self) {
         self.xlsx_operator.to_excel()
     }
     pub fn get_sheet(&mut self, sheet_name: &str) -> SheetA {
@@ -56,8 +60,9 @@ impl<'a, XOpe: XLSXOperator> Excel<'a, XOpe> {
         let shared_strings = self.shared_strings.get_mut();
         let sheet = SheetA::new(sheet_name, source, shared_strings);
         //self.sheet_map.register_sheet(sheet_name, sheet);
-        //let sheet = self.sheet_map.get_sheet(sheet_name).unwrap();
         sheet
+        //let sheet = self.sheet_map.get_sheet(sheet_name).unwrap();
+        //sheet
     }
 }
 impl<'a> Excel<'a, XLSXFile<'a>> {
@@ -236,6 +241,6 @@ mod excel_tests {
         let oprator = XLSXOperatorMock::new(sheet1, shared_strings, workbook);
         let mut excel: Excel<XLSXOperatorMock> = Excel::new(oprator);
         let sheet = excel.get_sheet("term1"); //.get_sheet("term1");
-                                              //sheet.set_cell(Cell::new("", "A1"));
+                                              //sheet.set_cell(ECell::new("", "A1"));
     }
 }

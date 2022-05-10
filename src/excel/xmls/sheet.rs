@@ -3,7 +3,7 @@ use std::fmt::{Debug, Display};
 use super::shared_strings::SharedStringsInterface;
 use crate::{
     excel::cells::{
-        cell::{Cell, CellIndex, ColumnAlphabet},
+        cell::{CellIndex, ColumnAlphabet, ECell},
         cell_node::CellNode,
     },
     xml::nodes::{node::XMLNode, node_type::NodeType},
@@ -141,9 +141,9 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
         for (_, row) in before_t.iter().enumerate() {
             let mut buf = Vec::new();
             for j in 0..max_len {
-                let cell = row.get(j);
-                if let Some(cell) = cell {
-                    buf.push(cell.clone());
+                let ECell = row.get(j);
+                if let Some(ECell) = ECell {
+                    buf.push(ECell.clone());
                 } else {
                     buf.push(None);
                 }
@@ -152,14 +152,14 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
         }
         result
     }
-    fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, cell: Cell<T>) -> () {
-        let index = cell.get_index();
-        let value = cell.get_value();
+    fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, ECell: ECell<T>) -> () {
+        let index = ECell.get_index();
+        let value = ECell.get_value();
         let maybe_child = self.node.search_child_by_id_mut("r", index.get_value());
-        if let Some(cell) = maybe_child {
-            cell.add_node(XMLNode::from(format!("<v>{}</v>", value).as_str()));
-            cell.add_element("t", vec!["str"]);
-            cell.set_node_type(NodeType::Element);
+        if let Some(ECell) = maybe_child {
+            ECell.add_node(XMLNode::from(format!("<v>{}</v>", value).as_str()));
+            ECell.add_element("t", vec!["str"]);
+            ECell.set_node_type(NodeType::Element);
             return;
         }
     }
@@ -174,13 +174,13 @@ pub trait WorkSheet {
         start: ColumnAlphabet,
         end: ColumnAlphabet,
     ) -> Vec<Vec<Option<String>>>;
-    fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, cell: Cell<T>) -> ();
+    fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, ECell: ECell<T>) -> ();
 }
 
 #[cfg(test)]
 mod xml_sheet_test {
     use crate::excel::{
-        cells::cell::{Cell, CellIndex, ColumnAlphabet},
+        cells::cell::{CellIndex, ColumnAlphabet, ECell},
         xmls::{
             shared_strings::SharedStringsInterface,
             sheet::{Sheet, WorkSheet},
@@ -336,7 +336,7 @@ mod xml_sheet_test {
         );
     }
     #[test]
-    /// expect cell
+    /// expect ECell
     /// | |A|B|C|D|E|F|G|
     /// |-|-|-|-|-|-|-|-|
     /// |1|a| | | | | | |
@@ -368,7 +368,7 @@ mod xml_sheet_test {
         );
     }
     #[test]
-    /// expect cell
+    /// expect ECell
     /// | |A|B|C|D|E|F|G|
     /// |-|-|-|-|-|-|-|-|
     /// |1|a| | | | | | |
@@ -400,7 +400,7 @@ mod xml_sheet_test {
         );
     }
     #[test]
-    /// expect cell
+    /// expect ECell
     /// | |A|B|C|D|E|F|G|
     /// |-|-|-|-|-|-|-|-|
     /// |1|a| | | | | | |
@@ -435,7 +435,7 @@ mod xml_sheet_test {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
         let mut sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
-        let new_cell = Cell::new("new-data", "A2");
+        let new_cell = ECell::new("new-data", "A2");
         sheet.set_cell(new_cell);
         println!("{}", sheet.to_xml());
         assert_eq!(
