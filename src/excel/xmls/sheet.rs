@@ -146,9 +146,9 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
         for (_, row) in before_t.iter().enumerate() {
             let mut buf = Vec::new();
             for j in 0..max_len {
-                let ECell = row.get(j);
-                if let Some(ECell) = ECell {
-                    buf.push(ECell.clone());
+                let cell = row.get(j);
+                if let Some(cell) = cell {
+                    buf.push(cell.clone());
                 } else {
                     buf.push(None);
                 }
@@ -157,16 +157,18 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
         }
         result
     }
-    fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, ECell: ECell<T>) -> () {
-        let index = ECell.get_index();
-        let value = ECell.get_value();
+    fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, cell: ECell<T>) -> () {
+        let index = cell.get_index();
+        let value = cell.get_value();
         let maybe_child = self.node.search_child_by_id_mut("r", index.get_value());
-        if let Some(ECell) = maybe_child {
-            ECell.add_node(XMLNode::from(format!("<v>{}</v>", value).as_str()));
-            ECell.add_element("t", vec!["str"]);
-            ECell.set_node_type(NodeType::Element);
+        if let Some(cell) = maybe_child {
+            println!("yes {} use", "#".repeat(100));
+            cell.add_node(XMLNode::from(format!("<v>{}</v>", value).as_str()));
+            cell.add_element("t", vec!["str"]);
+            cell.set_node_type(NodeType::Element);
             return;
         }
+        println!("{}notuse", "#".repeat(100))
     }
 }
 pub trait WorkSheet {
@@ -179,7 +181,7 @@ pub trait WorkSheet {
         start: ColumnAlphabet,
         end: ColumnAlphabet,
     ) -> Vec<Vec<Option<String>>>;
-    fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, ECell: ECell<T>) -> ();
+    fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, cell: ECell<T>) -> ();
 }
 
 #[cfg(test)]

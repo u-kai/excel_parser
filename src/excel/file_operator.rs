@@ -1,7 +1,7 @@
 use std::{
     cell::Cell,
     fs::{rename, File},
-    io::{BufReader, Read},
+    io::{BufReader, BufWriter, Read, Write},
     path::{Path, PathBuf},
     process::Command,
 };
@@ -13,6 +13,7 @@ pub trait XLSXOperator {
     fn read_sheet(&self, e_sheet_name: &str) -> String;
     fn read_workbook(&self) -> String;
     fn read_shared_strings(&self) -> String;
+    fn write_sheet(&self, e_sheet_name: &str, content: &str) -> ();
 }
 #[derive(PartialEq, Eq, Clone, Copy)]
 enum XLSXFileState {
@@ -48,6 +49,22 @@ impl<'a> XLSXFile<'a> {
         );
         let _ = reader.read_to_string(&mut buf);
         buf
+    }
+    fn write_file(&self, filepath: &str, content: &str) {
+        let filepath = self.decompress_root.join(filepath);
+        let mut writer = BufWriter::new(
+            File::open(&filepath).expect(format!("{:?} is not found", filepath.display()).as_str()),
+        );
+        let _ = writer.write_all(content.as_bytes());
+    }
+    fn workbook_path(&self) -> &str {
+        "xl/workbook.xml"
+    }
+    fn sheet_path(&self, e_sheet_name: &str) -> String {
+        format!("xl/worksheets/{}.xml", e_sheet_name)
+    }
+    fn shared_strings(&self) -> &str {
+        "xl/sharedStrings.xml"
     }
 }
 
@@ -95,18 +112,15 @@ impl<'a> XLSXOperator for XLSXFile<'a> {
         }
     }
     fn read_sheet(&self, e_sheet_name: &str) -> String {
-        let sheet_path = format!("xl/worksheets/{}.xml", e_sheet_name);
-        let source = self.read_file(&sheet_path);
-        source
+        self.read_file(self.sheet_path(e_sheet_name).as_str())
     }
     fn read_shared_strings(&self) -> String {
-        let path = "xl/sharedStrings.xml";
-        let source = self.read_file(path);
-        source
+        self.read_file(self.shared_strings())
     }
     fn read_workbook(&self) -> String {
-        let path = "xl/workbook.xml";
-        let source = self.read_file(path);
-        source
+        self.read_file(self.workbook_path())
+    }
+    fn write_sheet(&self, e_sheet_name: &str, content: &str) -> () {
+        self.write_file(self.sheet_path(e_sheet_name).as_str(), content);
     }
 }

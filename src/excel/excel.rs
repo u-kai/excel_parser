@@ -27,10 +27,12 @@ impl<XOpe: XLSXOperator> Excel<XOpe> {
         }
     }
     pub fn save(&self, sheet: SheetA) {
-        println!("{}", sheet.to_xml());
+        self.xlsx_operator.write_sheet(
+            self.workbook.get_excel_sheet_name(sheet.get_sheet_name()),
+            sheet.to_xml().as_str(),
+        )
     }
     pub fn close(self) {
-        println!("{}", self.shared_strings.to_xml());
         self.xlsx_operator.to_excel()
     }
     pub fn get_sheet(&self, sheet_name: &str) -> SheetA {
@@ -97,6 +99,9 @@ mod excel_tests {
         }
         fn read_shared_strings(&self) -> String {
             self.shared_strings.clone()
+        }
+        fn write_sheet(&self, _e_sheet_name: &str, _content: &str) -> () {
+            println!("write")
         }
     }
     #[test]
