@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct NodeValue {
@@ -21,14 +21,34 @@ impl NodeValue {
     }
     pub fn to_string(&self) -> String {
         if let Some(element) = &self.element {
-            let result = element.iter().fold(self.value.clone(), |acc, cur| {
-                let mut values = cur
-                    .1
-                    .iter()
-                    .fold(String::new(), |acc, cur| format!("{}{} ", acc, cur));
-                values.pop();
-                format!(r#"{} {}="{}""#, acc, cur.0, values)
+            let mut sort_keys = element.keys().collect::<Vec<_>>();
+            sort_keys.sort_by(|first, second| {
+                for (i, a) in first.bytes().enumerate() {
+                    if second.get(i..=i).is_none() {
+                        return Ordering::Greater;
+                    }
+                    if a == second.get(i..=i).unwrap().as_bytes()[0] {
+                        continue;
+                    }
+                    if a > second.get(i..=i).unwrap().as_bytes()[0] {
+                        return Ordering::Greater;
+                    } else {
+                        return Ordering::Less;
+                    }
+                }
+                return Ordering::Equal;
             });
+            let result = sort_keys
+                .iter()
+                .map(|key| (key, element.get(key.as_str()).unwrap()))
+                .fold(self.value.clone(), |acc, cur| {
+                    let mut values = cur
+                        .1
+                        .iter()
+                        .fold(String::new(), |acc, cur| format!("{}{} ", acc, cur));
+                    values.pop();
+                    format!(r#"{} {}="{}""#, acc, cur.0, values)
+                });
             result
         } else {
             self.value.clone()
@@ -82,19 +102,7 @@ impl NodeValue {
 }
 impl Into<String> for NodeValue {
     fn into(self) -> String {
-        if let Some(element) = self.element {
-            let result = element.iter().fold(self.value, |acc, cur| {
-                let mut values = cur
-                    .1
-                    .iter()
-                    .fold(String::new(), |acc, cur| format!("{}{} ", acc, cur));
-                values.pop();
-                format!(r#"{} {}="{}""#, acc, cur.0, values)
-            });
-            result
-        } else {
-            self.value
-        }
+        self.to_string()
     }
 }
 
@@ -152,13 +160,30 @@ mod node_value_test {
         assert_eq!(expect, r#"test key1="value1""#.to_string());
         let mut node = NodeValue::new("test");
         node.add_element("key1", vec!["value1"]);
-        node.add_element("key2", vec!["value1 value2"]);
+        node.add_element("yek1", vec!["value1 value2"]);
         let expect: String = node.into();
         // key value の順番が安定していないので毎回実行結果が変わりうる
         // どうやってテストするべきか
         assert_eq!(
-            expect.len(),
-            r#"test key1="value1" key2="value1 value2""#.to_string().len()
+            expect,
+            r#"test key1="value1" yek1="value1 value2""#.to_string()
+        );
+        let mut node = NodeValue::new("test");
+        node.add_element("a", vec!["value1"]);
+        node.add_element("b", vec!["value2 value3"]);
+        let expect: String = node.to_string();
+        // key value の順番が安定していないので毎回実行結果が変わりうる
+        // どうやってテストするべきか
+        assert_eq!(expect, r#"test a="value1" b="value2 value3""#.to_string());
+        let mut node = NodeValue::new("test");
+        node.add_element("key1", vec!["value1"]);
+        node.add_element("key2", vec!["value2 value3"]);
+        let expect: String = node.to_string();
+        // key value の順番が安定していないので毎回実行結果が変わりうる
+        // どうやってテストするべきか
+        assert_eq!(
+            expect,
+            r#"test key1="value1" key2="value2 value3""#.to_string()
         );
     }
 }

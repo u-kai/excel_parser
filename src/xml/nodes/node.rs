@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::{
     node_type::NodeType,
     node_value::{NodeElement, NodeValue},
