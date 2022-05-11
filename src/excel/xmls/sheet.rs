@@ -1,5 +1,6 @@
 use std::{
     cell::RefCell,
+    collections::HashMap,
     fmt::{Debug, Display},
 };
 
@@ -21,8 +22,6 @@ pub struct Sheet<'a, S: SharedStringsInterface> {
 impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
     pub fn new(sheet_name: &str, source: String, shared_strings: &'a S) -> Self {
         let node = XMLNode::from(source.as_str());
-        let node = node.search_node("worksheet").unwrap();
-        let node = node.search_node("sheetData").unwrap().clone();
         Sheet {
             sheet_name: sheet_name.to_string(),
             node,
@@ -32,8 +31,22 @@ impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
     pub fn get_sheet_name(&self) -> &str {
         &self.sheet_name
     }
+    fn get_sheet_data_node(&self) -> &XMLNode {
+        self.node
+            .search_node("worksheet")
+            .expect(format!("not found worksheet\n{:?}", &self.node).as_str())
+            .search_node("sheetData")
+            .expect(format!("not found sheetData\n{:?}", &self.node).as_str())
+    }
+    fn get_sheet_data_node_mut(&mut self) -> &mut XMLNode {
+        self.node
+            .search_node_mut("worksheet")
+            .unwrap()
+            .search_node_mut("sheetData")
+            .unwrap()
+    }
     pub fn get_all_row_index(&self) -> Vec<usize> {
-        let rows = self.node.search_all_nodes("row");
+        let rows = self.get_sheet_data_node().search_all_nodes("row");
         if let Some(rows) = rows {
             return rows
                 .iter()
@@ -44,7 +57,9 @@ impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
         Vec::new()
     }
     fn get_cell_v(&self, index: CellIndex) -> Option<String> {
-        let c_node = self.node.search_child_by_id("r", index.get_value());
+        let c_node = self
+            .get_sheet_data_node()
+            .search_child_by_id("r", index.get_value());
         if let Some(c_node) = c_node {
             let shared_strings = self.shared_strings.borrow().get_values();
             let c_node = CellNode::new(c_node, shared_strings);
@@ -95,7 +110,7 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
     }
     fn get_row(&self, row_index: usize) -> Vec<Option<String>> {
         let row_node = self
-            .node
+            .get_sheet_data_node()
             .search_child_by_id("r", row_index.to_string().as_str());
         if let Some(row_node) = row_node {
             let c_nodes = row_node.search_all_nodes("c").unwrap();
@@ -115,14 +130,20 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
         }
     }
     fn get_column(&self, s: ColumnAlphabet) -> Vec<Option<String>> {
-        let rows = self.node.search_all_nodes("row");
+        let rows = self.get_sheet_data_node().search_all_nodes("row");
         if rows.is_none() {
             return vec![None];
         }
+        println!("{:?}", rows);
         let mut result = Vec::new();
         for row in rows.unwrap().iter() {
             let mut is_exist = false;
             for c in row.search_all_nodes("c").unwrap().iter() {
+                println!("{:?}", c.search_element("r"));
+                let element = c.search_element("r");
+                if element.is_none() {
+                    continue;
+                }
                 let cell_index = CellIndex::new(c.search_element("r").unwrap());
                 let column_index = cell_index.get_column_index();
                 if column_index == s.to_number() {
@@ -160,15 +181,22 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
     fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, cell: ECell<T>) -> () {
         let index = cell.get_index();
         let value = cell.get_value();
-        let maybe_child = self.node.search_child_by_id_mut("r", index.get_value());
+        let maybe_child = self
+            .get_sheet_data_node_mut()
+            .search_child_by_id_mut("r", index.get_value());
         if let Some(cell) = maybe_child {
-            println!("yes {} use", "#".repeat(100));
-            cell.add_node(XMLNode::from(format!("<v>{}</v>", value).as_str()));
-            cell.add_element("t", vec!["str"]);
-            cell.set_node_type(NodeType::Element);
+            if let Some(v_node) = cell.search_node_mut("v") {
+                v_node.change_text(value.to_string().as_str());
+            } else {
+                cell.add_node(XMLNode::from(format!("<v>{}</v>", value).as_str()));
+                let mut element = HashMap::new();
+                element.insert("t".to_string(), vec!["str".to_string()]);
+                element.insert("r".to_string(), vec![index.get_value().to_string()]);
+                cell.set_element(element);
+                cell.set_node_type(NodeType::Element);
+            }
             return;
         }
-        println!("{}notuse", "#".repeat(100))
     }
 }
 pub trait WorkSheet {
@@ -444,7 +472,6 @@ mod xml_sheet_test {
         let mut sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
         let new_cell = ECell::new("new-data", "A2");
         sheet.set_cell(new_cell);
-        println!("{}", sheet.to_xml());
         assert_eq!(
             sheet.get_column(ColumnAlphabet::new("A")),
             vec![

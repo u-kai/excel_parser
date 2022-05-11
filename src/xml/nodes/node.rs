@@ -232,6 +232,9 @@ impl XMLNode {
     pub fn add_element(&mut self, key: &str, value: Vec<&str>) {
         self.value.add_element(key, value)
     }
+    pub fn set_element(&mut self, element: NodeElement) {
+        self.value.set_element(element)
+    }
     #[allow(dead_code)]
     pub fn element_all(&self, key: &str, value: &str) -> Option<Vec<&XMLNode>> {
         if self.has_nodes() {
@@ -304,9 +307,6 @@ impl XMLNode {
     #[allow(dead_code)]
     pub fn get_node_value(&self) -> &NodeValue {
         &self.value
-    }
-    pub fn set_element(&mut self, element: HashMap<String, Vec<String>>) {
-        self.value.set_element(element)
     }
     #[allow(dead_code)]
     fn has_characters(&self) -> bool {
