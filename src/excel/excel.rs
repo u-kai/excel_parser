@@ -1,10 +1,6 @@
 use super::{
     file_operator::{XLSXFile, XLSXOperator},
-    xmls::{
-        shared_strings::{SharedStrings, SharedStringsInterface},
-        sheet::Sheet,
-        workbook::WorkBook,
-    },
+    xmls::{shared_strings::SharedStrings, sheet::Sheet, workbook::WorkBook},
 };
 
 type SheetA<'a> = Sheet<'a, SharedStrings>;
@@ -32,14 +28,14 @@ impl<XOpe: XLSXOperator> Excel<XOpe> {
             sheet.to_xml().as_str(),
         )
     }
-    pub fn close(self) {
-        self.xlsx_operator.to_excel()
-    }
     pub fn get_sheet(&self, sheet_name: &str) -> SheetA {
         let e_sheet_name = self.workbook.get_excel_sheet_name(&sheet_name);
         let source = self.xlsx_operator.read_sheet(e_sheet_name);
         let sheet = SheetA::new(sheet_name, source, &self.shared_strings);
         sheet
+    }
+    fn close(&mut self) {
+        self.xlsx_operator.to_excel()
     }
 }
 impl<'a> Excel<XLSXFile<'a>> {
@@ -54,6 +50,11 @@ impl<'a> Excel<XLSXFile<'a>> {
             workbook,
             shared_strings,
         }
+    }
+}
+impl<T: XLSXOperator> Drop for Excel<T> {
+    fn drop(&mut self) {
+        self.close()
     }
 }
 

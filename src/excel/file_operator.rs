@@ -69,20 +69,12 @@ impl<'a> XLSXFile<'a> {
 impl<'a> XLSXOperator for XLSXFile<'a> {
     fn decompress(&self) -> () {
         if self.state.get() == XLSXFileState::Zip {
-            let command_arg = format!(
-                "unzip {} -d ./",
-                self.zip_name.to_str().unwrap(),
-                //self.decompress_root.to_str().unwrap()
-            );
+            let command_arg = format!("unzip {} -d ./", self.zip_name.to_str().unwrap(),);
             Command::new("zsh")
                 .arg("-c")
                 .arg(command_arg)
                 .output()
                 .unwrap();
-            //let mv_commad = format!(
-            //"mv {:?}/{:?} {:?}",
-            //self.decompress_root, self.filename, self.filename
-            //);
             let rm_commad = format!("rm -rf {}", self.zip_name.to_str().unwrap());
             Command::new("zsh")
                 .arg("-c")
@@ -128,7 +120,6 @@ impl<'a> XLSXOperator for XLSXFile<'a> {
                     .arg(command_arg)
                     .output()
                     .unwrap();
-                //let _ = rename(&self.zip_name, &self.filename).unwrap();
             }
         }
         self.state.set(XLSXFileState::Excel)
@@ -145,7 +136,6 @@ impl<'a> XLSXOperator for XLSXFile<'a> {
                 .arg(command_arg)
                 .output()
                 .unwrap();
-            //let _ = rename(&self.filename, &self.zip_name).unwrap();
             self.state.set(XLSXFileState::Zip)
         }
     }
