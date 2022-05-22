@@ -48,6 +48,11 @@ impl Into<String> for XMLNode {
 }
 #[cfg(test)]
 mod xml_into_str_test {
+    use std::{
+        fs::{set_permissions, File},
+        io::{BufReader, Read},
+    };
+
     use crate::xml::nodes::node::XMLNode;
 
     #[test]
@@ -77,4 +82,13 @@ mod xml_into_str_test {
         println!("{:?}", expect);
         assert_eq!(expect.len(), data.len());
     }
+    //#[test]
+    //fn same_file_test() {
+    //let mut buf = String::new();
+    //let mut file = BufReader::new(File::open("test/xl/worksheets/sheet1.xml").unwrap());
+    //let _ = file.read_to_string(&mut buf);
+
+    //let node = XMLNode::from(buf.as_str());
+    //assert_eq!(node.to_string(), buf);
+    //}
 }

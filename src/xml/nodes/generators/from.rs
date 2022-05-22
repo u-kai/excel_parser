@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, iter::Peekable};
 
 use crate::xml::{
     nodes::{node::XMLNode, node_type::NodeType},
@@ -175,3 +175,81 @@ impl Element {
         self.key.push(c)
     }
 }
+
+//pub fn peekable<'a, I>(token_array: &mut Peekable<I>) -> XMLNode
+//where
+//I: Iterator<Item = &'a Token>,
+//{
+//let mut node = XMLNode::new("", NodeType::Character);
+//loop {
+//if let Some(token) = token_array.peek() {}
+//return node;
+//}
+//}
+
+//#[cfg(test)]
+//mod token_array_test {
+//use std::collections::HashMap;
+
+//use crate::xml::{
+//nodes::{generators::from::peekable, node::XMLNode, node_type::NodeType},
+//tokens::token_array::TokenArray,
+//};
+
+//#[test]
+//fn from_token_array_test() {
+//let data = "<div>
+//<p>p-data</p>
+//div-data
+//</div>";
+//let token_array = TokenArray::new(data).drain();
+//let expect = peekable(&mut token_array.iter().peekable());
+//let mut p = XMLNode::new("p", NodeType::Element);
+//p.add_text("p-data");
+//let mut div = XMLNode::new("div", NodeType::Element);
+//div.add_node(p);
+//div.add_text("div-data");
+//assert_eq!(expect, div);
+////let data = "<div><div>div-first
+////<p>p-data</p>
+////div-data</div>
+////</div>";
+////let token_array = TokenArray::new(data);
+////let expect = XMLNode::from(token_array);
+////let mut p = XMLNode::new("p", NodeType::Element);
+////p.add_text("p-data");
+////let mut div = XMLNode::new("div", NodeType::Element);
+////let mut child_div = XMLNode::new("div", NodeType::Element);
+////child_div.add_text("div-first");
+////child_div.add_node(p);
+////child_div.add_text("div-data");
+////div.add_node(child_div);
+////assert_eq!(expect, div);
+////let data = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+////<div><div>div-first
+////<p>p-data</p>
+////<data/>
+////div-data</div>
+////</div>"#;
+////let expect = XMLNode::from(data);
+////let mut root = XMLNode::new("?xml", NodeType::SingleElement);
+////let mut root_element = HashMap::new();
+////root_element.insert("standalone".to_string(), vec![r#"yes"#.to_string()]);
+////root_element.insert("encoding".to_string(), vec![r#"UTF-8"#.to_string()]);
+////root_element.insert("version".to_string(), vec![r#"1.0"#.to_string()]);
+
+////root.set_element(root_element);
+////let mut p = XMLNode::new("p", NodeType::Element);
+////p.add_text("p-data");
+////let single_data = XMLNode::new("data", NodeType::SingleElement);
+////let mut div = XMLNode::new("div", NodeType::Element);
+////let mut child_div = XMLNode::new("div", NodeType::Element);
+////child_div.add_text("div-first");
+////child_div.add_node(p);
+////child_div.add_node(single_data);
+////child_div.add_text("div-data");
+////div.add_node(child_div);
+////root.add_node(div);
+////assert_eq!(expect, root)
+//}
+//}

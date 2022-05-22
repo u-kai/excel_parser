@@ -36,7 +36,7 @@ impl NodeValue {
                         return Ordering::Less;
                     }
                 }
-                return Ordering::Equal;
+                Ordering::Equal
             });
             let result = sort_keys
                 .iter()
@@ -162,8 +162,6 @@ mod node_value_test {
         node.add_element("key1", vec!["value1"]);
         node.add_element("yek1", vec!["value1 value2"]);
         let expect: String = node.into();
-        // key value の順番が安定していないので毎回実行結果が変わりうる
-        // どうやってテストするべきか
         assert_eq!(
             expect,
             r#"test key1="value1" yek1="value1 value2""#.to_string()
@@ -172,18 +170,14 @@ mod node_value_test {
         node.add_element("a", vec!["value1"]);
         node.add_element("b", vec!["value2 value3"]);
         let expect: String = node.to_string();
-        // key value の順番が安定していないので毎回実行結果が変わりうる
-        // どうやってテストするべきか
         assert_eq!(expect, r#"test a="value1" b="value2 value3""#.to_string());
-        let mut node = NodeValue::new("test");
-        node.add_element("key1", vec!["value1"]);
-        node.add_element("key2", vec!["value2 value3"]);
-        let expect: String = node.to_string();
-        // key value の順番が安定していないので毎回実行結果が変わりうる
-        // どうやってテストするべきか
-        assert_eq!(
-            expect,
-            r#"test key1="value1" key2="value2 value3""#.to_string()
-        );
+        //let mut node = NodeValue::new("test");
+        //node.add_element("key2", vec!["value2 value3"]);
+        //node.add_element("key1", vec!["value1"]);
+        //let expect: String = node.to_string();
+        //assert_eq!(
+        //expect,
+        //r#"test key2="value2 key1="value1" value3""#.to_string()
+        //);
     }
 }

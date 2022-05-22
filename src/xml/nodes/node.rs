@@ -102,17 +102,15 @@ impl XMLNode {
     #[allow(dead_code)]
     pub fn search_node_mut(&mut self, search_value: &str) -> Option<&mut XMLNode> {
         if self.has_nodes() {
-            let d = self
+            return self
                 .children
                 .as_mut()
                 .unwrap()
                 .iter_mut()
                 .filter(|child| child.get_value() == search_value)
                 .next();
-            d
-        } else {
-            None
         }
+        None
     }
     #[allow(dead_code)]
     pub fn search_all_nodes_mut(&mut self, search_value: &str) -> Option<Vec<&mut XMLNode>> {
@@ -197,9 +195,9 @@ impl XMLNode {
                     break;
                 }
             }
-        } else {
-            self.add_node(new_node)
+            return;
         }
+        self.add_node(new_node)
     }
     pub fn change_text(&mut self, s: &str) {
         fn _push_text_node(node: &mut XMLNode, s: &str) {
