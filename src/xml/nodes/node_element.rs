@@ -1,11 +1,10 @@
-use std::ops::Index;
-
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct NodeElement<'a>(Vec<(&'a str, Vec<&'a str>)>);
 impl<'a> NodeElement<'a> {
     pub fn new(key: &'a str, values: Vec<&'a str>) -> Self {
         NodeElement(vec![(key, values)])
     }
-    pub fn with(element: Vec<(&'a str, Vec<&'a str>)>) -> Self {
+    pub fn with_element(element: Vec<(&'a str, Vec<&'a str>)>) -> Self {
         NodeElement(element)
     }
     fn index_of(&self, key: &str) -> Option<usize> {
