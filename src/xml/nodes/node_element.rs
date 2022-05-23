@@ -17,7 +17,7 @@ pub trait ElementsInterface<'a> {
     fn contains_key(&self, key: &str) -> bool;
     fn to_string(&self) -> String;
     fn search_all_element(&self, key: &str) -> Option<&Vec<&'a str>>;
-    //fn search_element(&self,key:&str)->Option<&'a str>;
+    fn search_element(&self, key: &str) -> Option<&'a str>;
 }
 
 impl<'a> ElementsInterface<'a> for NodeElement<'a> {
@@ -49,6 +49,13 @@ impl<'a> ElementsInterface<'a> for NodeElement<'a> {
             .find(|(e_key, _values)| *e_key == key)
             .map(|(_key, values)| values)
     }
+    fn search_element(&self, key: &str) -> Option<&'a str> {
+        if let Some(values) = self.search_all_element(key) {
+            values.iter().map(|s| *s).next()
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]
@@ -60,6 +67,14 @@ mod node_element_tests {
         }
     }
     use super::NodeElement;
+    #[test]
+    fn search_element_test() {
+        let mut element = NodeElement::new("test", vec!["value"]);
+        element.add_element("test2", vec!["value2", "value3"]);
+        assert_eq!(element.search_element("test"), Some("value"));
+        assert_eq!(element.search_element("test2"), Some("value2"));
+        assert_eq!(element.search_element("test3"), None);
+    }
     #[test]
     fn search_all_element_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
