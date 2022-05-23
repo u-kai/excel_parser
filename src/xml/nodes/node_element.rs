@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 pub struct NodeElement<'a>(Vec<(&'a str, Vec<&'a str>)>);
 impl<'a> NodeElement<'a> {
     pub fn new(key: &'a str, values: Vec<&'a str>) -> Self {
@@ -5,6 +7,15 @@ impl<'a> NodeElement<'a> {
     }
     pub fn with(element: Vec<(&'a str, Vec<&'a str>)>) -> Self {
         NodeElement(element)
+    }
+    fn index_of(&self, key: &str) -> Option<usize> {
+        let mut index = None;
+        self.0.iter().enumerate().for_each(|(i, (e_key, _))| {
+            if *e_key == key {
+                index = Some(i)
+            }
+        });
+        index
     }
 }
 
@@ -15,9 +26,33 @@ pub trait ElementsInterface<'a> {
     fn search_all(&self, key: &str) -> Option<&Vec<&'a str>>;
     fn search(&self, key: &str) -> Option<&'a str>;
     fn is_containe_key_value(&self, key: &str, value: &str) -> bool;
+    fn change(&mut self, key: &'a str, values: Vec<&'a str>) -> ();
 }
 
 impl<'a> ElementsInterface<'a> for NodeElement<'a> {
+    fn search(&self, key: &str) -> Option<&'a str> {
+        if let Some(values) = self.search_all(key) {
+            values.iter().map(|s| *s).next()
+        } else {
+            None
+        }
+    }
+    fn search_all(&self, key: &str) -> Option<&Vec<&'a str>> {
+        self.0
+            .iter()
+            .find(|(e_key, _values)| *e_key == key)
+            .map(|(_key, values)| values)
+    }
+    fn contains_key(&self, key: &str) -> bool {
+        self.0.iter().any(|(e_key, _values)| key == *e_key)
+    }
+    fn is_containe_key_value(&self, key: &str, value: &str) -> bool {
+        if let Some(values) = self.search_all(key) {
+            values.contains(&value)
+        } else {
+            false
+        }
+    }
     fn add(&mut self, key: &'a str, values: Vec<&'a str>) -> () {
         if self.contains_key(key) {
             self.0
@@ -30,35 +65,20 @@ impl<'a> ElementsInterface<'a> for NodeElement<'a> {
         }
         self.0.push((key, values))
     }
+    fn change(&mut self, key: &'a str, values: Vec<&'a str>) -> () {
+        if self.contains_key(key) {
+            let index = self.index_of(key).unwrap();
+            self.0[index] = (key, values);
+        } else {
+            self.0.push((key, values))
+        }
+    }
     fn to_string(&self) -> String {
         let mut with_last_empty = self.0.iter().fold("".to_string(), |acc, cur| {
             format!("{}{} ", acc, taple_to_string(cur))
         });
         with_last_empty.pop();
         with_last_empty
-    }
-    fn contains_key(&self, key: &str) -> bool {
-        self.0.iter().any(|(e_key, _values)| key == *e_key)
-    }
-    fn search_all(&self, key: &str) -> Option<&Vec<&'a str>> {
-        self.0
-            .iter()
-            .find(|(e_key, _values)| *e_key == key)
-            .map(|(_key, values)| values)
-    }
-    fn search(&self, key: &str) -> Option<&'a str> {
-        if let Some(values) = self.search_all(key) {
-            values.iter().map(|s| *s).next()
-        } else {
-            None
-        }
-    }
-    fn is_containe_key_value(&self, key: &str, value: &str) -> bool {
-        if let Some(values) = self.search_all(key) {
-            values.contains(&value)
-        } else {
-            false
-        }
     }
 }
 fn taple_to_string(taple: &(&str, Vec<&str>)) -> String {
@@ -78,6 +98,12 @@ mod node_tests {
         }
     }
     use super::NodeElement;
+    #[test]
+    fn change_test() {
+        let mut element = NodeElement::new("test", vec!["value"]);
+        element.change("test", vec!["value2", "value3"]);
+        assert_eq!(element.search_all("test"), Some(&vec!["value2", "value3"]));
+    }
     #[test]
     fn is_containe_key_value_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
