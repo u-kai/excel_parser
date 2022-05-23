@@ -3,14 +3,14 @@ use super::{
     xmls::{shared_strings::SharedStrings, sheet::Sheet, workbook::WorkBook},
 };
 
-type SheetA<'a> = Sheet<'a, SharedStrings>;
+type SheetA<'a> = Sheet<'a, SharedStrings<'a>>;
 #[derive(Debug, PartialEq, Eq)]
-pub struct Excel<T: XLSXOperator> {
+pub struct Excel<'a, T: XLSXOperator> {
     xlsx_operator: T,
-    workbook: WorkBook,
-    shared_strings: SharedStrings,
+    workbook: WorkBook<'a>,
+    shared_strings: SharedStrings<'a>,
 }
-impl<XOpe: XLSXOperator> Excel<XOpe> {
+impl<'a, XOpe: XLSXOperator> Excel<'a, XOpe> {
     pub fn new(xlsx_operator: XOpe) -> Self {
         xlsx_operator.to_zip();
         xlsx_operator.decompress();
@@ -38,7 +38,7 @@ impl<XOpe: XLSXOperator> Excel<XOpe> {
         self.xlsx_operator.to_excel()
     }
 }
-impl<'a> Excel<XLSXFile<'a>> {
+impl<'a> Excel<'a, XLSXFile<'a>> {
     pub fn open(xlsx_file: &'a str) -> Self {
         let xlsx_operator = XLSXFile::open(xlsx_file);
         xlsx_operator.to_zip();
@@ -52,7 +52,7 @@ impl<'a> Excel<XLSXFile<'a>> {
         }
     }
 }
-impl<T: XLSXOperator> Drop for Excel<T> {
+impl<'a, T: XLSXOperator> Drop for Excel<'a, T> {
     fn drop(&mut self) {
         self.close()
     }
