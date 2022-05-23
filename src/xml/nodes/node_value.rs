@@ -18,6 +18,13 @@ impl<'a> NodeValue<'a> {
     pub fn get_value(&self) -> &str {
         &self.value
     }
+    pub fn is_containe_key_value(&self, key: &str, value: &str) -> bool {
+        if self.element.is_some() {
+            self.element.unwrap().is_containe_key_value(key, value)
+        } else {
+            false
+        }
+    }
     pub fn to_string(&self) -> String {
         if let Some(element) = &self.element {
             "".to_string()
