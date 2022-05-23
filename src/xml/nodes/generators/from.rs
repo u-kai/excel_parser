@@ -5,18 +5,18 @@ use crate::xml::{
     tokens::{states::TokenType, token::Token, token_array::TokenArray},
 };
 
-impl From<&str> for XMLNode {
-    fn from(s: &str) -> Self {
+impl<'a> From<&'a str> for XMLNode<'a> {
+    fn from(s: &'a str) -> Self {
         let token_array = TokenArray::new(s);
         XMLNode::from(token_array)
     }
 }
-impl From<Token> for XMLNode {
+impl<'a> From<Token> for XMLNode<'a> {
     fn from(token: Token) -> Self {
         token_to_node(token)
     }
 }
-impl From<TokenArray> for XMLNode {
+impl<'a> From<TokenArray> for XMLNode<'a> {
     fn from(token_array: TokenArray) -> Self {
         let token_array = token_array.drain();
         let mut parent_stack = Vec::new();
@@ -54,7 +54,7 @@ impl From<TokenArray> for XMLNode {
     }
 }
 
-fn token_to_node(token: Token) -> XMLNode {
+fn token_to_node<'a>(token: Token) -> XMLNode<'a> {
     match token.get_token_type() {
         TokenType::StartToken => start_or_single_token_to_node(token),
         TokenType::SingleToken => start_or_single_token_to_node(token),
@@ -62,7 +62,7 @@ fn token_to_node(token: Token) -> XMLNode {
         _ => panic!("not consider end type"),
     }
 }
-fn start_or_single_token_to_node(token: Token) -> XMLNode {
+fn start_or_single_token_to_node<'a>(token: Token) -> XMLNode<'a> {
     let mut prev_char = StartTokenPrevChar::NodeChar;
     let mut node_value = String::new();
     let mut element = Element::new();
@@ -124,7 +124,7 @@ fn start_or_single_token_to_node(token: Token) -> XMLNode {
         TokenType::StartToken => NodeType::Element,
         _ => panic!("not consider end and character type"),
     };
-    XMLNode::new_with_element(&node_value, element.get_element(), node_type)
+    XMLNode::new_with_element(&node_value, , node_type)
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -150,6 +150,9 @@ impl Element {
             value_buffer: Vec::new(),
             hash_map: HashMap::new(),
         }
+    }
+    pub fn key(&self)->&str {
+        &self.key
     }
     pub fn get_element(self) -> Option<HashMap<String, Vec<String>>> {
         if self.hash_map.is_empty() {
