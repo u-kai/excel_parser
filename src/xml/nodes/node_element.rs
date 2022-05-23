@@ -1,21 +1,24 @@
 pub struct NodeElement<'a>(Vec<(&'a str, Vec<&'a str>)>);
 impl<'a> NodeElement<'a> {
-    fn new(key: &'a str, values: Vec<&'a str>) -> Self {
+    pub fn new(key: &'a str, values: Vec<&'a str>) -> Self {
         NodeElement(vec![(key, values)])
+    }
+    pub fn with(element: Vec<(&'a str, Vec<&'a str>)>) -> Self {
+        NodeElement(element)
     }
 }
 
 pub trait ElementsInterface<'a> {
-    fn add_element(&mut self, key: &'a str, values: Vec<&'a str>) -> ();
+    fn add(&mut self, key: &'a str, values: Vec<&'a str>) -> ();
     fn contains_key(&self, key: &str) -> bool;
     fn to_string(&self) -> String;
-    fn search_all_element(&self, key: &str) -> Option<&Vec<&'a str>>;
-    fn search_element(&self, key: &str) -> Option<&'a str>;
+    fn search_all(&self, key: &str) -> Option<&Vec<&'a str>>;
+    fn search(&self, key: &str) -> Option<&'a str>;
     fn is_containe_key_value(&self, key: &str, value: &str) -> bool;
 }
 
 impl<'a> ElementsInterface<'a> for NodeElement<'a> {
-    fn add_element(&mut self, key: &'a str, values: Vec<&'a str>) -> () {
+    fn add(&mut self, key: &'a str, values: Vec<&'a str>) -> () {
         if self.contains_key(key) {
             self.0
                 .iter_mut()
@@ -37,21 +40,21 @@ impl<'a> ElementsInterface<'a> for NodeElement<'a> {
     fn contains_key(&self, key: &str) -> bool {
         self.0.iter().any(|(e_key, _values)| key == *e_key)
     }
-    fn search_all_element(&self, key: &str) -> Option<&Vec<&'a str>> {
+    fn search_all(&self, key: &str) -> Option<&Vec<&'a str>> {
         self.0
             .iter()
             .find(|(e_key, _values)| *e_key == key)
             .map(|(_key, values)| values)
     }
-    fn search_element(&self, key: &str) -> Option<&'a str> {
-        if let Some(values) = self.search_all_element(key) {
+    fn search(&self, key: &str) -> Option<&'a str> {
+        if let Some(values) = self.search_all(key) {
             values.iter().map(|s| *s).next()
         } else {
             None
         }
     }
     fn is_containe_key_value(&self, key: &str, value: &str) -> bool {
-        if let Some(values) = self.search_all_element(key) {
+        if let Some(values) = self.search_all(key) {
             values.contains(&value)
         } else {
             false
@@ -67,7 +70,7 @@ fn taple_to_string(taple: &(&str, Vec<&str>)) -> String {
 }
 
 #[cfg(test)]
-mod node_element_tests {
+mod node_tests {
     use crate::xml::nodes::node_element::ElementsInterface;
     impl<'a> NodeElement<'a> {
         pub fn get(&self) -> Vec<(&'a str, Vec<&'a str>)> {
@@ -78,7 +81,7 @@ mod node_element_tests {
     #[test]
     fn is_containe_key_value_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
-        element.add_element("test2", vec!["value2", "value3"]);
+        element.add("test2", vec!["value2", "value3"]);
         assert_eq!(element.is_containe_key_value("test", "value"), true);
         assert_eq!(element.is_containe_key_value("test2", "value2"), true);
         assert_eq!(element.is_containe_key_value("test2", "value3"), true);
@@ -86,28 +89,25 @@ mod node_element_tests {
         assert_eq!(element.is_containe_key_value("test", "value2"), false);
     }
     #[test]
-    fn search_element_test() {
+    fn search_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
-        element.add_element("test2", vec!["value2", "value3"]);
-        assert_eq!(element.search_element("test"), Some("value"));
-        assert_eq!(element.search_element("test2"), Some("value2"));
-        assert_eq!(element.search_element("test3"), None);
+        element.add("test2", vec!["value2", "value3"]);
+        assert_eq!(element.search("test"), Some("value"));
+        assert_eq!(element.search("test2"), Some("value2"));
+        assert_eq!(element.search("test3"), None);
     }
     #[test]
-    fn search_all_element_test() {
+    fn search_all_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
-        element.add_element("test2", vec!["value2", "value3"]);
-        assert_eq!(element.search_all_element("test"), Some(&vec!["value"]));
-        assert_eq!(
-            element.search_all_element("test2"),
-            Some(&vec!["value2", "value3"])
-        );
-        assert_eq!(element.search_all_element("test3"), None);
+        element.add("test2", vec!["value2", "value3"]);
+        assert_eq!(element.search_all("test"), Some(&vec!["value"]));
+        assert_eq!(element.search_all("test2"), Some(&vec!["value2", "value3"]));
+        assert_eq!(element.search_all("test3"), None);
     }
     #[test]
     fn containes_key_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
-        element.add_element("test2", vec!["value2", "value3"]);
+        element.add("test2", vec!["value2", "value3"]);
         assert_eq!(element.contains_key("test"), true);
         assert_eq!(element.contains_key("test2"), true);
         assert_eq!(element.contains_key("test3"), false);
@@ -115,35 +115,35 @@ mod node_element_tests {
     #[test]
     fn to_string_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
-        element.add_element("test2", vec!["value2", "value3"]);
+        element.add("test2", vec!["value2", "value3"]);
         assert_eq!(
             element.to_string(),
             r#"test="value" test2="value2 value3""#.to_string()
         );
-        element.add_element("test3", vec![]);
+        element.add("test3", vec![]);
         assert_eq!(
             element.to_string(),
             r#"test="value" test2="value2 value3" test3"#.to_string()
         );
     }
     #[test]
-    fn add_element_test() {
+    fn add_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
-        element.add_element("test2", vec!["value2"]);
+        element.add("test2", vec!["value2"]);
         assert_eq!(
             element.get(),
             vec![("test", vec!["value"]), ("test2", vec!["value2"])]
         );
     }
     #[test]
-    fn add_element_case_add_same_key() {
+    fn add_case_add_same_key() {
         let mut element = NodeElement::new("test", vec!["value"]);
-        element.add_element("test2", vec!["value2"]);
+        element.add("test2", vec!["value2"]);
         assert_eq!(
             element.get(),
             vec![("test", vec!["value"]), ("test2", vec!["value2"])]
         );
-        element.add_element("test2", vec!["value3"]);
+        element.add("test2", vec!["value3"]);
         assert_eq!(
             element.get(),
             vec![("test", vec!["value"]), ("test2", vec!["value2", "value3"])]
