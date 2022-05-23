@@ -22,6 +22,15 @@ pub trait ElementsInterface<'a> {
 
 impl<'a> ElementsInterface<'a> for NodeElement<'a> {
     fn add_element(&mut self, key: &'a str, values: Vec<&'a str>) -> () {
+        if self.contains_key(key) {
+            self.0
+                .iter_mut()
+                .filter(|(e_key, _)| *e_key == key)
+                .for_each(|(_key, mut_values)| {
+                    values.iter().for_each(|value| mut_values.push(*value))
+                });
+            return;
+        }
         self.0.push((key, values))
     }
     fn to_string(&self) -> String {
@@ -91,6 +100,20 @@ mod node_element_tests {
         assert_eq!(
             element.get(),
             vec![("test", vec!["value"]), ("test2", vec!["value2"])]
-        )
+        );
+    }
+    #[test]
+    fn add_element_case_add_same_key() {
+        let mut element = NodeElement::new("test", vec!["value"]);
+        element.add_element("test2", vec!["value2"]);
+        assert_eq!(
+            element.get(),
+            vec![("test", vec!["value"]), ("test2", vec!["value2"])]
+        );
+        element.add_element("test2", vec!["value3"]);
+        assert_eq!(
+            element.get(),
+            vec![("test", vec!["value"]), ("test2", vec!["value2", "value3"])]
+        );
     }
 }
