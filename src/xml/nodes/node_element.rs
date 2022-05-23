@@ -4,13 +4,6 @@ impl<'a> NodeElement<'a> {
         NodeElement(vec![(key, values)])
     }
 }
-fn taple_to_string(taple: &(&str, Vec<&str>)) -> String {
-    if taple.1.len() == 0 {
-        taple.0.to_string()
-    } else {
-        format!(r#"{}="{}""#, taple.0, taple.1.join(" "))
-    }
-}
 
 pub trait ElementsInterface<'a> {
     fn add_element(&mut self, key: &'a str, values: Vec<&'a str>) -> ();
@@ -18,6 +11,7 @@ pub trait ElementsInterface<'a> {
     fn to_string(&self) -> String;
     fn search_all_element(&self, key: &str) -> Option<&Vec<&'a str>>;
     fn search_element(&self, key: &str) -> Option<&'a str>;
+    fn is_containe_key_value(&self, key: &str, value: &str) -> bool;
 }
 
 impl<'a> ElementsInterface<'a> for NodeElement<'a> {
@@ -56,6 +50,20 @@ impl<'a> ElementsInterface<'a> for NodeElement<'a> {
             None
         }
     }
+    fn is_containe_key_value(&self, key: &str, value: &str) -> bool {
+        if let Some(values) = self.search_all_element(key) {
+            values.contains(&value)
+        } else {
+            false
+        }
+    }
+}
+fn taple_to_string(taple: &(&str, Vec<&str>)) -> String {
+    if taple.1.len() == 0 {
+        taple.0.to_string()
+    } else {
+        format!(r#"{}="{}""#, taple.0, taple.1.join(" "))
+    }
 }
 
 #[cfg(test)]
@@ -67,6 +75,16 @@ mod node_element_tests {
         }
     }
     use super::NodeElement;
+    #[test]
+    fn is_containe_key_value_test() {
+        let mut element = NodeElement::new("test", vec!["value"]);
+        element.add_element("test2", vec!["value2", "value3"]);
+        assert_eq!(element.is_containe_key_value("test", "value"), true);
+        assert_eq!(element.is_containe_key_value("test2", "value2"), true);
+        assert_eq!(element.is_containe_key_value("test2", "value3"), true);
+        assert_eq!(element.is_containe_key_value("test3", "value"), false);
+        assert_eq!(element.is_containe_key_value("test", "value2"), false);
+    }
     #[test]
     fn search_element_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
