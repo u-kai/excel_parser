@@ -4,11 +4,18 @@ impl<'a> NodeElement<'a> {
         NodeElement(vec![(key, values)])
     }
 }
+fn taple_to_string(taple: &(&str, Vec<&str>)) -> String {
+    if taple.1.len() == 0 {
+        taple.0.to_string()
+    } else {
+        format!(r#"{}="{}""#, taple.0, taple.1.join(" "))
+    }
+}
 
 pub trait ElementsInterface<'a> {
     fn add_element(&mut self, key: &'a str, values: Vec<&'a str>) -> ();
     //fn contains_key(&self, key: &str) -> bool;
-    //fn to_string(&self) -> String;
+    fn to_string(&self) -> String;
     //fn search_all_element(&self,key:&str)->Option<Vec<&'a str>>;
     //fn search_element(&self,key:&str)->Option<&'a str>;
 }
@@ -16,6 +23,13 @@ pub trait ElementsInterface<'a> {
 impl<'a> ElementsInterface<'a> for NodeElement<'a> {
     fn add_element(&mut self, key: &'a str, values: Vec<&'a str>) -> () {
         self.0.push((key, values))
+    }
+    fn to_string(&self) -> String {
+        let mut with_last_empty = self.0.iter().fold("".to_string(), |acc, cur| {
+            format!("{}{} ", acc, taple_to_string(cur))
+        });
+        with_last_empty.pop();
+        with_last_empty
     }
 }
 
@@ -28,6 +42,20 @@ mod node_element_tests {
         }
     }
     use super::NodeElement;
+    #[test]
+    fn to_string_test() {
+        let mut element = NodeElement::new("test", vec!["value"]);
+        element.add_element("test2", vec!["value2", "value3"]);
+        assert_eq!(
+            element.to_string(),
+            r#"test="value" test2="value2 value3""#.to_string()
+        );
+        element.add_element("test3", vec![]);
+        assert_eq!(
+            element.to_string(),
+            r#"test="value" test2="value2 value3" test3"#.to_string()
+        );
+    }
     #[test]
     fn add_element_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
