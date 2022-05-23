@@ -14,7 +14,7 @@ fn taple_to_string(taple: &(&str, Vec<&str>)) -> String {
 
 pub trait ElementsInterface<'a> {
     fn add_element(&mut self, key: &'a str, values: Vec<&'a str>) -> ();
-    //fn contains_key(&self, key: &str) -> bool;
+    fn contains_key(&self, key: &str) -> bool;
     fn to_string(&self) -> String;
     //fn search_all_element(&self,key:&str)->Option<Vec<&'a str>>;
     //fn search_element(&self,key:&str)->Option<&'a str>;
@@ -31,6 +31,9 @@ impl<'a> ElementsInterface<'a> for NodeElement<'a> {
         with_last_empty.pop();
         with_last_empty
     }
+    fn contains_key(&self, key: &str) -> bool {
+        self.0.iter().any(|(e_key, _values)| key == *e_key)
+    }
 }
 
 #[cfg(test)]
@@ -42,6 +45,14 @@ mod node_element_tests {
         }
     }
     use super::NodeElement;
+    #[test]
+    fn containes_key_test() {
+        let mut element = NodeElement::new("test", vec!["value"]);
+        element.add_element("test2", vec!["value2", "value3"]);
+        assert_eq!(element.contains_key("test"), true);
+        assert_eq!(element.contains_key("test2"), true);
+        assert_eq!(element.contains_key("test3"), false);
+    }
     #[test]
     fn to_string_test() {
         let mut element = NodeElement::new("test", vec!["value"]);
