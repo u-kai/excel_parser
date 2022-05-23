@@ -1,4 +1,4 @@
-use super::{node_element::NodeElement, node_type::NodeType, node_value::NodeValue};
+use super::{node_type::NodeType, node_value::NodeValue};
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct XMLNode<'a> {
     value: NodeValue<'a>,
@@ -34,14 +34,14 @@ impl<'a> XMLNode<'a> {
     pub fn set_node_type(&mut self, node_type: NodeType) {
         self.node_type = node_type
     }
-    pub fn get_children(&self) -> Option<Vec<&XMLNode>> {
+    pub fn get_children(&self) -> Option<Vec<&XMLNode<'a>>> {
         if self.has_children() {
             Some(self.children.as_ref().unwrap().iter().collect())
         } else {
             None
         }
     }
-    pub fn get_child_nodes(&self) -> Option<Vec<&XMLNode>> {
+    pub fn get_child_nodes(&self) -> Option<Vec<&XMLNode<'a>>> {
         if self.has_nodes() {
             let nodes = self
                 .children
@@ -130,7 +130,7 @@ impl<'a> XMLNode<'a> {
         }
     }
     #[allow(dead_code)]
-    pub fn search_node(&self, search_value: &str) -> Option<&XMLNode> {
+    pub fn search_node(&self, search_value: &str) -> Option<&XMLNode<'a>> {
         if self.has_nodes() {
             return self
                 .get_child_nodes()

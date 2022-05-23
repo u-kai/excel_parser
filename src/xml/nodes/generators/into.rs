@@ -1,6 +1,6 @@
 use crate::xml::nodes::{node::XMLNode, node_type::NodeType};
 
-impl XMLNode {
+impl<'a> XMLNode<'a> {
     pub fn to_string(&self) -> String {
         let mut result = String::new();
         match self.get_node_type() {
@@ -41,7 +41,7 @@ impl XMLNode {
         }
     }
 }
-impl Into<String> for XMLNode {
+impl<'a> Into<String> for XMLNode<'a> {
     fn into(self) -> String {
         self.to_string()
     }

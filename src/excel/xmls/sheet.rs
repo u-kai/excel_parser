@@ -16,7 +16,7 @@ use crate::{
 #[derive(PartialEq, Eq, Debug)]
 pub struct Sheet<'a, S: SharedStringsInterface> {
     sheet_name: String,
-    node: XMLNode,
+    node: XMLNode<'a>,
     shared_strings: RefCell<&'a S>,
 }
 impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
@@ -38,7 +38,7 @@ impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
             .search_node("sheetData")
             .expect(format!("not found sheetData\n{:?}", &self.node).as_str())
     }
-    fn get_sheet_data_node_mut(&mut self) -> &mut XMLNode {
+    fn get_sheet_data_node_mut(&mut self) -> &mut XMLNode<'a> {
         self.node
             .search_node_mut("worksheet")
             .unwrap()
@@ -192,7 +192,8 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
                 let mut element = HashMap::new();
                 element.insert("t".to_string(), vec!["str".to_string()]);
                 element.insert("r".to_string(), vec![index.get_value().to_string()]);
-                cell.set_element(element);
+                cell.add_element("t", vec!["str"]);
+                cell.add_element("r", vec![index.get_value()]);
                 cell.set_node_type(NodeType::Element);
             }
             return;
