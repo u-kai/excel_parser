@@ -19,11 +19,10 @@ impl<'a> Token<'a> {
             token_type,
         }
     }
-
     pub fn get_token_type(&self) -> TokenType {
         self.token_type
     }
-    pub fn get_value(&self) -> &TokenValue<'a> {
+    pub fn get_value(&self) -> TokenValue<'a> {
         &self.value
     }
     //pub fn drain(&mut self) -> Token {

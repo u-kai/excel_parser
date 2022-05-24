@@ -1,5 +1,3 @@
-use std::{cmp::Ordering, collections::HashMap};
-
 use super::node_element::{ElementsInterface, NodeElement};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
