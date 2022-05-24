@@ -151,15 +151,6 @@ impl<'a> TokenArray<'a> {
                         prev_char.change_character();
                     }
                 }
-                ////case split character by Blank
-                //if prev_char != PrevChar::Blank && i == start_index {
-                //self.0
-                //.push(Token::with_type(s.get(start_index..i).unwrap(), token_type));
-                //}
-                //start_index = i + 1;
-                //} else {
-                //start_index += 1;
-                //}
             }
         });
         self
@@ -187,6 +178,49 @@ mod token_array_test {
                 Token::with_type("world", TokenType::Character),
                 Token::with_type("div", TokenType::EndToken),
             ]
-        )
+        );
+        let source = r#"
+        <div id="name" class="style style2">
+            hello world
+        </div>
+        "#;
+        let token_array = TokenArray::new(source).token_array();
+        assert_eq!(
+            token_array,
+            vec![
+                Token::with_type(
+                    r#"div id="name" class="style style2""#,
+                    TokenType::StartToken
+                ),
+                Token::with_type("hello", TokenType::Character),
+                Token::with_type("world", TokenType::Character),
+                Token::with_type("div", TokenType::EndToken),
+            ]
+        );
+        let source = r#"
+        <div id="name" class="style style2">
+            <data />
+            hello world
+            <p> p desu </    p>
+        </div>
+        "#;
+        let token_array = TokenArray::new(source).token_array();
+        assert_eq!(
+            token_array,
+            vec![
+                Token::with_type(
+                    r#"div id="name" class="style style2""#,
+                    TokenType::StartToken
+                ),
+                Token::with_type("data ", TokenType::SingleToken),
+                Token::with_type("hello", TokenType::Character),
+                Token::with_type("world", TokenType::Character),
+                Token::with_type("p", TokenType::StartToken),
+                Token::with_type("p", TokenType::Character),
+                Token::with_type("desu", TokenType::Character),
+                Token::with_type("p", TokenType::EndToken),
+                Token::with_type("div", TokenType::EndToken),
+            ]
+        );
     }
 }
