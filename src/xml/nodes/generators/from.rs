@@ -222,7 +222,7 @@ mod token_to_node_tests {
     use super::token_to_node;
 
     #[test]
-    fn token_to_node_test() {
+    fn token_to_node_case_element_test() {
         let token = Token::with_type("div", TokenType::StartToken);
         assert_eq!(token_to_node(token), XMLNode::new("div", NodeType::Element));
         let token = Token::with_type(
@@ -233,6 +233,22 @@ mod token_to_node_tests {
         node.add_element("id", vec!["kai"]);
         node.add_element("class", vec!["style", "style2"]);
         assert_eq!(token_to_node(token), node)
+    }
+    #[test]
+    fn token_to_node_case_single_test() {
+        let token = Token::with_type("div", TokenType::SingleToken);
+        assert_eq!(
+            token_to_node(token),
+            XMLNode::new("div", NodeType::SingleElement)
+        );
+    }
+    #[test]
+    fn token_to_node_case_charcter_test() {
+        let token = Token::with_type("char", TokenType::Character);
+        assert_eq!(
+            token_to_node(token),
+            XMLNode::new("char", NodeType::Character)
+        );
     }
 }
 //#[cfg(test)]
