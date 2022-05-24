@@ -23,6 +23,7 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     let mut start_index = 0;
     let mut node_char_range = start_index..start_index;
     let source = token.get_value();
+    println!("{}", source);
     let _ = source.chars().enumerate().for_each(|(i, c)| match c {
         ' ' => match prev_char {
             StartTokenPrevChar::NodeChar => {
@@ -32,6 +33,7 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
             }
             StartTokenPrevChar::ElementValue => {
                 // blank means split element value
+                println!("tmp_push {}", &source.get(start_index..i).unwrap());
                 element.tmp_push(&source.get(start_index..i).unwrap());
                 prev_char.value_blank();
             }
@@ -45,18 +47,23 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
                 // and begin element-key
                 // so push tmp-value
                 // and push values
+                println!("tmp_push2 {}", &source.get(start_index..i).unwrap());
                 element.tmp_push(&source.get(start_index..i).unwrap());
                 element.values_push();
                 prev_char.blank()
             }
 
-            StartTokenPrevChar::Equal => prev_char.element_value(),
+            StartTokenPrevChar::Equal => {
+                prev_char.element_value();
+                start_index = i + 1
+            }
             _ => panic!(r#"error not parse before {} after ""#, c),
         },
 
         '=' => match prev_char {
             StartTokenPrevChar::ElementKey => {
                 //  element.push()
+                element.key_push(source.get(start_index..i).unwrap());
                 prev_char.equal();
             }
             StartTokenPrevChar::ElementValue => {
@@ -79,6 +86,9 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
                 start_index = i;
             }
             StartTokenPrevChar::ElementValueBlank => {
+                // split
+                //println!("tmp_push3 {}", &source.get(start_index..i).unwrap());
+                //element.tmp_push(source.get(start_index..i).unwrap());
                 // start element-value
                 prev_char.element_value();
                 start_index = i;
@@ -92,6 +102,9 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
         TokenType::StartToken => NodeType::Element,
         _ => panic!("not consider end and character type"),
     };
+    if start_index == 0 {
+        node_char_range = 0..(source.len())
+    }
     let mut node = XMLNode::new(&source.get(node_char_range).unwrap(), node_type);
     let mut key_values = element.key_values();
     key_values.iter_mut().for_each(|(key, values)| {
