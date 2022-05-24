@@ -8,7 +8,6 @@ impl<'a> From<Token<'a>> for XMLNode<'a> {
         token_to_node(token)
     }
 }
-
 fn token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     match token.get_token_type() {
         TokenType::StartToken => start_or_single_token_to_node(token),
@@ -105,6 +104,10 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     if start_index == 0 {
         node_char_range = 0..(source.len())
     }
+    if prev_char == StartTokenPrevChar::ElementKey {
+        element.key_push(source.get(start_index..source.len()).unwrap());
+        element.empty_push();
+    }
     let mut node = XMLNode::new(&source.get(node_char_range).unwrap(), node_type);
     let mut key_values = element.key_values();
     key_values.iter_mut().for_each(|(key, values)| {
@@ -143,6 +146,9 @@ impl<'a> Element<'a> {
     }
     pub fn tmp_push(&mut self, value: &'a str) {
         self.tmp_values.push(value)
+    }
+    pub fn empty_push(&mut self) {
+        self.values.push(vec![]);
     }
 }
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -185,11 +191,20 @@ mod token_to_node_tests {
     };
 
     use super::token_to_node;
-
+    #[test]
+    fn token_to_node_case_only_element_key_test() {
+        let token = Token::with_type(
+            r#"div id="kai" class="style style2" only"#,
+            TokenType::StartToken,
+        );
+        let mut node = XMLNode::new("div", NodeType::Element);
+        node.add_element("id", vec!["kai"]);
+        node.add_element("class", vec!["style", "style2"]);
+        node.add_element("only", vec![]);
+        assert_eq!(token_to_node(token), node)
+    }
     #[test]
     fn token_to_node_case_element_test() {
-        let token = Token::with_type("div", TokenType::StartToken);
-        assert_eq!(token_to_node(token), XMLNode::new("div", NodeType::Element));
         let token = Token::with_type(
             r#"div id="kai" class="style style2""#,
             TokenType::StartToken,
