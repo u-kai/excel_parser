@@ -7,7 +7,7 @@ use super::{
 pub struct TokenArray<'a>(Vec<Token<'a>>);
 impl<'a> TokenArray<'a> {
     pub fn new(source: &'a str) -> Self {
-        let mut token_array = TokenArray::_new();
+        let token_array = TokenArray::_new();
         token_array._build(source)
     }
     pub fn token_array(self) -> Vec<Token<'a>> {
@@ -18,20 +18,20 @@ impl<'a> TokenArray<'a> {
     }
     fn _build(mut self, s: &'a str) -> Self {
         let mut start_index = 0;
-        let mut token_type = TokenType::Character;
+        let mut token_type = TokenType::new();
         let mut prev_char = PrevChar::new();
         s.chars().enumerate().for_each(|(i, c)| match c {
             // case start-tag
             // next is start token-type element
             '<' => {
                 // case start_index == i is init loop 0 == 0
-                if start_index != i {
+                if start_index != i && prev_char != PrevChar::Blank {
                     // push before token
                     self.0
                         .push(Token::with_type(s.get(start_index..i).unwrap(), token_type))
                 }
                 start_index = i + 1;
-                token_type.change_start();
+                // もしかしたら次が空白かもしれないのでtoken_typeはまだ設定しない
                 prev_char.change_start_tag();
             }
             '/' => {
@@ -67,17 +67,99 @@ impl<'a> TokenArray<'a> {
                 token_type.change_character();
             }
             _ => {
-                if c.is_whitespace() && token_type == TokenType::Character {
-                    //case split character by Blank
-                    if prev_char != PrevChar::Blank && i != start_index {
-                        self.0
-                            .push(Token::with_type(s.get(start_index..i).unwrap(), token_type));
+                if c.is_whitespace() {
+                    match prev_char {
+                        //case ignore blank
+                        // so incriment start_index
+                        PrevChar::Blank => {
+                            start_index += 1;
+                        }
+
+                        //case split character
+                        PrevChar::Character => {
+                            // case start_index == i is init loop 0 == 0
+                            if start_index != i {
+                                self.0.push(Token::with_type(
+                                    s.get(start_index..i).unwrap(),
+                                    token_type,
+                                ));
+                            }
+                            prev_char.change_blank();
+                            start_index = i + 1
+                        }
+                        PrevChar::StartTag => {
+                            // case in the middle of start-tag
+                            // so ignore
+                        }
+                        PrevChar::EndTag => {
+                            // case ignore blank
+                            // so incriment start_index
+                            start_index += 1;
+                        }
+                        PrevChar::Slash => {
+                            //ignore
+                        }
                     }
-                    start_index += 1;
-                    prev_char.change_blank();
                     return;
                 }
-                prev_char.change_character();
+                match prev_char {
+                    //case ignore blank
+                    // so incriment start_index
+                    PrevChar::Blank => {
+                        if token_type == TokenType::Character {
+                            start_index = i
+                        }
+                        prev_char.change_character()
+                    }
+
+                    //case split character
+                    PrevChar::Character => {
+                        // case start_index == i is init loop 0 == 0
+                        if start_index != i {
+                            if token_type == TokenType::Character {
+                                return;
+                            }
+                            if token_type == TokenType::EndToken {
+                                return;
+                            }
+                            //self.0
+                            //.push(Token::with_type(s.get(start_index..i).unwrap(), token_type));
+                        }
+                        prev_char.change_character();
+                        start_index = i + 1
+                    }
+                    PrevChar::StartTag => {
+                        // case in the middle of start token
+                        if token_type == TokenType::StartToken {
+                            return;
+                        }
+                        token_type.change_start();
+                        start_index = i
+                    }
+
+                    PrevChar::EndTag => {
+                        // case ignore blank
+                        // so incriment start_index
+                        prev_char.change_character();
+                        token_type.change_character();
+                        start_index = i;
+                    }
+                    PrevChar::Slash => {
+                        //ignore
+                        start_index = i;
+                        println!("{:?}", token_type);
+                        prev_char.change_character();
+                    }
+                }
+                ////case split character by Blank
+                //if prev_char != PrevChar::Blank && i == start_index {
+                //self.0
+                //.push(Token::with_type(s.get(start_index..i).unwrap(), token_type));
+                //}
+                //start_index = i + 1;
+                //} else {
+                //start_index += 1;
+                //}
             }
         });
         self
@@ -89,12 +171,6 @@ mod token_array_test {
     use crate::xml::tokens::{states::TokenType, token::Token};
 
     use super::TokenArray;
-    //impl<'a> TokenArray<'a> {
-    //pub fn token_array(self) -> Vec<Token<'a>> {
-    //self.0
-    //}
-    //}
-
     #[test]
     fn build_test() {
         let source = r#"
