@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, usize};
 
 use crate::xml::{
     nodes::{node::XMLNode, node_type::NodeType},
@@ -11,14 +11,14 @@ impl<'a> From<&'a str> for XMLNode<'a> {
         XMLNode::from(token_array)
     }
 }
-impl<'a> From<Token> for XMLNode<'a> {
-    fn from(token: Token) -> Self {
+impl<'a> From<Token<'a>> for XMLNode<'a> {
+    fn from(token: Token<'a>) -> Self {
         token_to_node(token)
     }
 }
-impl<'a> From<TokenArray> for XMLNode<'a> {
-    fn from(token_array: TokenArray) -> Self {
-        let token_array = token_array.drain();
+impl<'a> From<TokenArray<'a>> for XMLNode<'a> {
+    fn from(token_array: TokenArray<'a>) -> Self {
+        let token_array = token_array.token_array();
         let mut parent_stack = Vec::new();
         for token in token_array {
             match token.get_token_type() {
@@ -54,7 +54,7 @@ impl<'a> From<TokenArray> for XMLNode<'a> {
     }
 }
 
-fn token_to_node<'a>(token: Token) -> XMLNode<'a> {
+fn token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     match token.get_token_type() {
         TokenType::StartToken => start_or_single_token_to_node(token),
         TokenType::SingleToken => start_or_single_token_to_node(token),
@@ -62,71 +62,103 @@ fn token_to_node<'a>(token: Token) -> XMLNode<'a> {
         _ => panic!("not consider end type"),
     }
 }
-fn start_or_single_token_to_node<'a>(token: Token) -> XMLNode<'a> {
-    let mut prev_char = StartTokenPrevChar::NodeChar;
-    let mut node_value = String::new();
+fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     let mut element = Element::new();
+    let mut prev_char = StartTokenPrevChar::new();
+    let mut start_index = 0;
+    //let mut node_value = String::new();
+    //let mut element = Element::new();
+    XMLNode::new(token.get_value(), NodeType::Character)
+    //let _ = token
+    //.get_value()
+    //.chars()
+    //.enumerate()
+    //.for_each(|(i, c)| match c {
+    //' ' => match prev_char {
+    //StartTokenPrevChar::NodeChar => prev_char.blank(),
+    //StartTokenPrevChar::ElementValue => {
+    //element.add_value_buffer();
+    //}
+    //_ => {
+    //();
+    //}
+    //},
+    //'"' => match prev_char {
+    //StartTokenPrevChar::ElementValue => {
+    //element.add_element();
+    //prev_char = StartTokenPrevChar::ElementKey
+    //}
+    //StartTokenPrevChar::Equal => prev_char.element_value(),
+    //_ => panic!(r#"error not parse before {} after ""#, c),
+    //},
 
-    for c in token.get_value().chars() {
-        match c {
-            ' ' => match prev_char {
-                StartTokenPrevChar::NodeChar => prev_char = StartTokenPrevChar::Blank,
-                StartTokenPrevChar::ElementValue => {
-                    element.add_value_buffer();
-                }
-                _ => {
-                    ();
-                }
-            },
-            '"' => match prev_char {
-                StartTokenPrevChar::ElementValue => {
-                    element.add_element();
-                    prev_char = StartTokenPrevChar::ElementKey
-                }
-                StartTokenPrevChar::Equal => prev_char = StartTokenPrevChar::ElementValue,
-                _ => panic!(r#"error not parse before {} after ""#, c),
-            },
+    //'=' => match prev_char {
+    //StartTokenPrevChar::ElementKey => {
+    //element.push()
+    //prev_char.equal();
 
-            '=' => match prev_char {
-                StartTokenPrevChar::ElementKey => prev_char = StartTokenPrevChar::Equal,
-                StartTokenPrevChar::ElementValue => {
-                    element.add_value(c);
-                }
-                StartTokenPrevChar::Blank => {}
-                _ => {
-                    panic!(r#"not pattern to prev {} and next ="#, c)
-                }
-            },
-            _ => match prev_char {
-                StartTokenPrevChar::NodeChar => {
-                    node_value.push(c);
-                }
-                StartTokenPrevChar::Blank => {
-                    prev_char = StartTokenPrevChar::ElementKey;
-                    element.add_key(c);
-                }
-
-                StartTokenPrevChar::ElementKey => {
-                    element.add_key(c);
-                }
-                StartTokenPrevChar::ElementValue => {
-                    element.add_value(c);
-                }
-                StartTokenPrevChar::Equal => {
-                    prev_char = StartTokenPrevChar::ElementValue;
-                    element.add_value(c);
-                }
-            },
-        }
-    }
-    let node_type = match token.get_token_type() {
-        TokenType::SingleToken => NodeType::SingleElement,
-        TokenType::StartToken => NodeType::Element,
-        _ => panic!("not consider end and character type"),
-    };
-    XMLNode::new_with_element(&node_value, , node_type)
+    //},
+    //StartTokenPrevChar::ElementValue => {
+    //element.add_value(c);
+    //}
+    //StartTokenPrevChar::Blank => {}
+    //_ => {
+    //panic!(r#"not pattern to prev {} and next ="#, c)
+    //}
+    //},
+    //_ => match prev_char {
+    //StartTokenPrevChar::Blank => {
+    //// start element-key
+    //prev_char.element_key();
+    //start_index = i;
+    //}
+    //StartTokenPrevChar::Equal => {
+    //// start element-value
+    //prev_char.element_value();
+    //start_index = i;
+    //}
+    ////in the middle of prev
+    //_=>(),
+    //},
+    //});
+    //let node_type = match token.get_token_type() {
+    //TokenType::SingleToken => NodeType::SingleElement,
+    //TokenType::StartToken => NodeType::Element,
+    //_ => panic!("not consider end and character type"),
+    //};
+    //XMLNode::new_with_element(&node_value, , node_type)
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+struct Element<'a> {
+    keys: Vec<&'a str>,
+    values: Vec<Vec<&'a str>>,
+    tmp_values: Vec<&'a str>,
+}
+impl<'a> Element<'a> {
+    pub fn new() -> Self {
+        Element {
+            keys: Vec::new(),
+            values: Vec::new(),
+            tmp_values: Vec::new(),
+        }
+    }
+    pub fn key_push(&mut self, key: &'a str) {
+        self.keys.push(key)
+    }
+    pub fn values_push(&mut self) {
+        self.values.push(self.tmp_values.drain(..).collect());
+    }
+    pub fn tmp_push(&mut self, value: &'a str) {
+        self.tmp_values.push(value)
+    }
+    pub fn key(&self, index: usize) -> &'a str {
+        &self.keys[index]
+    }
+    pub fn values(&mut self, index: usize) -> Vec<&'a str> {
+        self.values.remove(index)
+    }
+}
 #[derive(Debug, PartialEq, Eq, Clone)]
 enum StartTokenPrevChar {
     NodeChar,
@@ -135,47 +167,130 @@ enum StartTokenPrevChar {
     Equal,
     Blank,
 }
-#[derive(Debug, PartialEq, Eq, Clone)]
-struct Element {
-    key: String,
-    value: String,
-    value_buffer: Vec<String>,
-    hash_map: HashMap<String, Vec<String>>,
-}
-impl Element {
+impl StartTokenPrevChar {
     pub fn new() -> Self {
-        Element {
-            key: String::new(),
-            value: String::new(),
-            value_buffer: Vec::new(),
-            hash_map: HashMap::new(),
-        }
+        StartTokenPrevChar::NodeChar
     }
-    pub fn key(&self)->&str {
-        &self.key
+    pub fn node_char(&mut self) {
+        *self = StartTokenPrevChar::NodeChar
     }
-    pub fn get_element(self) -> Option<HashMap<String, Vec<String>>> {
-        if self.hash_map.is_empty() {
-            None
-        } else {
-            Some(self.hash_map)
-        }
+    pub fn element_key(&mut self) {
+        *self = StartTokenPrevChar::ElementKey
     }
-    pub fn add_element(&mut self) {
-        self.add_value_buffer();
-        self.hash_map.insert(
-            self.key.drain(..).collect(),
-            self.value_buffer.drain(..).collect(),
-        );
+    pub fn element_value(&mut self) {
+        *self = StartTokenPrevChar::ElementValue
     }
-    pub fn add_value_buffer(&mut self) {
-        self.value_buffer.push(self.value.drain(..).collect());
+    pub fn equal(&mut self) {
+        *self = StartTokenPrevChar::Equal
     }
-    pub fn add_value(&mut self, c: char) {
-        self.value.push(c)
+    pub fn blank(&mut self) {
+        *self = StartTokenPrevChar::Blank
     }
-    pub fn add_key(&mut self, c: char) {
-        self.key.push(c)
+}
+#[cfg(test)]
+mod create_node {
+
+    use crate::xml::{
+        nodes::{node::XMLNode, node_type::NodeType},
+        tokens::token_array::TokenArray,
+    };
+    #[test]
+    fn from_token_array_test() {
+        let data = "<div>
+            <p>p-data</p>
+            div-data
+        </div>";
+        let token_array = TokenArray::new(data);
+        let expect = XMLNode::from(token_array);
+        let mut p = XMLNode::new("p", NodeType::Element);
+        p.add_text("p-data");
+        let mut div = XMLNode::new("div", NodeType::Element);
+        div.add_node(p);
+        div.add_text("div-data");
+        assert_eq!(expect, div);
+        let data = "<div><div>div-first
+            <p>p-data</p>
+            div-data</div>
+        </div>";
+        let token_array = TokenArray::new(data);
+        let expect = XMLNode::from(token_array);
+        let mut p = XMLNode::new("p", NodeType::Element);
+        p.add_text("p-data");
+        let mut div = XMLNode::new("div", NodeType::Element);
+        let mut child_div = XMLNode::new("div", NodeType::Element);
+        child_div.add_text("div-first");
+        child_div.add_node(p);
+        child_div.add_text("div-data");
+        div.add_node(child_div);
+        assert_eq!(expect, div);
+        let data = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <div><div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+        </div>"#;
+        let expect = XMLNode::from(data);
+        let mut root = XMLNode::new("?xml", NodeType::SingleElement);
+        root.add_element("standalone", vec![r#"yes"#]);
+        root.add_element("encoding", vec![r#"UTF-8"#]);
+        root.add_element("version", vec![r#"1.0"#]);
+        let mut p = XMLNode::new("p", NodeType::Element);
+        p.add_text("p-data");
+        let single_data = XMLNode::new("data", NodeType::SingleElement);
+        let mut div = XMLNode::new("div", NodeType::Element);
+        let mut child_div = XMLNode::new("div", NodeType::Element);
+        child_div.add_text("div-first");
+        child_div.add_node(p);
+        child_div.add_node(single_data);
+        child_div.add_text("div-data");
+        div.add_node(child_div);
+        root.add_node(div);
+        assert_eq!(expect, root)
+    }
+    #[test]
+    fn element_test() {
+        let data = r#"<div id="1180" name="kai"><div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+        </div>"#;
+
+        let token_array = TokenArray::new(data);
+        let expect = XMLNode::from(token_array);
+        let mut p = XMLNode::new("p", NodeType::Element);
+        p.add_text("p-data");
+        let single_data = XMLNode::new("data", NodeType::SingleElement);
+        let mut div = XMLNode::new("div", NodeType::Element);
+        div.add_element("name", vec!["kai"]);
+        div.add_element("id", vec!["1180"]);
+        let mut child_div = XMLNode::new("div", NodeType::Element);
+        child_div.add_text("div-first");
+        child_div.add_node(p);
+        child_div.add_node(single_data);
+        child_div.add_text("div-data");
+        div.add_node(child_div);
+        assert_eq!(expect, div);
+        let data = r#"<div id="1180" name="kai" class="style1 style2"><div>div-first
+            <p>p-data</p>
+            <data/>
+            div-data</div>
+        </div>"#;
+        let token_array = TokenArray::new(data);
+        let expect = XMLNode::from(token_array);
+        let mut p = XMLNode::new("p", NodeType::Element);
+        p.add_text("p-data");
+        let single_data = XMLNode::new("data", NodeType::SingleElement);
+        let mut div = XMLNode::new("div", NodeType::Element);
+        div.add_element("name", vec!["kai"]);
+        div.add_element("id", vec!["1180"]);
+        div.add_element("class", vec!["style1 style2"]);
+        let mut child_div = XMLNode::new("div", NodeType::Element);
+        child_div.add_text("div-first");
+        child_div.add_node(p);
+        child_div.add_node(single_data);
+        child_div.add_text("div-data");
+        div.add_node(child_div);
+        assert_eq!(expect, div)
     }
 }
 
@@ -206,19 +321,19 @@ div-data</div>
         div.add_node(child_div);
         assert_eq!(expect, div);
         let data = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<div><div>div-first
-<p>p-data</p>
-<data/>
-div-data</div>
-</div>"#;
+                                <div>
+                                    <div>
+                                        div-first
+                                        <p>p-data</p>
+                                        <data/>
+                                        div-data
+                                    </div>
+                                </div>"#;
         let expect = XMLNode::from(data);
         let mut root = XMLNode::new("?xml", NodeType::SingleElement);
-        let mut root_element = HashMap::new();
-        root_element.insert("standalone".to_string(), vec![r#"yes"#.to_string()]);
-        root_element.insert("encoding".to_string(), vec![r#"UTF-8"#.to_string()]);
-        root_element.insert("version".to_string(), vec![r#"1.0"#.to_string()]);
-
-        root.set_element(root_element);
+        root.add_element("version", vec!["1.0"]);
+        root.add_element("encoding", vec!["UTF-8"]);
+        root.add_element("standalone", vec!["yes"]);
         let mut p = XMLNode::new("p", NodeType::Element);
         p.add_text("p-data");
         let single_data = XMLNode::new("data", NodeType::SingleElement);

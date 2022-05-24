@@ -6,10 +6,10 @@ pub struct SharedStrings<'a> {
     node: XMLNode<'a>,
     values: Vec<String>,
 }
-pub trait SharedStringsInterface {
+pub trait SharedStringsInterface<'a> {
     fn get_values(&self) -> &Vec<String>;
     fn get_shared_string(&self, index: usize) -> &str;
-    fn add_shared_string(&mut self, value: &str) -> ();
+    fn add_shared_string(&mut self, value: &'a str) -> ();
     fn to_xml(&self) -> String;
 }
 impl<'a> SharedStrings<'a> {
@@ -37,7 +37,7 @@ impl<'a> XL<'a> for SharedStrings<'a> {
         &self.node
     }
 }
-impl<'a> SharedStringsInterface for SharedStrings<'a> {
+impl<'a> SharedStringsInterface<'a> for SharedStrings<'a> {
     fn to_xml(&self) -> String {
         self.node.to_string()
     }

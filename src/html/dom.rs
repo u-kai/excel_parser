@@ -5,15 +5,15 @@ use std::{
 
 use crate::xml::nodes::node::XMLNode;
 
-type HTMLNode = XMLNode;
+type HTMLNode<'a> = XMLNode<'a>;
 #[derive(Debug)]
-pub struct Dom {
-    node: HTMLNode,
+pub struct Dom<'a> {
+    node: HTMLNode<'a>,
 }
 
-impl Dom {
+impl<'a> Dom<'a> {
     #[allow(dead_code)]
-    pub fn new(s: &str) -> Self {
+    pub fn new(s: &'a str) -> Self {
         Dom {
             node: HTMLNode::from(s),
         }
@@ -36,24 +36,30 @@ impl Dom {
             Some(nodes)
         }
     }
-}
-impl From<File> for Dom {
-    fn from(f: File) -> Self {
-        let mut buf = String::new();
-        let mut buf_reader = BufReader::new(f);
-        let _ = buf_reader.read_to_string(&mut buf);
-        let node = HTMLNode::from(buf.as_str());
-        Dom::from(node)
+    fn change_node(&mut self, node: HTMLNode<'a>) {
+        self.node = node
     }
 }
-impl From<&str> for Dom {
-    fn from(s: &str) -> Self {
+const DUMY: &str = "";
+//impl<'a> From<File> for Dom<'a> {
+//fn from(f: File) -> Self {
+//let mut buf = String::new();
+//let mut buf_reader = BufReader::new(f);
+//let _ = buf_reader.read_to_string(&mut buf);
+//let node = HTMLNode::from(buf.as_str());
+//let mut dom = Dom::new(DUMY);
+//dom.change_node(node);
+//dom
+//}
+//}
+impl<'a> From<&'a str> for Dom<'a> {
+    fn from(s: &'a str) -> Self {
         let node = XMLNode::from(s);
         Dom::from(node)
     }
 }
-impl From<XMLNode> for Dom {
-    fn from(xml: XMLNode) -> Self {
+impl<'a> From<XMLNode<'a>> for Dom<'a> {
+    fn from(xml: XMLNode<'a>) -> Self {
         let html = xml
             .search_node("html")
             .expect(&format!("{:?} is not has html node", xml))

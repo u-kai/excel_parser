@@ -1,23 +1,23 @@
 #[derive(PartialEq, Eq, Debug)]
-pub struct ECell<T: PartialEq + Eq> {
+pub struct ECell<'a, T: PartialEq + Eq> {
     value: T,
-    index: CellIndex,
+    index: CellIndex<'a>,
 }
-impl<T: PartialEq + Eq> ECell<T> {
+impl<'a, T: PartialEq + Eq> ECell<'a, T> {
     #[allow(dead_code)]
-    pub fn new(value: T, cell_index: &str) -> Self {
+    pub fn new(value: T, cell_index: &'a str) -> Self {
         ECell {
             value,
             index: CellIndex::new(cell_index),
         }
     }
-    pub fn get_value(&self) -> &T {
+    pub fn get_value(&'a self) -> &'a T {
         &self.value
     }
     pub fn is_index(&self, cell_index: &CellIndex) -> bool {
         &self.index == cell_index
     }
-    pub fn get_index(&self) -> CellIndex {
+    pub fn get_index(&self) -> CellIndex<'a> {
         self.index.clone()
     }
     pub fn get_column_index(&self) -> usize {
@@ -28,21 +28,21 @@ impl<T: PartialEq + Eq> ECell<T> {
     }
 }
 #[derive(PartialEq, Eq, Debug, Clone)]
-pub struct CellIndex {
-    excel_index: String,
+pub struct CellIndex<'a> {
+    excel_index: &'a str,
     column: usize,
     row: usize,
 }
-impl CellIndex {
-    pub fn new(s: &str) -> Self {
+impl<'a> CellIndex<'a> {
+    pub fn new(s: &'a str) -> Self {
         let split = CellIndex::split_alphabet_number(s);
         CellIndex {
-            excel_index: s.to_string(),
+            excel_index: s,
             column: split.0,
             row: split.1,
         }
     }
-    pub fn get_value(&self) -> &str {
+    pub fn get_value(&self) -> &'a str {
         &self.excel_index
     }
     pub fn get_column_index(&self) -> usize {
@@ -101,7 +101,7 @@ mod cell_index_tests {
         assert_eq!(
             cell_index,
             CellIndex {
-                excel_index: "A1".to_string(),
+                excel_index: "A1",
                 column: 1,
                 row: 1
             }
@@ -110,7 +110,7 @@ mod cell_index_tests {
         assert_eq!(
             cell_index,
             CellIndex {
-                excel_index: "B1".to_string(),
+                excel_index: "B1",
                 column: 2,
                 row: 1
             }
@@ -132,7 +132,7 @@ mod cell_tests {
             ECell {
                 value: "test",
                 index: CellIndex {
-                    excel_index: "A123".to_string(),
+                    excel_index: "A123",
                     column: 1,
                     row: 123
                 }
@@ -144,7 +144,7 @@ mod cell_tests {
             ECell {
                 value: "test",
                 index: CellIndex {
-                    excel_index: "AA1".to_string(),
+                    excel_index: "AA1",
                     column: 27,
                     row: 1
                 }
@@ -156,7 +156,7 @@ mod cell_tests {
             ECell {
                 value: "test",
                 index: CellIndex {
-                    excel_index: "LRO1".to_string(),
+                    excel_index: "LRO1",
                     column: 8595,
                     row: 1
                 }
@@ -168,7 +168,7 @@ mod cell_tests {
             ECell {
                 value: "test2",
                 index: CellIndex {
-                    excel_index: "B1".to_string(),
+                    excel_index: "B1",
                     column: 2,
                     row: 1
                 }

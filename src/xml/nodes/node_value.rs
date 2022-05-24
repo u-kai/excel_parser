@@ -20,7 +20,10 @@ impl<'a> NodeValue<'a> {
     }
     pub fn is_containe_key_value(&self, key: &str, value: &str) -> bool {
         if self.element.is_some() {
-            self.element.unwrap().is_containe_key_value(key, value)
+            self.element
+                .as_ref()
+                .unwrap()
+                .is_containe_key_value(key, value)
         } else {
             false
         }
@@ -66,21 +69,21 @@ impl<'a> NodeValue<'a> {
     }
     pub fn search_all_element(&self, key: &str) -> Option<&Vec<&str>> {
         if self.element.is_some() {
-            self.element.unwrap().search_all(key)
+            self.element.as_ref().unwrap().search_all(key)
         } else {
             None
         }
     }
     pub fn search_element(&self, key: &str) -> Option<&str> {
         if self.element.is_some() {
-            self.element.unwrap().search(key)
+            self.element.as_ref().unwrap().search(key)
         } else {
             None
         }
     }
     pub fn add_element(&mut self, key: &'a str, values: Vec<&'a str>) {
         if self.element.is_some() {
-            self.element.unwrap().add(key, values)
+            self.element.as_mut().unwrap().add(key, values)
         } else {
             self.element = Some(NodeElement::new(key, values));
         }
@@ -110,7 +113,7 @@ mod node_value_test {
         node.add_element("class", vec!["big"]);
         node.add_element("class", vec!["big2"]);
         assert_eq!(node.search_element("class"), Some("big"));
-        assert_eq!(node.search_all_element("class"), Some(vec!["big", "big2"]));
+        assert_eq!(node.search_all_element("class"), Some(&vec!["big", "big2"]));
         assert_eq!(node.search_element("non"), None);
     }
     #[test]

@@ -1,68 +1,83 @@
 use super::{
-    states::{PrevChar, PrevCharcter, TokenType},
-    token::Token,
+    states::{PrevChar, TokenType},
+    token::{self, Token},
 };
 
 #[derive(Debug)]
-pub struct TokenArray {
-    value: Vec<Token>,
-    tmp_token: Token,
-    prev_char: PrevCharcter,
-}
-impl TokenArray {
-    pub fn new(s: &str) -> Self {
-        let token_array = TokenArray::_new();
-        token_array._build(s)
+pub struct TokenArray<'a>(Vec<Token<'a>>);
+impl<'a> TokenArray<'a> {
+    pub fn new(source: &'a str) -> Self {
+        let mut token_array = TokenArray::_new();
+        token_array._build(source)
     }
-    pub fn drain(self) -> Vec<Token> {
-        self.value
+    pub fn token_array(self) -> Vec<Token<'a>> {
+        self.0
     }
     fn _new() -> Self {
-        TokenArray {
-            value: Vec::new(),
-            tmp_token: Token::new(),
-            prev_char: PrevCharcter::new(),
-        }
+        TokenArray(Vec::new())
     }
-    fn _build(mut self, s: &str) -> Self {
-        s.chars().for_each(|c| match c {
+    fn _build(mut self, s: &'a str) -> Self {
+        let mut start_index = 0;
+        let mut token_type = TokenType::Character;
+        let mut prev_char = PrevChar::new();
+        s.chars().enumerate().for_each(|(i, c)| match c {
+            // case start-tag
+            // next is start token-type element
             '<' => {
-                if !(self.tmp_token.is_empty_value()) {
-                    self.value.push(self.tmp_token.drain());
+                // case start_index == i is init loop 0 == 0
+                if start_index != i {
+                    // push before token
+                    self.0
+                        .push(Token::with_type(s.get(start_index..i).unwrap(), token_type))
                 }
-                self.tmp_token.change_start();
-                self.prev_char.change_start_tag();
+                start_index = i + 1;
+                token_type.change_start();
+                prev_char.change_start_tag();
             }
             '/' => {
-                match self.prev_char.get_prev_char() {
-                    PrevChar::StartTag => self.tmp_token.change_end(),
-                    PrevChar::Slash => self.tmp_token.add_char('/'),
-                    PrevChar::EndTag => self.tmp_token.add_char(c),
-                    PrevChar::Character => {}
+                match prev_char {
+                    // case begin end-tag token
+                    PrevChar::StartTag => {
+                        token_type.change_end();
+                    }
+                    // case in the middle of token
+                    _ => (),
                 }
-                self.prev_char.change_slash();
+                prev_char.change_slash();
             }
             '>' => {
-                if self.prev_char.get_prev_char() == PrevChar::Slash {
-                    self.tmp_token.change_single();
+                match prev_char {
+                    //case end end-tag token
+                    PrevChar::Slash => {
+                        token_type.change_single();
+                        // i-1 means is except before "/"
+                        self.0.push(Token::with_type(
+                            s.get(start_index..(i - 1)).unwrap(),
+                            token_type,
+                        ))
+                    }
+                    //case end start-tag or single-tag token
+                    _ => self
+                        .0
+                        .push(Token::with_type(s.get(start_index..i).unwrap(), token_type)),
                 }
-                self.prev_char.change_end_tag();
-                self.value.push(self.tmp_token.drain());
-                self.tmp_token.change_character()
+                //next is begin something token
+                start_index = i + 1;
+                prev_char.change_end_tag();
+                token_type.change_character();
             }
             _ => {
-                if self.tmp_token.is_add_slash(self.prev_char.get_prev_char()) {
-                    self.tmp_token.add_char('/');
-                }
-                match self.tmp_token.get_token_type() {
-                    TokenType::Character => {
-                        if !(c.is_whitespace()) {
-                            self.tmp_token.add_char(c)
-                        }
+                if c.is_whitespace() && token_type == TokenType::Character {
+                    //case split character by Blank
+                    if prev_char != PrevChar::Blank && i != start_index {
+                        self.0
+                            .push(Token::with_type(s.get(start_index..i).unwrap(), token_type));
                     }
-                    _ => self.tmp_token.add_char(c),
+                    start_index += 1;
+                    prev_char.change_blank();
+                    return;
                 }
-                self.prev_char.change_character()
+                prev_char.change_character();
             }
         });
         self
@@ -70,109 +85,32 @@ impl TokenArray {
 }
 
 #[cfg(test)]
-mod create_node {
-    use std::collections::HashMap;
+mod token_array_test {
+    use crate::xml::tokens::{states::TokenType, token::Token};
 
-    use crate::xml::{
-        nodes::{node::XMLNode, node_type::NodeType},
-        tokens::token_array::TokenArray,
-    };
-    #[test]
-    fn from_token_array_test() {
-        let data = "<div>
-            <p>p-data</p>
-            div-data
-        </div>";
-        let token_array = TokenArray::new(data);
-        let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_text("p-data");
-        let mut div = XMLNode::new("div", NodeType::Element);
-        div.add_node(p);
-        div.add_text("div-data");
-        assert_eq!(expect, div);
-        let data = "<div><div>div-first
-            <p>p-data</p>
-            div-data</div>
-        </div>";
-        let token_array = TokenArray::new(data);
-        let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_text("p-data");
-        let mut div = XMLNode::new("div", NodeType::Element);
-        let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_text("div-first");
-        child_div.add_node(p);
-        child_div.add_text("div-data");
-        div.add_node(child_div);
-        assert_eq!(expect, div);
-        let data = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-        <div><div>div-first
-            <p>p-data</p>
-            <data/>
-            div-data</div>
-        </div>"#;
-        let expect = XMLNode::from(data);
-        let mut root = XMLNode::new("?xml", NodeType::SingleElement);
-        root.add_element("standalone", vec![r#"yes"#]);
-        root.add_element("encoding", vec![r#"UTF-8"#]);
-        root.add_element("version", vec![r#"1.0"#]);
-        let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_text("p-data");
-        let single_data = XMLNode::new("data", NodeType::SingleElement);
-        let mut div = XMLNode::new("div", NodeType::Element);
-        let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_text("div-first");
-        child_div.add_node(p);
-        child_div.add_node(single_data);
-        child_div.add_text("div-data");
-        div.add_node(child_div);
-        root.add_node(div);
-        assert_eq!(expect, root)
-    }
-    #[test]
-    fn element_test() {
-        let data = r#"<div id="1180" name="kai"><div>div-first
-            <p>p-data</p>
-            <data/>
-            div-data</div>
-        </div>"#;
+    use super::TokenArray;
+    //impl<'a> TokenArray<'a> {
+    //pub fn token_array(self) -> Vec<Token<'a>> {
+    //self.0
+    //}
+    //}
 
-        let token_array = TokenArray::new(data);
-        let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_text("p-data");
-        let single_data = XMLNode::new("data", NodeType::SingleElement);
-        let mut div = XMLNode::new("div", NodeType::Element);
-        div.add_element("name", vec!["kai"]);
-        div.add_element("id", vec!["1180"]);
-        let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_text("div-first");
-        child_div.add_node(p);
-        child_div.add_node(single_data);
-        child_div.add_text("div-data");
-        div.add_node(child_div);
-        assert_eq!(expect, div);
-        let data = r#"<div id="1180" name="kai" class="style1 style2"><div>div-first
-            <p>p-data</p>
-            <data/>
-            div-data</div>
-        </div>"#;
-        let token_array = TokenArray::new(data);
-        let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_text("p-data");
-        let single_data = XMLNode::new("data", NodeType::SingleElement);
-        let mut div = XMLNode::new("div", NodeType::Element);
-        div.add_element("name", vec!["kai"]);
-        div.add_element("id", vec!["1180"]);
-        div.add_element("class", vec!["style1 style2"]);
-        let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_text("div-first");
-        child_div.add_node(p);
-        child_div.add_node(single_data);
-        child_div.add_text("div-data");
-        div.add_node(child_div);
-        assert_eq!(expect, div)
+    #[test]
+    fn build_test() {
+        let source = r#"
+        <div>
+            hello world
+        </div>
+        "#;
+        let token_array = TokenArray::new(source).token_array();
+        assert_eq!(
+            token_array,
+            vec![
+                Token::with_type("div", TokenType::StartToken),
+                Token::with_type("hello", TokenType::Character),
+                Token::with_type("world", TokenType::Character),
+                Token::with_type("div", TokenType::EndToken),
+            ]
+        )
     }
 }
