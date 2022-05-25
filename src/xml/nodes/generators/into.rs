@@ -61,7 +61,7 @@ mod xml_into_str_test {
             r#"<div id="1180" name="kai"><div>div-first<p>p-data</p><data/>div-data</div></div>"#;
         let root_node = XMLNode::from(data);
         let expect: String = root_node.to_string();
-        assert_eq!(expect.len(), data.len());
+        assert_eq!(expect, data);
     }
 
     #[test]
@@ -70,7 +70,7 @@ mod xml_into_str_test {
             r#"<div id="1180" name="kai"><div>div-first<p>p-data</p><data/>div-data</div></div>"#;
         let root_node = XMLNode::from(data);
         let expect: String = root_node.into();
-        assert_eq!(expect.len(), data.len());
+        assert_eq!(expect, data);
     }
     #[test]
 
@@ -80,7 +80,7 @@ mod xml_into_str_test {
         let root_node = XMLNode::from(data);
         let expect: String = root_node.into();
         println!("{:?}", expect);
-        assert_eq!(expect.len(), data.len());
+        assert_eq!(expect, data);
     }
     //#[test]
     //fn same_file_test() {

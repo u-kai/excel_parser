@@ -22,7 +22,6 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     let mut start_index = 0;
     let mut node_char_range = start_index..start_index;
     let source = token.get_value();
-    println!("{}", source);
     let _ = source.chars().enumerate().for_each(|(i, c)| match c {
         ' ' => match prev_char {
             StartTokenPrevChar::NodeChar => {
@@ -32,7 +31,6 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
             }
             StartTokenPrevChar::ElementValue => {
                 // blank means split element value
-                println!("tmp_push {}", &source.get(start_index..i).unwrap());
                 element.tmp_push(&source.get(start_index..i).unwrap());
                 prev_char.value_blank();
             }
@@ -46,7 +44,6 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
                 // and begin element-key
                 // so push tmp-value
                 // and push values
-                println!("tmp_push2 {}", &source.get(start_index..i).unwrap());
                 element.tmp_push(&source.get(start_index..i).unwrap());
                 element.values_push();
                 prev_char.blank()

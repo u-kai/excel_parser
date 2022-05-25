@@ -28,36 +28,7 @@ impl<'a> NodeValue<'a> {
     }
     pub fn to_string(&self) -> String {
         if let Some(element) = &self.element {
-            "".to_string()
-            //let mut sort_keys = element.keys().collect::<Vec<_>>();
-            //sort_keys.sort_by(|first, second| {
-            //for (i, a) in first.bytes().enumerate() {
-            //if second.get(i..=i).is_none() {
-            //return Ordering::Greater;
-            //}
-            //if a == second.get(i..=i).unwrap().as_bytes()[0] {
-            //continue;
-            //}
-            //if a > second.get(i..=i).unwrap().as_bytes()[0] {
-            //return Ordering::Greater;
-            //} else {
-            //return Ordering::Less;
-            //}
-            //}
-            //Ordering::Equal
-            //});
-            //let result = sort_keys
-            //.iter()
-            //.map(|key| (key, element.get(key.as_str()).unwrap()))
-            //.fold(self.value.clone(), |acc, cur| {
-            //let mut values = cur
-            //.1
-            //.iter()
-            //.fold(String::new(), |acc, cur| format!("{}{} ", acc, cur));
-            //values.pop();
-            //format!(r#"{} {}="{}""#, acc, cur.0, values)
-            //});
-            //result
+            format!("{} {}", self.value, element.to_string())
         } else {
             self.value.to_string()
         }

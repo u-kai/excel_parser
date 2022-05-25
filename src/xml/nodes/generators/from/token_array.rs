@@ -1,6 +1,6 @@
 use crate::xml::{
     nodes::{node::XMLNode, node_type::NodeType},
-    tokens::{states::TokenType, token::Token, token_array::TokenArray},
+    tokens::{states::TokenType, token_array::TokenArray},
 };
 
 impl<'a> From<&'a str> for XMLNode<'a> {
@@ -87,6 +87,7 @@ mod token_array_test {
         root.add_element("version", vec!["1.0"]);
         root.add_element("encoding", vec!["UTF-8"]);
         root.add_element("standalone", vec!["yes"]);
+        root.add_element("?", vec![]);
         let mut p = XMLNode::new("p", NodeType::Element);
         p.add_text("p-data");
         let single_data = XMLNode::new("data", NodeType::SingleElement);
