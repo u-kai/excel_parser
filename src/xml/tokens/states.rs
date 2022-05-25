@@ -32,7 +32,7 @@ pub enum PrevChar {
 }
 impl PrevChar {
     pub fn new() -> Self {
-        PrevChar::Character
+        PrevChar::Blank
     }
     pub fn change_character(&mut self) {
         *self = PrevChar::Character;

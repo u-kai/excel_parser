@@ -57,9 +57,11 @@ impl<'a> TokenArray<'a> {
                         ))
                     }
                     //case end start-tag or single-tag token
-                    _ => self
-                        .0
-                        .push(Token::with_type(s.get(start_index..i).unwrap(), token_type)),
+                    _ => self.0.push(Token::with_type(
+                        s.get(start_index..i)
+                            .expect(format!("{},{:?}", start_index, self.0).as_str()),
+                        token_type,
+                    )),
                 }
                 //next is begin something token
                 start_index = i + 1;
@@ -79,10 +81,9 @@ impl<'a> TokenArray<'a> {
                         PrevChar::Character => {
                             // case start_index == i is init loop 0 == 0
                             if start_index != i {
-                                self.0.push(Token::with_type(
-                                    s.get(start_index..i).unwrap(),
-                                    token_type,
-                                ));
+                                if let Some(str) = s.get(start_index..i) {
+                                    self.0.push(Token::with_type(str, token_type));
+                                }
                             }
                             prev_char.change_blank();
                             start_index = i + 1
@@ -147,7 +148,6 @@ impl<'a> TokenArray<'a> {
                     PrevChar::Slash => {
                         //ignore
                         start_index = i;
-                        println!("{:?}", token_type);
                         prev_char.change_character();
                     }
                 }

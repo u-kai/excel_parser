@@ -146,11 +146,10 @@ mod dom_test {
                 </head>
                 <body>
                     <div id="message" class="not-class data ddsfa" div="d">
-                    これはrustで XMLを解析するプロジェクトです
+                        これはrustで XMLを解析するプロジェクトです
                     </div>
                 </body>
-                </html>
-        "#;
+                </html>"#;
         let dom = Dom::from(data);
         let element = dom.get_element_by_id("message");
         assert_eq!(

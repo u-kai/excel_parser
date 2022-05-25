@@ -80,7 +80,7 @@ mod shared_strings_test {
     fn get_xml_node_test() {
         let source = r#"
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="938" uniqueCount="265">
+<sst xmlns="http:schemas.openxmlformats.orgspreadsheetml2006main" count="938" uniqueCount="265">
     <si>
         <t>詳細画面レイアウト</t>
         <rPh sb="0" eb="2">
