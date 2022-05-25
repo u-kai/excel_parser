@@ -50,10 +50,6 @@ impl<'a> Into<String> for XMLNode<'a> {
 }
 #[cfg(test)]
 mod xml_into_str_test {
-    use std::{
-        fs::{set_permissions, File},
-        io::{BufReader, Read},
-    };
 
     use crate::xml::nodes::node::XMLNode;
 

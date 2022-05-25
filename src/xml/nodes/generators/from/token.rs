@@ -1,6 +1,6 @@
 use crate::xml::{
     nodes::{node::XMLNode, node_type::NodeType},
-    tokens::{states::TokenType, token::Token},
+    tokens::token::{Token, TokenType},
 };
 
 impl<'a> From<Token<'a>> for XMLNode<'a> {
@@ -184,7 +184,7 @@ impl StartTokenPrevChar {
 mod token_to_node_tests {
     use crate::xml::{
         nodes::{node::XMLNode, node_type::NodeType},
-        tokens::{states::TokenType, token::Token},
+        tokens::token::{Token, TokenType},
     };
 
     use super::token_to_node;

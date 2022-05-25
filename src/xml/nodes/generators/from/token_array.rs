@@ -1,17 +1,19 @@
 use crate::xml::{
     nodes::{node::XMLNode, node_type::NodeType},
-    tokens::{states::TokenType, token_array::TokenArray},
+    tokens::{
+        token::{Token, TokenType},
+        token_array::create_token_array,
+    },
 };
 
 impl<'a> From<&'a str> for XMLNode<'a> {
     fn from(s: &'a str) -> Self {
-        let token_array = TokenArray::new(s);
+        let token_array = create_token_array(s);
         XMLNode::from(token_array)
     }
 }
-impl<'a> From<TokenArray<'a>> for XMLNode<'a> {
-    fn from(token_array: TokenArray<'a>) -> Self {
-        let token_array = token_array.token_array();
+impl<'a> From<Vec<Token<'a>>> for XMLNode<'a> {
+    fn from(token_array: Vec<Token<'a>>) -> Self {
         let mut parent_stack = Vec::new();
         for token in token_array {
             match token.get_token_type() {
@@ -51,7 +53,7 @@ mod token_array_test {
 
     use crate::xml::{
         nodes::{node::XMLNode, node_type::NodeType},
-        tokens::token_array::TokenArray,
+        tokens::token_array::create_token_array,
     };
 
     #[test]
@@ -62,7 +64,8 @@ mod token_array_test {
                                 div-data
                             </div>
                         </div>";
-        let token_array = TokenArray::new(data);
+        let token_array = create_token_array(data);
+        println!("{:?}", token_array);
         let expect = XMLNode::from(token_array);
         let mut p = XMLNode::new("p", NodeType::Element);
         p.add_text("p-data");
