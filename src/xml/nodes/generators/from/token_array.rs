@@ -16,6 +16,7 @@ impl<'a> From<Vec<Token<'a>>> for XMLNode<'a> {
     fn from(token_array: Vec<Token<'a>>) -> Self {
         let mut parent_stack = Vec::new();
         for token in token_array {
+            println!("{:?}", token);
             match token.get_token_type() {
                 TokenType::StartToken => parent_stack.push(XMLNode::from(token)),
                 TokenType::Character => {

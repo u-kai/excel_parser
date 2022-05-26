@@ -8,6 +8,56 @@ impl<'a> From<Token<'a>> for XMLNode<'a> {
         token_to_node(token)
     }
 }
+#[derive(Debug, PartialEq, Eq, Clone)]
+struct Element<'a> {
+    keys: Vec<&'a str>,
+    values: Vec<Vec<&'a str>>,
+    tmvalues: Vec<&'a str>,
+}
+impl<'a> Element<'a> {
+    pub fn new() -> Self {
+        Element {
+            keys: Vec::new(),
+            values: Vec::new(),
+            tmvalues: Vec::new(),
+        }
+    }
+    pub fn key_push(&mut self, key: &'a str) {
+        self.keys.push(key)
+    }
+    pub fn key_values(&mut self) -> Vec<(&'a str, Vec<&'a str>)> {
+        let mut result = Vec::new();
+        println!("len {} key {:?}", self.keys.len(), self.keys);
+        println!("len {} values {:?}", self.values.len(), self.values);
+        let _ = self
+            .keys
+            .iter()
+            .enumerate()
+            .for_each(|(i, key)| result.push((*key, self.values.remove(0))));
+        result
+    }
+    pub fn values_push(&mut self) {
+        self.values.push(self.tmvalues.drain(..).collect());
+    }
+    pub fn tmpush(&mut self, value: &'a str) {
+        self.tmvalues.push(value)
+    }
+    pub fn empty_push(&mut self) {
+        self.values.push(vec![]);
+    }
+}
+#[derive(Debug, PartialEq, Eq, Clone)]
+enum StateMachine {
+    ValueBlank,
+    ValueChar,
+    EleKeyBlank,
+    EleKeyChar,
+    EleValBlank,
+    EleValStart,
+    EleValChar,
+    EleValSplit,
+}
+
 fn token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     match token.get_token_type() {
         TokenType::StartToken => start_or_single_token_to_node(token),
@@ -18,80 +68,76 @@ fn token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
 }
 fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     let mut element = Element::new();
-    let mut prev_char = StartTokenPrevChar::new();
     let mut start_index = 0;
     let mut node_char_range = start_index..start_index;
+    let mut state = StateMachine::ValueBlank;
     let source = token.get_value();
-    let _ = source.chars().enumerate().for_each(|(i, c)| match c {
-        ' ' => match prev_char {
-            StartTokenPrevChar::NodeChar => {
-                // case end of node-char
+    source.chars().enumerate().for_each(|(i, c)| match state {
+        StateMachine::ValueBlank => {
+            if c.is_whitespace() {
+                start_index += 1;
+                return;
+            }
+            state = StateMachine::ValueChar
+        }
+        StateMachine::ValueChar => {
+            if c.is_whitespace() {
                 node_char_range = start_index..i;
-                prev_char.blank()
+                state = StateMachine::EleKeyBlank
             }
-            StartTokenPrevChar::ElementValue => {
-                // blank means split element value
-                element.tmp_push(&source.get(start_index..i).unwrap());
-                prev_char.value_blank();
+        }
+        StateMachine::EleKeyBlank => {
+            if !(c.is_whitespace()) {
+                start_index = i;
+                state = StateMachine::EleKeyChar;
             }
-            _ => {
-                ();
-            }
-        },
-        '"' => match prev_char {
-            StartTokenPrevChar::ElementValue => {
-                // case element-value derimita
-                // and begin element-key
-                // so push tmp-value
-                // and push values
-                element.tmp_push(&source.get(start_index..i).unwrap());
-                element.values_push();
-                prev_char.blank()
-            }
-
-            StartTokenPrevChar::Equal => {
-                prev_char.element_value();
-                start_index = i + 1
-            }
-            _ => panic!(r#"error not parse before {} after ""#, c),
-        },
-
-        '=' => match prev_char {
-            StartTokenPrevChar::ElementKey => {
-                //  element.push()
+        }
+        StateMachine::EleKeyChar => {
+            if c.is_whitespace() {
                 element.key_push(source.get(start_index..i).unwrap());
-                prev_char.equal();
+                state = StateMachine::EleKeyBlank;
+                return;
             }
-            StartTokenPrevChar::ElementValue => {
-                // element.add_value(c);
+            if c == '=' {
+                element.key_push(source.get(start_index..i).unwrap());
+                state = StateMachine::EleValBlank;
             }
-            StartTokenPrevChar::Blank => {}
-            _ => {
-                panic!(r#"not pattern to prev {} and next ="#, c)
+        }
+        StateMachine::EleValBlank => {
+            if c == '"' {
+                start_index = i + 1;
+                state = StateMachine::EleValStart;
             }
-        },
-        _ => match prev_char {
-            StartTokenPrevChar::Blank => {
-                // start element-key
-                prev_char.element_key();
+        }
+        StateMachine::EleValStart => {
+            if !(c.is_whitespace()) {
                 start_index = i;
+                state = StateMachine::EleValChar;
             }
-            StartTokenPrevChar::Equal => {
-                // start element-value
-                prev_char.element_value();
+        }
+        StateMachine::EleValChar => {
+            if c == '"' {
+                element.tmpush(source.get(start_index..i).unwrap());
+                element.values_push();
+                state = StateMachine::EleKeyBlank;
+                return;
+            }
+            if c.is_whitespace() {
+                element.tmpush(source.get(start_index..i).unwrap());
+                state = StateMachine::EleValSplit;
+            }
+        }
+        StateMachine::EleValSplit => {
+            if c == '"' {
+                element.values_push();
+                state = StateMachine::EleKeyBlank;
+            }
+            if !(c.is_whitespace()) {
                 start_index = i;
+                state = StateMachine::EleValChar;
+                return;
             }
-            StartTokenPrevChar::ElementValueBlank => {
-                // split
-                //println!("tmp_push3 {}", &source.get(start_index..i).unwrap());
-                //element.tmp_push(source.get(start_index..i).unwrap());
-                // start element-value
-                prev_char.element_value();
-                start_index = i;
-            }
-            //in the middle of prev
-            _ => (),
-        },
+        }
     });
     let node_type = match token.get_token_type() {
         TokenType::SingleToken => NodeType::SingleElement,
@@ -101,7 +147,7 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     if start_index == 0 {
         node_char_range = 0..(source.len())
     }
-    if prev_char == StartTokenPrevChar::ElementKey {
+    if state == StateMachine::EleKeyChar {
         element.key_push(source.get(start_index..source.len()).unwrap());
         element.empty_push();
     }
@@ -113,73 +159,6 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     node
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-struct Element<'a> {
-    keys: Vec<&'a str>,
-    values: Vec<Vec<&'a str>>,
-    tmp_values: Vec<&'a str>,
-}
-impl<'a> Element<'a> {
-    pub fn new() -> Self {
-        Element {
-            keys: Vec::new(),
-            values: Vec::new(),
-            tmp_values: Vec::new(),
-        }
-    }
-    pub fn key_push(&mut self, key: &'a str) {
-        self.keys.push(key)
-    }
-    pub fn key_values(&mut self) -> Vec<(&'a str, Vec<&'a str>)> {
-        let mut result = Vec::new();
-        let _ = self
-            .keys
-            .iter()
-            .for_each(|key| result.push((*key, self.values.remove(0))));
-        result
-    }
-    pub fn values_push(&mut self) {
-        self.values.push(self.tmp_values.drain(..).collect());
-    }
-    pub fn tmp_push(&mut self, value: &'a str) {
-        self.tmp_values.push(value)
-    }
-    pub fn empty_push(&mut self) {
-        self.values.push(vec![]);
-    }
-}
-#[derive(Debug, PartialEq, Eq, Clone)]
-enum StartTokenPrevChar {
-    NodeChar,
-    ElementKey,
-    ElementValue,
-    ElementValueBlank,
-    Equal,
-    Blank,
-}
-impl StartTokenPrevChar {
-    pub fn new() -> Self {
-        StartTokenPrevChar::NodeChar
-    }
-    pub fn node_char(&mut self) {
-        *self = StartTokenPrevChar::NodeChar
-    }
-    pub fn element_key(&mut self) {
-        *self = StartTokenPrevChar::ElementKey
-    }
-    pub fn element_value(&mut self) {
-        *self = StartTokenPrevChar::ElementValue
-    }
-    pub fn value_blank(&mut self) {
-        *self = StartTokenPrevChar::ElementValueBlank
-    }
-    pub fn equal(&mut self) {
-        *self = StartTokenPrevChar::Equal
-    }
-    pub fn blank(&mut self) {
-        *self = StartTokenPrevChar::Blank
-    }
-}
 #[cfg(test)]
 mod token_to_node_tests {
     use crate::xml::{
@@ -226,5 +205,48 @@ mod token_to_node_tests {
             token_to_node(token),
             XMLNode::new("char", NodeType::Character)
         );
+    }
+    #[test]
+    fn token_to_node_case_workbook_test() {
+        let token = Token::with_type(
+            r#"workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x15 xr xr6 xr10 xr2" xmlns:x15="http://schemas.microsoft.com/office/spreadsheetml/2010/11/main" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr6="http://schemas.microsoft.com/office/spreadsheetml/2016/revision6" xmlns:xr10="http://schemas.microsoft.com/office/spreadsheetml/2016/revision10" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2""#,
+            TokenType::StartToken,
+        );
+        let mut node = XMLNode::new("workbook", NodeType::Element);
+        node.add_element(
+            "xmlns",
+            vec!["http://schemas.openxmlformats.org/spreadsheetml/2006/main"],
+        );
+        node.add_element(
+            "xmlns:r",
+            vec!["http://schemas.openxmlformats.org/officeDocument/2006/relationships"],
+        );
+        node.add_element(
+            "xmlns:mc",
+            vec!["http://schemas.openxmlformats.org/markup-compatibility/2006"],
+        );
+        node.add_element("mc:Ignorable", vec!["x15", "xr", "xr6", "xr10", "xr2"]);
+        node.add_element(
+            "xmlns:x15",
+            vec!["http://schemas.microsoft.com/office/spreadsheetml/2010/11/main"],
+        );
+        node.add_element(
+            "xmlns:xr",
+            vec!["http://schemas.microsoft.com/office/spreadsheetml/2014/revision"],
+        );
+        node.add_element(
+            "xmlns:xr6",
+            vec!["http://schemas.microsoft.com/office/spreadsheetml/2016/revision6"],
+        );
+        node.add_element(
+            "xmlns:xr10",
+            vec!["http://schemas.microsoft.com/office/spreadsheetml/2016/revision10"],
+        );
+        node.add_element(
+            "xmlns:xr2",
+            vec!["http://schemas.microsoft.com/office/spreadsheetml/2015/revision2"],
+        );
+
+        assert_eq!(token_to_node(token), node);
     }
 }
