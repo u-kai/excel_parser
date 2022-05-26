@@ -72,67 +72,67 @@ fn start_or_single_token_to_node<'a>(token: Token<'a>) -> XMLNode<'a> {
     let mut node_char_range = start_index..start_index;
     let mut state = StateMachine::ValueBlank;
     let source = token.get_value();
-    source.chars().enumerate().for_each(|(i, c)| match state {
+    source.bytes().enumerate().for_each(|(i, c)| match state {
         StateMachine::ValueBlank => {
-            if c.is_whitespace() {
+            if c.is_ascii_whitespace() {
                 start_index += 1;
                 return;
             }
             state = StateMachine::ValueChar
         }
         StateMachine::ValueChar => {
-            if c.is_whitespace() {
+            if c.is_ascii_whitespace() {
                 node_char_range = start_index..i;
                 state = StateMachine::EleKeyBlank
             }
         }
         StateMachine::EleKeyBlank => {
-            if !(c.is_whitespace()) {
+            if !(c.is_ascii_whitespace()) {
                 start_index = i;
                 state = StateMachine::EleKeyChar;
             }
         }
         StateMachine::EleKeyChar => {
-            if c.is_whitespace() {
+            if c.is_ascii_whitespace() {
                 element.key_push(source.get(start_index..i).unwrap());
                 state = StateMachine::EleKeyBlank;
                 return;
             }
-            if c == '=' {
+            if c == 61 {
                 element.key_push(source.get(start_index..i).unwrap());
                 state = StateMachine::EleValBlank;
             }
         }
         StateMachine::EleValBlank => {
-            if c == '"' {
+            if c == 34 {
                 start_index = i + 1;
                 state = StateMachine::EleValStart;
             }
         }
         StateMachine::EleValStart => {
-            if !(c.is_whitespace()) {
+            if !(c.is_ascii_whitespace()) {
                 start_index = i;
                 state = StateMachine::EleValChar;
             }
         }
         StateMachine::EleValChar => {
-            if c == '"' {
+            if c == 34 {
                 element.tmpush(source.get(start_index..i).unwrap());
                 element.values_push();
                 state = StateMachine::EleKeyBlank;
                 return;
             }
-            if c.is_whitespace() {
+            if c.is_ascii_whitespace() {
                 element.tmpush(source.get(start_index..i).unwrap());
                 state = StateMachine::EleValSplit;
             }
         }
         StateMachine::EleValSplit => {
-            if c == '"' {
+            if c == 34 {
                 element.values_push();
                 state = StateMachine::EleKeyBlank;
             }
-            if !(c.is_whitespace()) {
+            if !(c.is_ascii_whitespace()) {
                 start_index = i;
                 state = StateMachine::EleValChar;
                 return;

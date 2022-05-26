@@ -14,26 +14,26 @@ pub fn create_token_array<'a>(source: &'a str) -> Vec<Token<'a>> {
     let mut vec = Vec::new();
     let mut state = StateMachine::CharBlank;
     let mut len = 0;
-    source.chars().enumerate().for_each(|(i, c)| {
+    source.bytes().enumerate().for_each(|(i, c)| {
         if len < vec.len() {
             println!("{:?}", vec[len]);
             len += 1;
         }
         match state {
             StateMachine::CharBlank => match c {
-                '<' => {
+                60 => {
                     state = StateMachine::StartStart;
                     start_index = i + 1;
                 }
                 _ => {
-                    if !(c.is_whitespace()) {
+                    if !(c.is_ascii_whitespace()) {
                         state = StateMachine::CharChar;
                         start_index = i;
                     }
                 }
             },
             StateMachine::CharChar => match c {
-                '<' => {
+                60 => {
                     vec.push(Token::with_type(
                         source.get(start_index..i).unwrap(),
                         TokenType::Character,
@@ -42,7 +42,7 @@ pub fn create_token_array<'a>(source: &'a str) -> Vec<Token<'a>> {
                     start_index = i + 1;
                 }
                 _ => {
-                    if c.is_whitespace() {
+                    if c.is_ascii_whitespace() {
                         vec.push(Token::with_type(
                             source.get(start_index..i).unwrap(),
                             TokenType::Character,
@@ -52,19 +52,19 @@ pub fn create_token_array<'a>(source: &'a str) -> Vec<Token<'a>> {
                 }
             },
             StateMachine::StartStart => match c {
-                '/' => {
+                47 => {
                     state = StateMachine::EndChar;
                     start_index += 1;
                 }
                 _ => {
-                    if c.is_whitespace() {
+                    if c.is_ascii_whitespace() {
                         return;
                     }
                     state = StateMachine::StartChar;
                 }
             },
             StateMachine::EndChar => match c {
-                '>' => {
+                62 => {
                     vec.push(Token::with_type(
                         source.get(start_index..i).expect(
                             format!(
@@ -83,10 +83,10 @@ pub fn create_token_array<'a>(source: &'a str) -> Vec<Token<'a>> {
                 _ => (),
             },
             StateMachine::StartChar => match c {
-                '/' => {
+                47 => {
                     state = StateMachine::StartSlash;
                 }
-                '>' => {
+                62 => {
                     state = StateMachine::CharBlank;
                     vec.push(Token::with_type(
                         source.get(start_index..i).unwrap(),
@@ -96,7 +96,7 @@ pub fn create_token_array<'a>(source: &'a str) -> Vec<Token<'a>> {
                 _ => (),
             },
             StateMachine::StartSlash => match c {
-                '>' => {
+                62 => {
                     vec.push(Token::with_type(
                         source.get(start_index..i - 1).unwrap(),
                         TokenType::SingleToken,
@@ -104,7 +104,7 @@ pub fn create_token_array<'a>(source: &'a str) -> Vec<Token<'a>> {
                     state = StateMachine::CharBlank;
                 }
                 _ => {
-                    if !(c.is_whitespace()) {
+                    if !(c.is_ascii_whitespace()) {
                         state = StateMachine::StartChar;
                     }
                 }
