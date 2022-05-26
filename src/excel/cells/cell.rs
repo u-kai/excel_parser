@@ -1,17 +1,17 @@
 #[derive(PartialEq, Eq, Debug)]
-pub struct ECell<'a, T: PartialEq + Eq> {
-    value: T,
+pub struct ECell<'a> {
+    value: &'a str,
     index: CellIndex<'a>,
 }
-impl<'a, T: PartialEq + Eq> ECell<'a, T> {
+impl<'a> ECell<'a> {
     #[allow(dead_code)]
-    pub fn new(value: T, cell_index: &'a str) -> Self {
+    pub fn new(value: &'a str, cell_index: &'a str) -> Self {
         ECell {
             value,
             index: CellIndex::new(cell_index),
         }
     }
-    pub fn get_value(&'a self) -> &'a T {
+    pub fn get_value(&'a self) -> &'a str {
         &self.value
     }
     pub fn is_index(&self, cell_index: &CellIndex) -> bool {
@@ -126,9 +126,9 @@ mod cell_tests {
 
     #[test]
     fn new_cell_test() {
-        let ECell = ECell::new("test", "A123");
+        let e_cell = ECell::new("test", "A123");
         assert_eq!(
-            ECell,
+            e_cell,
             ECell {
                 value: "test",
                 index: CellIndex {
@@ -138,9 +138,9 @@ mod cell_tests {
                 }
             }
         );
-        let ECell = ECell::new("test", "AA1");
+        let e_cell = ECell::new("test", "AA1");
         assert_eq!(
-            ECell,
+            e_cell,
             ECell {
                 value: "test",
                 index: CellIndex {
@@ -150,9 +150,9 @@ mod cell_tests {
                 }
             }
         );
-        let ECell = ECell::new("test", "LRO1");
+        let e_cell = ECell::new("test", "LRO1");
         assert_eq!(
-            ECell,
+            e_cell,
             ECell {
                 value: "test",
                 index: CellIndex {
@@ -162,9 +162,9 @@ mod cell_tests {
                 }
             }
         );
-        let ECell = ECell::new("test2", "B1");
+        let e_cell = ECell::new("test2", "B1");
         assert_eq!(
-            ECell,
+            e_cell,
             ECell {
                 value: "test2",
                 index: CellIndex {

@@ -15,11 +15,6 @@ pub struct CellNode<'a> {
     node: &'a XMLNode<'a>,
     shared_strings: &'a Vec<String>,
 }
-const C: &'static str = "c";
-const R: &'static str = "r";
-const S: &'static str = "s";
-const T: &'static str = "t";
-const V: &'static str = "v";
 
 impl<'a> CellNode<'a> {
     pub fn new(node: &'a XMLNode, shared_strings: &'a Vec<String>) -> Self {
@@ -29,13 +24,13 @@ impl<'a> CellNode<'a> {
         }
     }
     pub fn new_c_node(value: &'a str, index: CellIndex<'a>, value_type: CellType) -> XMLNode<'a> {
-        let mut c_node = XMLNode::new(C, NodeType::Element);
-        c_node.add_element(R, vec![index.get_value()]);
+        let mut c_node = XMLNode::new("c", NodeType::Element);
+        c_node.add_element("r", vec![index.get_value()]);
         match value_type {
             CellType::Num => (),
-            CellType::Str => c_node.add_element(T, vec![S]),
+            CellType::Str => c_node.add_element("t", vec!["s"]),
         }
-        let mut v_node = XMLNode::new(V, NodeType::Element);
+        let mut v_node = XMLNode::new("v", NodeType::Element);
         v_node.add_text(value);
         c_node.add_node(v_node);
         c_node
