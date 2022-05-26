@@ -1,7 +1,9 @@
 use std::{
     cell::Cell,
+    collections::HashMap,
     fs::{rename, File, OpenOptions},
     io::{BufReader, BufWriter, Read, Write},
+    ops::Index,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -10,25 +12,18 @@ pub trait XLSXOperator<'a> {
     //fn to_zip(&self) -> ();
     fn to_excel(&self) -> ();
     //fn decompress(&self) -> ();
-    fn read_sheet(&'a self, e_sheet_name: &str) -> &'a str;
+    fn read_sheet(&'a self, e_sheet_name: &str) -> String;
     fn read_workbook(&'a self) -> &'a str;
     fn read_shared_strings(&'a self) -> &'a str;
     fn add_sheet(&mut self, e_sheet_name: &str) -> ();
     fn write_sheet(&self, e_sheet_name: &str, content: &str) -> ();
 }
-#[derive(PartialEq, Eq, Clone, Copy)]
-enum XLSXFileState {
-    Excel,
-    Zip,
-    Decompress,
-}
 pub struct XLSXFile<'a> {
     filename: &'a Path,
     zip_name: PathBuf,
-    //state: Cell<XLSXFileState>,
     workbook: String,
     shared_strings: String,
-    sheets: Vec<String>,
+    sheets: HashMap<String, String>,
 }
 
 impl<'a> XLSXFile<'a> {
@@ -44,8 +39,7 @@ impl<'a> XLSXFile<'a> {
             zip_name,
             workbook,
             shared_strings,
-            sheets: Vec::new(),
-            //state: Cell::new(XLSXFileState::Excel),
+            sheets: HashMap::new(),
         }
     }
     fn read_file(filepath: &str) -> String {
@@ -114,13 +108,13 @@ fn decompress(zip_name: &PathBuf) -> () {
 }
 impl<'a> XLSXOperator<'a> for XLSXFile<'a> {
     fn add_sheet(&mut self, e_sheet_name: &str) -> () {
-        ()
+        let sheet = XLSXFile::read_file(XLSXFile::sheet_path(e_sheet_name).as_str());
+        self.sheets.insert(e_sheet_name.to_string(), sheet);
     }
     fn to_excel(&self) -> () {
         let command_arg = format!(
             r#"zip {} -r _rels docProps xl \[Content_Types\].xml"#,
             self.zip_name.to_str().unwrap(),
-            //&self.decompress_root.to_str().unwrap()
         );
         Command::new("zsh")
             .arg("-c")
@@ -144,8 +138,10 @@ impl<'a> XLSXOperator<'a> for XLSXFile<'a> {
             .output()
             .unwrap();
     }
-    fn read_sheet(&'a self, e_sheet_name: &str) -> &'a str {
-        &self.sheets[0]
+    fn read_sheet(&'a self, e_sheet_name: &str) -> String {
+        let sheet = XLSXFile::read_file(XLSXFile::sheet_path(e_sheet_name).as_str());
+        sheet
+        //self.sheets[e_sheet_name].as_str()
     }
     fn read_shared_strings(&'a self) -> &'a str {
         &self.shared_strings

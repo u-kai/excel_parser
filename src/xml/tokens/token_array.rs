@@ -13,103 +13,96 @@ pub fn create_token_array<'a>(source: &'a str) -> Vec<Token<'a>> {
     let mut start_index = 0;
     let mut vec = Vec::new();
     let mut state = StateMachine::CharBlank;
-    let mut len = 0;
-    source.bytes().enumerate().for_each(|(i, c)| {
-        if len < vec.len() {
-            println!("{:?}", vec[len]);
-            len += 1;
-        }
-        match state {
-            StateMachine::CharBlank => match c {
-                60 => {
-                    state = StateMachine::StartStart;
-                    start_index = i + 1;
+    source.bytes().enumerate().for_each(|(i, c)| match state {
+        StateMachine::CharBlank => match c {
+            60 => {
+                state = StateMachine::StartStart;
+                start_index = i + 1;
+            }
+            _ => {
+                if !(c.is_ascii_whitespace()) {
+                    state = StateMachine::CharChar;
+                    start_index = i;
                 }
-                _ => {
-                    if !(c.is_ascii_whitespace()) {
-                        state = StateMachine::CharChar;
-                        start_index = i;
-                    }
-                }
-            },
-            StateMachine::CharChar => match c {
-                60 => {
+            }
+        },
+        StateMachine::CharChar => match c {
+            60 => {
+                vec.push(Token::with_type(
+                    source.get(start_index..i).unwrap(),
+                    TokenType::Character,
+                ));
+                state = StateMachine::StartStart;
+                start_index = i + 1;
+            }
+            _ => {
+                if c.is_ascii_whitespace() {
                     vec.push(Token::with_type(
                         source.get(start_index..i).unwrap(),
                         TokenType::Character,
                     ));
-                    state = StateMachine::StartStart;
-                    start_index = i + 1;
+                    state = StateMachine::CharBlank;
                 }
-                _ => {
-                    if c.is_ascii_whitespace() {
-                        vec.push(Token::with_type(
-                            source.get(start_index..i).unwrap(),
-                            TokenType::Character,
-                        ));
-                        state = StateMachine::CharBlank;
-                    }
+            }
+        },
+        StateMachine::StartStart => match c {
+            47 => {
+                state = StateMachine::EndChar;
+                start_index += 1;
+            }
+            _ => {
+                if c.is_ascii_whitespace() {
+                    return;
                 }
-            },
-            StateMachine::StartStart => match c {
-                47 => {
-                    state = StateMachine::EndChar;
-                    start_index += 1;
-                }
-                _ => {
-                    if c.is_ascii_whitespace() {
-                        return;
-                    }
+                state = StateMachine::StartChar;
+            }
+        },
+        StateMachine::EndChar => match c {
+            62 => {
+                vec.push(Token::with_type(
+                    source.get(start_index..i).expect(
+                        format!(
+                            "len {} start {} i {}, range {:?}",
+                            source.len(),
+                            start_index,
+                            i,
+                            source.get(190..)
+                        )
+                        .as_str(),
+                    ),
+                    TokenType::EndToken,
+                ));
+                state = StateMachine::CharBlank;
+            }
+            _ => (),
+        },
+        StateMachine::StartChar => match c {
+            47 => {
+                state = StateMachine::StartSlash;
+            }
+            62 => {
+                state = StateMachine::CharBlank;
+                vec.push(Token::with_type(
+                    source.get(start_index..i).unwrap(),
+                    TokenType::StartToken,
+                ))
+            }
+            _ => (),
+        },
+        StateMachine::StartSlash => match c {
+            62 => {
+                vec.push(Token::with_type(
+                    source.get(start_index..i - 1).unwrap(),
+                    TokenType::SingleToken,
+                ));
+                state = StateMachine::CharBlank;
+            }
+            _ => {
+                if !(c.is_ascii_whitespace()) {
                     state = StateMachine::StartChar;
                 }
-            },
-            StateMachine::EndChar => match c {
-                62 => {
-                    vec.push(Token::with_type(
-                        source.get(start_index..i).expect(
-                            format!(
-                                "len {} start {} i {}, range {:?}",
-                                source.len(),
-                                start_index,
-                                i,
-                                source.get(190..)
-                            )
-                            .as_str(),
-                        ),
-                        TokenType::EndToken,
-                    ));
-                    state = StateMachine::CharBlank;
-                }
-                _ => (),
-            },
-            StateMachine::StartChar => match c {
-                47 => {
-                    state = StateMachine::StartSlash;
-                }
-                62 => {
-                    state = StateMachine::CharBlank;
-                    vec.push(Token::with_type(
-                        source.get(start_index..i).unwrap(),
-                        TokenType::StartToken,
-                    ))
-                }
-                _ => (),
-            },
-            StateMachine::StartSlash => match c {
-                62 => {
-                    vec.push(Token::with_type(
-                        source.get(start_index..i - 1).unwrap(),
-                        TokenType::SingleToken,
-                    ));
-                    state = StateMachine::CharBlank;
-                }
-                _ => {
-                    if !(c.is_ascii_whitespace()) {
-                        state = StateMachine::StartChar;
-                    }
-                }
-            },
-        }
+            }
+        },
     });
 
     vec

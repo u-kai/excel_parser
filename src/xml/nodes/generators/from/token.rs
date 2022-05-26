@@ -27,13 +27,11 @@ impl<'a> Element<'a> {
     }
     pub fn key_values(&mut self) -> Vec<(&'a str, Vec<&'a str>)> {
         let mut result = Vec::new();
-        println!("len {} key {:?}", self.keys.len(), self.keys);
-        println!("len {} values {:?}", self.values.len(), self.values);
         let _ = self
             .keys
             .iter()
             .enumerate()
-            .for_each(|(i, key)| result.push((*key, self.values.remove(0))));
+            .for_each(|(_, key)| result.push((*key, self.values.remove(0))));
         result
     }
     pub fn values_push(&mut self) {

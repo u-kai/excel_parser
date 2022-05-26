@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::{
     file_operator::{XLSXFile, XLSXOperator},
     xmls::{shared_strings::SharedStrings, sheet::Sheet, workbook::WorkBook},
@@ -9,13 +11,15 @@ pub struct Excel<'a, T: XLSXOperator<'a>> {
     xlsx_operator: &'a T,
     workbook: Option<WorkBook<'a>>,
     shared_strings: Option<SharedStrings<'a>>,
+    sheets: HashMap<String, String>,
 }
 impl<'a, XOpe: XLSXOperator<'a>> Excel<'a, XOpe> {
-    pub fn new(xlsx_operator: &'a XOpe) -> Self {
+    pub fn new(xlsx_operator: &'a mut XOpe) -> Self {
         let mut excel = Excel {
             xlsx_operator,
             workbook: None,
             shared_strings: None,
+            sheets: HashMap::new(),
         };
         excel.workbook = Some(WorkBook::new(excel.xlsx_operator.read_workbook()));
         excel.shared_strings = Some(SharedStrings::new(
@@ -32,13 +36,23 @@ impl<'a, XOpe: XLSXOperator<'a>> Excel<'a, XOpe> {
             sheet.to_xml().as_str(),
         )
     }
-    pub fn get_sheet(&self, sheet_name: &str) -> SheetA {
+    pub fn read_sheet(&mut self, sheet_name: &str) -> () {
         let e_sheet_name = self
             .workbook
             .as_ref()
             .unwrap()
             .get_excel_sheet_name(&sheet_name);
-        let source = self.xlsx_operator.read_sheet(e_sheet_name);
+        let sheet = self.xlsx_operator.read_sheet(e_sheet_name);
+        self.sheets.insert(e_sheet_name.to_string(), sheet);
+    }
+    pub fn get_sheet(&'a self, sheet_name: &str) -> SheetA {
+        let e_sheet_name = self
+            .workbook
+            .as_ref()
+            .unwrap()
+            .get_excel_sheet_name(&sheet_name);
+        println!("{}", e_sheet_name);
+        let source = self.sheets.get(e_sheet_name).unwrap();
         let sheet = SheetA::new(sheet_name, source, &self.shared_strings.as_ref().unwrap());
         sheet
     }
@@ -102,8 +116,8 @@ mod excel_tests {
         //fn decompress(&self) -> () {
         //println!("decompress")
         //}
-        fn read_sheet(&self, _: &str) -> &'a str {
-            self.sheet
+        fn read_sheet(&self, _: &str) -> String {
+            self.sheet.to_string()
         }
         fn read_workbook(&self) -> &'a str {
             self.workbook
