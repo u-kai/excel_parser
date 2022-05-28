@@ -1,9 +1,7 @@
 use std::{
-    cell::Cell,
     collections::HashMap,
-    fs::{rename, File, OpenOptions},
+    fs::{File, OpenOptions},
     io::{BufReader, BufWriter, Read, Write},
-    ops::Index,
     path::{Path, PathBuf},
     process::Command,
 };

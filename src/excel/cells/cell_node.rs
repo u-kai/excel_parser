@@ -42,7 +42,7 @@ impl<'a> CellNode<'a> {
                     return Some(text.to_string());
                 }
                 if self.is_use_shared_strings() {
-                    let index = text.parse::<usize>().unwrap();
+                    let index = text.parse::<usize>().expect(format!("{:?}", text).as_str());
                     return Some(self.shared_strings.get(index).unwrap().to_string());
                 }
             }
