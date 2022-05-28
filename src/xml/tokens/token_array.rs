@@ -1,190 +1,401 @@
-use super::{
-    states::{PrevChar, PrevCharcter, TokenType},
-    token::Token,
-};
+use super::token::{Token, TokenType};
 
-#[derive(Debug)]
-pub struct TokenArray {
-    value: Vec<Token>,
-    tmp_token: Token,
-    prev_char: PrevCharcter,
+enum StateMachine {
+    CharBlank,
+    CharChar,
+    StartStart,
+    EndChar,
+    StartChar,
+    StartSlash,
 }
-impl TokenArray {
-    pub fn new(s: &str) -> Self {
-        let token_array = TokenArray::_new();
-        token_array._build(s)
-    }
-    pub fn drain(self) -> Vec<Token> {
-        self.value
-    }
-    fn _new() -> Self {
-        TokenArray {
-            value: Vec::new(),
-            tmp_token: Token::new(),
-            prev_char: PrevCharcter::new(),
-        }
-    }
-    fn _build(mut self, s: &str) -> Self {
-        s.chars().for_each(|c| match c {
-            '<' => {
-                if !(self.tmp_token.is_empty_value()) {
-                    self.value.push(self.tmp_token.drain());
-                }
-                self.tmp_token.change_start();
-                self.prev_char.change_start_tag();
-            }
-            '/' => {
-                match self.prev_char.get_prev_char() {
-                    PrevChar::StartTag => self.tmp_token.change_end(),
-                    PrevChar::Slash => self.tmp_token.add_char('/'),
-                    PrevChar::EndTag => self.tmp_token.add_char(c),
-                    PrevChar::Character => {}
-                }
-                self.prev_char.change_slash();
-            }
-            '>' => {
-                if self.prev_char.get_prev_char() == PrevChar::Slash {
-                    self.tmp_token.change_single();
-                }
-                self.prev_char.change_end_tag();
-                self.value.push(self.tmp_token.drain());
-                self.tmp_token.change_character()
+
+pub fn create_token_array<'a>(source: &'a str) -> Vec<Token<'a>> {
+    let mut start_index = 0;
+    let mut vec = Vec::new();
+    let mut state = StateMachine::CharBlank;
+    source.bytes().enumerate().for_each(|(i, c)| match state {
+        StateMachine::CharBlank => match c {
+            60 => {
+                state = StateMachine::StartStart;
+                start_index = i + 1;
             }
             _ => {
-                if self.tmp_token.is_add_slash(self.prev_char.get_prev_char()) {
-                    self.tmp_token.add_char('/');
+                if !(c.is_ascii_whitespace()) {
+                    state = StateMachine::CharChar;
+                    start_index = i;
                 }
-                match self.tmp_token.get_token_type() {
-                    TokenType::Character => {
-                        if !(c.is_whitespace()) {
-                            self.tmp_token.add_char(c)
-                        }
-                    }
-                    _ => self.tmp_token.add_char(c),
-                }
-                self.prev_char.change_character()
             }
-        });
-        self
-    }
+        },
+        StateMachine::CharChar => match c {
+            60 => {
+                vec.push(Token::with_type(
+                    source.get(start_index..i).unwrap(),
+                    TokenType::Character,
+                ));
+                state = StateMachine::StartStart;
+                start_index = i + 1;
+            }
+            _ => {
+                if c.is_ascii_whitespace() {
+                    vec.push(Token::with_type(
+                        source.get(start_index..i).unwrap(),
+                        TokenType::Character,
+                    ));
+                    state = StateMachine::CharBlank;
+                }
+            }
+        },
+        StateMachine::StartStart => match c {
+            47 => {
+                state = StateMachine::EndChar;
+                start_index += 1;
+            }
+            _ => {
+                if c.is_ascii_whitespace() {
+                    return;
+                }
+                state = StateMachine::StartChar;
+            }
+        },
+        StateMachine::EndChar => match c {
+            62 => {
+                vec.push(Token::with_type(
+                    source.get(start_index..i).expect(
+                        format!(
+                            "len {} start {} i {}, range {:?}",
+                            source.len(),
+                            start_index,
+                            i,
+                            source.get(190..)
+                        )
+                        .as_str(),
+                    ),
+                    TokenType::EndToken,
+                ));
+                state = StateMachine::CharBlank;
+            }
+            _ => (),
+        },
+        StateMachine::StartChar => match c {
+            47 => {
+                state = StateMachine::StartSlash;
+            }
+            62 => {
+                state = StateMachine::CharBlank;
+                vec.push(Token::with_type(
+                    source.get(start_index..i).unwrap(),
+                    TokenType::StartToken,
+                ))
+            }
+            _ => (),
+        },
+        StateMachine::StartSlash => match c {
+            62 => {
+                vec.push(Token::with_type(
+                    source.get(start_index..i - 1).unwrap(),
+                    TokenType::SingleToken,
+                ));
+                state = StateMachine::CharBlank;
+            }
+            _ => {
+                if !(c.is_ascii_whitespace()) {
+                    state = StateMachine::StartChar;
+                }
+            }
+        },
+    });
+
+    vec
 }
 
 #[cfg(test)]
-mod create_node {
-    use std::collections::HashMap;
-
-    use crate::xml::{
-        nodes::{node::XMLNode, node_type::NodeType},
-        tokens::token_array::TokenArray,
+mod p_token_array_test {
+    use crate::xml::tokens::{
+        token::{Token, TokenType},
+        token_array::create_token_array,
     };
+
     #[test]
-    fn from_token_array_test() {
-        let data = "<div>
-            <p>p-data</p>
-            div-data
-        </div>";
-        let token_array = TokenArray::new(data);
-        let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_text("p-data");
-        let mut div = XMLNode::new("div", NodeType::Element);
-        div.add_node(p);
-        div.add_text("div-data");
-        assert_eq!(expect, div);
-        let data = "<div><div>div-first
-            <p>p-data</p>
-            div-data</div>
-        </div>";
-        let token_array = TokenArray::new(data);
-        let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_text("p-data");
-        let mut div = XMLNode::new("div", NodeType::Element);
-        let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_text("div-first");
-        child_div.add_node(p);
-        child_div.add_text("div-data");
-        div.add_node(child_div);
-        assert_eq!(expect, div);
-        let data = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-        <div><div>div-first
-            <p>p-data</p>
-            <data/>
-            div-data</div>
-        </div>"#;
-        let expect = XMLNode::from(data);
-        let mut root = XMLNode::new("?xml", NodeType::SingleElement);
-        let mut root_element = HashMap::new();
-        root_element.insert("standalone".to_string(), vec![r#"yes"#.to_string()]);
-        root_element.insert("encoding".to_string(), vec![r#"UTF-8"#.to_string()]);
-        root_element.insert("version".to_string(), vec![r#"1.0"#.to_string()]);
-
-        root.set_element(root_element);
-        let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_text("p-data");
-        let single_data = XMLNode::new("data", NodeType::SingleElement);
-        let mut div = XMLNode::new("div", NodeType::Element);
-        let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_text("div-first");
-        child_div.add_node(p);
-        child_div.add_node(single_data);
-        child_div.add_text("div-data");
-        div.add_node(child_div);
-        root.add_node(div);
-        assert_eq!(expect, root)
-    }
-    #[test]
-    fn element_test() {
-        let data = r#"<div id="1180" name="kai"><div>div-first
-            <p>p-data</p>
-            <data/>
-            div-data</div>
-        </div>"#;
-
-        let token_array = TokenArray::new(data);
-        let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_text("p-data");
-        let single_data = XMLNode::new("data", NodeType::SingleElement);
-        let mut div = XMLNode::new("div", NodeType::Element);
-        let mut element = HashMap::new();
-
-        element.insert("name".to_string(), vec![r#"kai"#.to_string()]);
-        element.insert("id".to_string(), vec![r#"1180"#.to_string()]);
-        div.set_element(element);
-        let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_text("div-first");
-        child_div.add_node(p);
-        child_div.add_node(single_data);
-        child_div.add_text("div-data");
-        div.add_node(child_div);
-        assert_eq!(expect, div);
-        let data = r#"<div id="1180" name="kai" class="style1 style2"><div>div-first
-            <p>p-data</p>
-            <data/>
-            div-data</div>
-        </div>"#;
-        let token_array = TokenArray::new(data);
-        let expect = XMLNode::from(token_array);
-        let mut p = XMLNode::new("p", NodeType::Element);
-        p.add_text("p-data");
-        let single_data = XMLNode::new("data", NodeType::SingleElement);
-        let mut div = XMLNode::new("div", NodeType::Element);
-        let mut element = HashMap::new();
-
-        element.insert("name".to_string(), vec![r#"kai"#.to_string()]);
-        element.insert("id".to_string(), vec![r#"1180"#.to_string()]);
-        element.insert(
-            "class".to_string(),
-            vec!["style1".to_string(), "style2".to_string()],
+    fn build_test() {
+        let source = r#"
+                    <div>
+                        hello world
+                    </div>
+                    "#;
+        let token_array = create_token_array(source);
+        assert_eq!(
+            token_array,
+            vec![
+                Token::with_type("div", TokenType::StartToken),
+                Token::with_type("hello", TokenType::Character),
+                Token::with_type("world", TokenType::Character),
+                Token::with_type("div", TokenType::EndToken),
+            ]
         );
-        div.set_element(element);
-        let mut child_div = XMLNode::new("div", NodeType::Element);
-        child_div.add_text("div-first");
-        child_div.add_node(p);
-        child_div.add_node(single_data);
-        child_div.add_text("div-data");
-        div.add_node(child_div);
-        assert_eq!(expect, div)
+        let source = r#"
+        <div id="name" class="style style2">
+        hello world
+        </div>
+        "#;
+        let token_array = create_token_array(source);
+        assert_eq!(
+            token_array,
+            vec![
+                Token::with_type(
+                    r#"div id="name" class="style style2""#,
+                    TokenType::StartToken
+                ),
+                Token::with_type("hello", TokenType::Character),
+                Token::with_type("world", TokenType::Character),
+                Token::with_type("div", TokenType::EndToken),
+            ]
+        );
+        let source = r#"
+        <div id="name" class="style style2">
+        <data />
+        hello world
+        <p> p desu </ p>
+        </div>
+        "#;
+        let token_array = create_token_array(source);
+        assert_eq!(
+            token_array,
+            vec![
+                Token::with_type(
+                    r#"div id="name" class="style style2""#,
+                    TokenType::StartToken
+                ),
+                Token::with_type("data ", TokenType::SingleToken),
+                Token::with_type("hello", TokenType::Character),
+                Token::with_type("world", TokenType::Character),
+                Token::with_type("p", TokenType::StartToken),
+                Token::with_type("p", TokenType::Character),
+                Token::with_type("desu", TokenType::Character),
+                Token::with_type(" p", TokenType::EndToken),
+                Token::with_type("div", TokenType::EndToken),
+            ]
+        );
     }
 }
+
+//#[derive(Debug)]
+//pub struct TokenArray<'a>(Vec<Token<'a>>);
+//impl<'a> TokenArray<'a> {
+//pub fn new(source: &'a str) -> Self {
+//let token_array = TokenArray::_new();
+//token_array._build(source)
+//}
+//pub fn token_array(self) -> Vec<Token<'a>> {
+//self.0
+//}
+//fn _new() -> Self {
+//TokenArray(Vec::new())
+//}
+//fn _build(mut self, s: &'a str) -> Self {
+//let mut start_index = 0;
+//let mut token_type = TokenType::new();
+//let mut prev_char = PrevChar::new();
+//s.chars().enumerate().for_each(|(i, c)| match c {
+//// case start-tag
+//// next is start token-type element
+//'<' => {
+//// case start_index == i is init loop 0 == 0
+//if start_index != i && prev_char != PrevChar::Blank {
+//// push before token
+//self.0
+//.push(Token::with_type(s.get(start_index..i).unwrap(), token_type))
+//}
+//start_index = i + 1;
+//// もしかしたら次が空白かもしれないのでtoken_typeはまだ設定しない
+//prev_char.change_start_tag();
+//}
+//'/' => {
+//match prev_char {
+//// case begin end-tag token
+//PrevChar::StartTag => {
+//token_type.change_end();
+//}
+//// case in the middle of token
+//_ => (),
+//}
+//prev_char.change_slash();
+//}
+//'>' => {
+//match prev_char {
+////case end end-tag token
+//PrevChar::Slash => {
+//token_type.change_single();
+//// i-1 means is except before "/"
+//self.0.push(Token::with_type(
+//s.get(start_index..(i - 1)).unwrap(),
+//token_type,
+//))
+//}
+////case end start-tag or single-tag token
+//_ => self.0.push(Token::with_type(
+//s.get(start_index..i)
+//.expect(format!("{},{:?}", start_index, self.0).as_str()),
+//token_type,
+//)),
+//}
+////next is begin something token
+//start_index = i + 1;
+//prev_char.change_end_tag();
+//token_type.change_character();
+//}
+//_ => {
+//if c.is_whitespace() {
+//match prev_char {
+////case ignore blank
+//// so incriment start_index
+//PrevChar::Blank => {
+//start_index += 1;
+//}
+
+////case split character
+//PrevChar::Character => {
+//// case start_index == i is init loop 0 == 0
+//if start_index != i {
+//if let Some(str) = s.get(start_index..i) {
+//self.0.push(Token::with_type(str, token_type));
+//}
+//}
+//prev_char.change_blank();
+//start_index = i + 1
+//}
+//PrevChar::StartTag => {
+//// case in the middle of start-tag
+//// so ignore
+//}
+//PrevChar::EndTag => {
+//// case ignore blank
+//// so incriment start_index
+//start_index += 1;
+//}
+//PrevChar::Slash => {
+////ignore
+//}
+//}
+//return;
+//}
+//match prev_char {
+////case ignore blank
+//// so incriment start_index
+//PrevChar::Blank => {
+//if token_type == TokenType::Character {
+//start_index = i
+//}
+//prev_char.change_character()
+//}
+
+////case split character
+//PrevChar::Character => {
+//// case start_index == i is init loop 0 == 0
+//if start_index != i {
+//if token_type == TokenType::Character {
+//return;
+//}
+//if token_type == TokenType::EndToken {
+//return;
+//}
+////self.0
+////.push(Token::with_type(s.get(start_index..i).unwrap(), token_type));
+//}
+//prev_char.change_character();
+//start_index = i + 1
+//}
+//PrevChar::StartTag => {
+//// case in the middle of start token
+//if token_type == TokenType::StartToken {
+//return;
+//}
+//token_type.change_start();
+//start_index = i
+//}
+
+//PrevChar::EndTag => {
+//// case ignore blank
+//// so incriment start_index
+//prev_char.change_character();
+//token_type.change_character();
+//start_index = i;
+//}
+//PrevChar::Slash => {
+////ignore
+//start_index = i;
+//prev_char.change_character();
+//}
+//}
+//}
+//});
+//self
+//}
+//}
+
+//#[cfg(test)]
+//mod token_array_test {
+//use crate::xml::tokens::{states::TokenType, token::Token};
+
+//use super::TokenArray;
+//#[test]
+//fn build_test() {
+//let source = r#"
+//<div>
+//hello world
+//</div>
+//"#;
+//let token_array = TokenArray::new(source).token_array();
+//assert_eq!(
+//token_array,
+//vec![
+//Token::with_type("div", TokenType::StartToken),
+//Token::with_type("hello", TokenType::Character),
+//Token::with_type("world", TokenType::Character),
+//Token::with_type("div", TokenType::EndToken),
+//]
+//);
+//let source = r#"
+//<div id="name" class="style style2">
+//hello world
+//</div>
+//"#;
+//let token_array = TokenArray::new(source).token_array();
+//assert_eq!(
+//token_array,
+//vec![
+//Token::with_type(
+//r#"div id="name" class="style style2""#,
+//TokenType::StartToken
+//),
+//Token::with_type("hello", TokenType::Character),
+//Token::with_type("world", TokenType::Character),
+//Token::with_type("div", TokenType::EndToken),
+//]
+//);
+//let source = r#"
+//<div id="name" class="style style2">
+//<data />
+//hello world
+//<p> p desu </    p>
+//</div>
+//"#;
+//let token_array = TokenArray::new(source).token_array();
+//assert_eq!(
+//token_array,
+//vec![
+//Token::with_type(
+//r#"div id="name" class="style style2""#,
+//TokenType::StartToken
+//),
+//Token::with_type("data ", TokenType::SingleToken),
+//Token::with_type("hello", TokenType::Character),
+//Token::with_type("world", TokenType::Character),
+//Token::with_type("p", TokenType::StartToken),
+//Token::with_type("p", TokenType::Character),
+//Token::with_type("desu", TokenType::Character),
+//Token::with_type("p", TokenType::EndToken),
+//Token::with_type("div", TokenType::EndToken),
+//]
+//);
+//}
+//}

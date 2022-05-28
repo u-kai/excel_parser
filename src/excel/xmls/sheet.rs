@@ -1,8 +1,4 @@
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    fmt::{Debug, Display},
-};
+use std::{cell::RefCell, fmt::Debug};
 
 use super::shared_strings::SharedStringsInterface;
 use crate::{
@@ -14,14 +10,14 @@ use crate::{
 };
 
 #[derive(PartialEq, Eq, Debug)]
-pub struct Sheet<'a, S: SharedStringsInterface> {
+pub struct Sheet<'a, S: SharedStringsInterface<'a>> {
     sheet_name: String,
-    node: XMLNode,
+    node: XMLNode<'a>,
     shared_strings: RefCell<&'a S>,
 }
-impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
-    pub fn new(sheet_name: &str, source: String, shared_strings: &'a S) -> Self {
-        let node = XMLNode::from(source.as_str());
+impl<'a, S: SharedStringsInterface<'a>> Sheet<'a, S> {
+    pub fn new(sheet_name: &str, source: &'a str, shared_strings: &'a S) -> Self {
+        let node = XMLNode::from(source);
         Sheet {
             sheet_name: sheet_name.to_string(),
             node,
@@ -38,7 +34,7 @@ impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
             .search_node("sheetData")
             .expect(format!("not found sheetData\n{:?}", &self.node).as_str())
     }
-    fn get_sheet_data_node_mut(&mut self) -> &mut XMLNode {
+    fn get_sheet_data_node_mut(&mut self) -> &mut XMLNode<'a> {
         self.node
             .search_node_mut("worksheet")
             .unwrap()
@@ -78,8 +74,11 @@ impl<'a, S: SharedStringsInterface> Sheet<'a, S> {
     pub fn to_xml(&self) -> String {
         self.node.to_string()
     }
+    fn create_new_v(&self, value: &'a str) -> &'a str {
+        value
+    }
 }
-impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
+impl<'a, S: SharedStringsInterface<'a>> WorkSheet<'a> for Sheet<'a, S> {
     fn get_cell(&self, cell_index: CellIndex) -> Option<String> {
         self.get_cell_v(cell_index)
     }
@@ -178,28 +177,29 @@ impl<'a, S: SharedStringsInterface> WorkSheet for Sheet<'a, S> {
         }
         result
     }
-    fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, cell: ECell<T>) -> () {
+    fn set_cell(&mut self, cell: &'a ECell<'a>) -> () {
         let index = cell.get_index();
         let value = cell.get_value();
+        let value = self.create_new_v(value);
         let maybe_child = self
             .get_sheet_data_node_mut()
             .search_child_by_id_mut("r", index.get_value());
         if let Some(cell) = maybe_child {
             if let Some(v_node) = cell.search_node_mut("v") {
-                v_node.change_text(value.to_string().as_str());
+                v_node.change_text(value);
             } else {
-                cell.add_node(XMLNode::from(format!("<v>{}</v>", value).as_str()));
-                let mut element = HashMap::new();
-                element.insert("t".to_string(), vec!["str".to_string()]);
-                element.insert("r".to_string(), vec![index.get_value().to_string()]);
-                cell.set_element(element);
+                let mut v_child = XMLNode::new("v", NodeType::Element);
+                v_child.add_text(value);
+                cell.add_node(v_child);
+                cell.add_element("t", vec!["str"]);
+                cell.add_element("r", vec![index.get_value()]);
                 cell.set_node_type(NodeType::Element);
             }
             return;
         }
     }
 }
-pub trait WorkSheet {
+pub trait WorkSheet<'a> {
     fn get_cell(&self, cell_index: CellIndex) -> Option<String>;
     fn get_row(&self, u: usize) -> Vec<Option<String>>;
     fn get_column(&self, s: ColumnAlphabet) -> Vec<Option<String>>;
@@ -209,7 +209,7 @@ pub trait WorkSheet {
         start: ColumnAlphabet,
         end: ColumnAlphabet,
     ) -> Vec<Vec<Option<String>>>;
-    fn set_cell<T: PartialEq + Eq + Debug + Display>(&mut self, cell: ECell<T>) -> ();
+    fn set_cell(&mut self, cell: &'a ECell<'a>) -> ();
 }
 
 #[cfg(test)]
@@ -224,89 +224,88 @@ mod xml_sheet_test {
 
     use super::mock_shared_strings::SharedStringsMock;
 
-    //use super::SheetData;
     const SOURCE1: &str = r#"
-    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-    <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{44FEEDED-D128-4496-B199-BCD526D1EB2C}">
-        <sheetData>
-            <row r="2" spans="2:19" x14ac:dyDescent="0.4">
-                <c r="B2" s="15" t="s">
-                    <v>0</v>
-                </c>
-                <c r="C2" s="12"/>
-                <c r="D2" s="16"/>
-                <c r="E2" s="13"/>
-                <c r="J2" s="15" t="s">
-                    <v>1</v>
-                </c>
-                <c r="K2" s="13"/>
-                <c r="P2" s="15" t="s">
-                    <v>2</v>
-                </c>
-                <c r="Q2" s="13"/>
-            </row>
-            <row r="3" spans="2:19" x14ac:dyDescent="0.4">
-                <c r="B3" s="4"/>
-                <c r="C3" s="15" t="s">
-                    <v>3</v>
-                </c>
-                <c r="D3" s="16"/>
-                <c r="E3" s="3" t="s">
-                    <v>4</v>
-                </c>
-                <c r="F6">
-                    <v>50</v>
-                </c>
-                <c r="H4" t="str">
-                <f>$E$3&amp;G4</f>
-                <v>shared_value</v>
-                </c>
-            </row>
-        </sheetData>
-    </worksheet>
-    "#;
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{44FEEDED-D128-4496-B199-BCD526D1EB2C}">
+<sheetData>
+<row r="2" spans="2:19" x14ac:dyDescent="0.4">
+<c r="B2" s="15" t="s">
+<v>0</v>
+</c>
+<c r="C2" s="12"/>
+<c r="D2" s="16"/>
+<c r="E2" s="13"/>
+<c r="J2" s="15" t="s">
+<v>1</v>
+</c>
+<c r="K2" s="13"/>
+<c r="P2" s="15" t="s">
+<v>2</v>
+</c>
+<c r="Q2" s="13"/>
+</row>
+<row r="3" spans="2:19" x14ac:dyDescent="0.4">
+<c r="B3" s="4"/>
+<c r="C3" s="15" t="s">
+<v>3</v>
+</c>
+<c r="D3" s="16"/>
+<c r="E3" s="3" t="s">
+<v>4</v>
+</c>
+<c r="F6">
+<v>50</v>
+</c>
+<c r="H4" t="str">
+<f>$E$3&amp;G4</f>
+<v>shared_value</v>
+</c>
+</row>
+</sheetData>
+</worksheet>
+"#;
     const SOURCE2: &str = r#"
-    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-    <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{44FEEDED-D128-4496-B199-BCD526D1EB2C}">
-        <sheetData>
-            <row r="1" spans="2:19" x14ac:dyDescent="0.4">
-                <c r="A1">
-                    <v>a</v>
-                </c>
-            </row>
-            <row r="2" spans="2:19" x14ac:dyDescent="0.4">
-                <c r="A2"/>
-                <c r="B2">
-                    <v>b</v>
-                </c>
-                <c r="C2" s="12"/>
-                <c r="D2" s="16"/>
-                <c r="E2" s="13"/>
-            </row>
-            <row r="3" spans="2:19" x14ac:dyDescent="0.4">
-                <c r="C3">
-                    <v>c</v>
-                </c>
-            </row>
-            <row r="4" spans="2:19" x14ac:dyDescent="0.4">
-                <c r="D4">
-                    <v>d</v>
-                </c>
-            </row>
-            <row r="5" spans="2:19" x14ac:dyDescent="0.4">
-                <c r="A5" s="15" t="s">
-                    <v>0</v>
-                </c>
-                <c r="E5">
-                    <v>e</v>
-                </c>
-                <c r="G5">
-                    <v>0</v>
-                </c>
-            </row>
-        </sheetData>
-    </worksheet>
-    "#;
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac xr xr2 xr3" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" xmlns:xr2="http://schemas.microsoft.com/office/spreadsheetml/2015/revision2" xmlns:xr3="http://schemas.microsoft.com/office/spreadsheetml/2016/revision3" xr:uid="{44FEEDED-D128-4496-B199-BCD526D1EB2C}">
+<sheetData>
+<row r="1" spans="2:19" x14ac:dyDescent="0.4">
+<c r="A1">
+<v>a</v>
+</c>
+</row>
+<row r="2" spans="2:19" x14ac:dyDescent="0.4">
+<c r="A2"/>
+<c r="B2">
+<v>b</v>
+</c>
+<c r="C2" s="12"/>
+<c r="D2" s="16"/>
+<c r="E2" s="13"/>
+</row>
+<row r="3" spans="2:19" x14ac:dyDescent="0.4">
+<c r="C3">
+<v>c</v>
+</c>
+</row>
+<row r="4" spans="2:19" x14ac:dyDescent="0.4">
+<c r="D4">
+<v>d</v>
+</c>
+</row>
+<row r="5" spans="2:19" x14ac:dyDescent="0.4">
+<c r="A5" s="15" t="s">
+<v>0</v>
+</c>
+<c r="E5">
+<v>e</v>
+</c>
+<c r="G5">
+<v>0</v>
+</c>
+</row>
+</sheetData>
+</worksheet>
+"#;
     #[test]
     fn get_cell_test() {
         let mut mock = SharedStringsMock::new();
@@ -314,7 +313,7 @@ mod xml_sheet_test {
         mock.add_shared_string("one");
         mock.add_shared_string("two");
         mock.add_shared_string("three");
-        let expect = Sheet::new("test", SOURCE1.to_string(), &mut mock);
+        let expect = Sheet::new("test", SOURCE1, &mut mock);
         assert_eq!(
             expect.get_cell(CellIndex::new("B2")),
             Some("zero".to_string())
@@ -333,7 +332,7 @@ mod xml_sheet_test {
         mock.add_shared_string("two");
         mock.add_shared_string("three");
         mock.add_shared_string("four");
-        let sheet = Sheet::new("test", SOURCE1.to_string(), &mut mock);
+        let sheet = Sheet::new("test", SOURCE1, &mut mock);
         assert_eq!(
             sheet.get_row(2),
             vec![
@@ -382,7 +381,7 @@ mod xml_sheet_test {
     fn get_column_test() {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
-        let sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
+        let sheet = Sheet::new("test", SOURCE2, &mut shareds);
         assert_eq!(
             sheet.get_column(ColumnAlphabet::new("A")),
             vec![
@@ -414,7 +413,7 @@ mod xml_sheet_test {
     fn get_all_cell_test() {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
-        let sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
+        let sheet = Sheet::new("test", SOURCE2, &mut shareds);
         assert_eq!(
             sheet.get_all_cell(),
             vec![
@@ -446,7 +445,7 @@ mod xml_sheet_test {
     fn get_column_range_test() {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
-        let sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
+        let sheet = Sheet::new("test", SOURCE2, &mut shareds);
         assert_eq!(
             sheet.get_column_range(ColumnAlphabet::new("B"), ColumnAlphabet::new("E")),
             vec![
@@ -462,16 +461,16 @@ mod xml_sheet_test {
     fn get_max_column_index_test() {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
-        let sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
+        let sheet = Sheet::new("test", SOURCE2, &mut shareds);
         assert_eq!(sheet.get_max_column_index(), 7);
     }
     #[test]
     fn set_cell_test() {
         let mut shareds = SharedStringsMock::new();
         shareds.add_shared_string("あ");
-        let mut sheet = Sheet::new("test", SOURCE2.to_string(), &mut shareds);
+        let mut sheet = Sheet::new("test", SOURCE2, &mut shareds);
         let new_cell = ECell::new("new-data", "A2");
-        sheet.set_cell(new_cell);
+        sheet.set_cell(&new_cell);
         assert_eq!(
             sheet.get_column(ColumnAlphabet::new("A")),
             vec![
@@ -496,7 +495,7 @@ mod mock_shared_strings {
             SharedStringsMock { values: Vec::new() }
         }
     }
-    impl SharedStringsInterface for SharedStringsMock {
+    impl<'a> SharedStringsInterface<'a> for SharedStringsMock {
         fn to_xml(&self) -> String {
             "".to_string()
         }
@@ -506,7 +505,7 @@ mod mock_shared_strings {
         fn get_shared_string(&self, index: usize) -> &str {
             self.values[index].as_str()
         }
-        fn add_shared_string(&mut self, value: &str) -> () {
+        fn add_shared_string(&mut self, value: &'a str) -> () {
             self.values.push(value.to_string())
         }
     }

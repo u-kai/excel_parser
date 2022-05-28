@@ -5,12 +5,12 @@ use self::sheet_map::*;
 use super::xl::XL;
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct WorkBook {
-    node: XMLNode,
+pub struct WorkBook<'a> {
+    node: XMLNode<'a>,
     sheet_map: SheetMap,
 }
-impl WorkBook {
-    pub fn new(source: &str) -> Self {
+impl<'a> WorkBook<'a> {
+    pub fn new(source: &'a str) -> Self {
         let node = XMLNode::from(source);
         let workbook_node = node.search_node("workbook").unwrap();
         let sheets_node = workbook_node.search_node("sheets").unwrap();
@@ -22,8 +22,8 @@ impl WorkBook {
         self.sheet_map.get_excel_sheet_name(sheet_name).unwrap()
     }
 }
-impl<'a> XL<'a> for WorkBook {
-    fn get_xml_node(&'a self) -> &'a XMLNode {
+impl<'a> XL<'a> for WorkBook<'a> {
+    fn get_xml_node(&'a self) -> &'a XMLNode<'a> {
         &self.node
     }
 }
@@ -131,8 +131,8 @@ mod sheet_map {
         }
     }
 
-    impl From<&XMLNode> for SheetMap {
-        fn from(sheets_node: &XMLNode) -> Self {
+    impl<'a> From<&XMLNode<'a>> for SheetMap {
+        fn from(sheets_node: &XMLNode<'a>) -> Self {
             let mut sheet_names = SheetMap::new();
             let sheets = sheets_node
                 .search_all_nodes("sheet")

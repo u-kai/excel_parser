@@ -2,18 +2,18 @@ use super::xl::XL;
 use crate::xml::nodes::{node::XMLNode, node_type::NodeType};
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct SharedStrings {
-    node: XMLNode,
+pub struct SharedStrings<'a> {
+    node: XMLNode<'a>,
     values: Vec<String>,
 }
-pub trait SharedStringsInterface {
+pub trait SharedStringsInterface<'a> {
     fn get_values(&self) -> &Vec<String>;
     fn get_shared_string(&self, index: usize) -> &str;
-    fn add_shared_string(&mut self, value: &str) -> ();
+    fn add_shared_string(&mut self, value: &'a str) -> ();
     fn to_xml(&self) -> String;
 }
-impl SharedStrings {
-    pub fn new(source: &str) -> Self {
+impl<'a> SharedStrings<'a> {
+    pub fn new(source: &'a str) -> Self {
         let node = XMLNode::from(source);
         let sst = node
             .search_node("sst")
@@ -32,12 +32,12 @@ impl SharedStrings {
     }
 }
 
-impl<'a> XL<'a> for SharedStrings {
-    fn get_xml_node(&'a self) -> &'a XMLNode {
+impl<'a> XL<'a> for SharedStrings<'a> {
+    fn get_xml_node(&'a self) -> &'a XMLNode<'a> {
         &self.node
     }
 }
-impl SharedStringsInterface for SharedStrings {
+impl<'a> SharedStringsInterface<'a> for SharedStrings<'a> {
     fn to_xml(&self) -> String {
         self.node.to_string()
     }
@@ -47,7 +47,7 @@ impl SharedStringsInterface for SharedStrings {
     fn get_shared_string(&self, index: usize) -> &str {
         &self.values[index]
     }
-    fn add_shared_string(&mut self, value: &str) -> () {
+    fn add_shared_string(&mut self, value: &'a str) -> () {
         self.values.push(value.into());
         let phonetic_pr = self
             .node
@@ -80,7 +80,7 @@ mod shared_strings_test {
     fn get_xml_node_test() {
         let source = r#"
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="938" uniqueCount="265">
+<sst xmlns="http:schemas.openxmlformats.orgspreadsheetml2006main" count="938" uniqueCount="265">
     <si>
         <t>詳細画面レイアウト</t>
         <rPh sb="0" eb="2">

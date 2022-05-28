@@ -1,6 +1,6 @@
 use crate::xml::nodes::{node::XMLNode, node_type::NodeType};
 
-impl XMLNode {
+impl<'a> XMLNode<'a> {
     pub fn to_string(&self) -> String {
         let mut result = String::new();
         match self.get_node_type() {
@@ -30,7 +30,9 @@ impl XMLNode {
                         result = format!("{}{}", result, child.to_string());
                     }
                     if self.get_value().chars().nth(0).unwrap() == '?' {
-                        format!("<{}?>\n{}", self.get_node_value().to_string(), result,)
+                        let str = self.get_node_value().to_string();
+                        let remove_last_question = str.get(..(str.len() - 2)).unwrap();
+                        format!("<{}?>\n{}", remove_last_question, result,)
                     } else {
                         format!("<{}>{}", self.get_node_value().to_string(), result,)
                     }
@@ -41,17 +43,13 @@ impl XMLNode {
         }
     }
 }
-impl Into<String> for XMLNode {
+impl<'a> Into<String> for XMLNode<'a> {
     fn into(self) -> String {
         self.to_string()
     }
 }
 #[cfg(test)]
 mod xml_into_str_test {
-    use std::{
-        fs::{set_permissions, File},
-        io::{BufReader, Read},
-    };
 
     use crate::xml::nodes::node::XMLNode;
 
@@ -61,7 +59,7 @@ mod xml_into_str_test {
             r#"<div id="1180" name="kai"><div>div-first<p>p-data</p><data/>div-data</div></div>"#;
         let root_node = XMLNode::from(data);
         let expect: String = root_node.to_string();
-        assert_eq!(expect.len(), data.len());
+        assert_eq!(expect, data);
     }
 
     #[test]
@@ -70,7 +68,7 @@ mod xml_into_str_test {
             r#"<div id="1180" name="kai"><div>div-first<p>p-data</p><data/>div-data</div></div>"#;
         let root_node = XMLNode::from(data);
         let expect: String = root_node.into();
-        assert_eq!(expect.len(), data.len());
+        assert_eq!(expect, data);
     }
     #[test]
 
@@ -78,9 +76,9 @@ mod xml_into_str_test {
         let data = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <div id="1180" name="kai"><div>div-first<p>p-data</p><data/>div-data</div></div>"#;
         let root_node = XMLNode::from(data);
+        println!("{:?}", root_node);
         let expect: String = root_node.into();
-        println!("{:?}", expect);
-        assert_eq!(expect.len(), data.len());
+        assert_eq!(expect, data);
     }
     //#[test]
     //fn same_file_test() {
