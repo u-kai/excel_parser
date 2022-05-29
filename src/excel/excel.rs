@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::{
-    file_operator::{XLSXFile, XLSXOperator},
+    file_operator::XLSXOperator,
     xmls::{shared_strings::SharedStrings, sheet::Sheet, workbook::WorkBook},
 };
 
@@ -60,23 +60,6 @@ impl<'a, XOpe: XLSXOperator<'a>> Excel<'a, XOpe> {
         self.xlsx_operator.to_excel()
     }
 }
-//impl<'a> Excel<'a, XLSXFile<'a>> {
-//pub fn open(xlsx_file: &'a str) -> Self {
-//let xlsx_operator = XLSXFile::open(xlsx_file);
-//xlsx_operator.to_zip();
-//xlsx_operator.decompress();
-//let mut excel = Excel {
-//xlsx_operator: &xlsx_operator,
-//workbook: None,
-//shared_strings: None,
-//};
-//excel.workbook = Some(WorkBook::new(excel.xlsx_operator.read_workbook()));
-//excel.shared_strings = Some(SharedStrings::new(
-//excel.xlsx_operator.read_shared_strings(),
-//));
-//excel
-//}
-//}
 impl<'a, T: XLSXOperator<'a>> Drop for Excel<'a, T> {
     fn drop(&mut self) {
         self.close()

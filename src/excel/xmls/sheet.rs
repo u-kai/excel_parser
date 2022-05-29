@@ -52,7 +52,8 @@ impl<'a, S: SharedStringsInterface<'a>> Sheet<'a, S> {
         }
         Vec::new()
     }
-    fn get_cell_v(&self, index: CellIndex) -> Option<String> {
+    fn get_cell_v(&self, index: &str) -> Option<String> {
+        let index = CellIndex::new(index);
         let c_node = self
             .get_sheet_data_node()
             .search_child_by_id("r", index.get_value());
@@ -74,19 +75,14 @@ impl<'a, S: SharedStringsInterface<'a>> Sheet<'a, S> {
     pub fn to_xml(&self) -> String {
         self.node.to_string()
     }
-    fn create_new_v(&self, value: &'a str) -> &'a str {
-        value
-    }
 }
 impl<'a, S: SharedStringsInterface<'a>> WorkSheet<'a> for Sheet<'a, S> {
-    fn get_cell(&self, cell_index: CellIndex) -> Option<String> {
+    fn get_cell(&self, cell_index: &str) -> Option<String> {
         self.get_cell_v(cell_index)
     }
-    fn get_column_range(
-        &self,
-        start: ColumnAlphabet,
-        end: ColumnAlphabet,
-    ) -> Vec<Vec<Option<String>>> {
+    fn get_column_range(&self, start: &str, end: &str) -> Vec<Vec<Option<String>>> {
+        let start = ColumnAlphabet::new(start);
+        let end = ColumnAlphabet::new(end);
         let max = self.get_max_column_index();
         if end.to_number() > max {
             return self
@@ -128,17 +124,16 @@ impl<'a, S: SharedStringsInterface<'a>> WorkSheet<'a> for Sheet<'a, S> {
             vec![None]
         }
     }
-    fn get_column(&self, s: ColumnAlphabet) -> Vec<Option<String>> {
+    fn get_column(&self, s: &str) -> Vec<Option<String>> {
         let rows = self.get_sheet_data_node().search_all_nodes("row");
         if rows.is_none() {
             return vec![None];
         }
-        println!("{:?}", rows);
+        let s = ColumnAlphabet::new(s);
         let mut result = Vec::new();
         for row in rows.unwrap().iter() {
             let mut is_exist = false;
             for c in row.search_all_nodes("c").unwrap().iter() {
-                println!("{:?}", c.search_element("r"));
                 let element = c.search_element("r");
                 if element.is_none() {
                     continue;
@@ -146,7 +141,7 @@ impl<'a, S: SharedStringsInterface<'a>> WorkSheet<'a> for Sheet<'a, S> {
                 let cell_index = CellIndex::new(c.search_element("r").unwrap());
                 let column_index = cell_index.get_column_index();
                 if column_index == s.to_number() {
-                    result.push(self.get_cell(cell_index));
+                    result.push(self.get_cell(cell_index.get_value()));
                     is_exist = true;
                     break;
                 }
@@ -180,7 +175,6 @@ impl<'a, S: SharedStringsInterface<'a>> WorkSheet<'a> for Sheet<'a, S> {
     fn set_cell(&mut self, cell: &'a ECell<'a>) -> () {
         let index = cell.get_index();
         let value = cell.get_value();
-        let value = self.create_new_v(value);
         let maybe_child = self
             .get_sheet_data_node_mut()
             .search_child_by_id_mut("r", index.get_value());
@@ -200,22 +194,18 @@ impl<'a, S: SharedStringsInterface<'a>> WorkSheet<'a> for Sheet<'a, S> {
     }
 }
 pub trait WorkSheet<'a> {
-    fn get_cell(&self, cell_index: CellIndex) -> Option<String>;
+    fn get_cell(&self, cell_index: &str) -> Option<String>;
     fn get_row(&self, u: usize) -> Vec<Option<String>>;
-    fn get_column(&self, s: ColumnAlphabet) -> Vec<Option<String>>;
+    fn get_column(&self, s: &str) -> Vec<Option<String>>;
     fn get_all_cell(&self) -> Vec<Vec<Option<String>>>;
-    fn get_column_range(
-        &self,
-        start: ColumnAlphabet,
-        end: ColumnAlphabet,
-    ) -> Vec<Vec<Option<String>>>;
+    fn get_column_range(&self, start: &str, end: &str) -> Vec<Vec<Option<String>>>;
     fn set_cell(&mut self, cell: &'a ECell<'a>) -> ();
 }
 
 #[cfg(test)]
 mod xml_sheet_test {
     use crate::excel::{
-        cells::cell::{CellIndex, ColumnAlphabet, ECell},
+        cells::cell::ECell,
         xmls::{
             shared_strings::SharedStringsInterface,
             sheet::{Sheet, WorkSheet},
@@ -314,15 +304,9 @@ mod xml_sheet_test {
         mock.add_shared_string("two");
         mock.add_shared_string("three");
         let expect = Sheet::new("test", SOURCE1, &mut mock);
-        assert_eq!(
-            expect.get_cell(CellIndex::new("B2")),
-            Some("zero".to_string())
-        );
-        assert_eq!(
-            expect.get_cell(CellIndex::new("J2")),
-            Some("one".to_string())
-        );
-        assert_eq!(expect.get_cell(CellIndex::new("XX3")), None);
+        assert_eq!(expect.get_cell("B2"), Some("zero".to_string()));
+        assert_eq!(expect.get_cell("J2"), Some("one".to_string()));
+        assert_eq!(expect.get_cell("XX3"), None);
     }
     #[test]
     fn get_row_test() {
@@ -383,7 +367,7 @@ mod xml_sheet_test {
         shareds.add_shared_string("あ");
         let sheet = Sheet::new("test", SOURCE2, &mut shareds);
         assert_eq!(
-            sheet.get_column(ColumnAlphabet::new("A")),
+            sheet.get_column("A"),
             vec![
                 Some("a".to_string()),
                 None,
@@ -393,11 +377,11 @@ mod xml_sheet_test {
             ]
         );
         assert_eq!(
-            sheet.get_column(ColumnAlphabet::new("G")),
+            sheet.get_column("G"),
             vec![None, None, None, None, Some("0".to_string())]
         );
         assert_eq!(
-            sheet.get_column(ColumnAlphabet::new("D")),
+            sheet.get_column("D"),
             vec![None, None, None, Some("d".to_string()), None]
         );
     }
@@ -447,7 +431,7 @@ mod xml_sheet_test {
         shareds.add_shared_string("あ");
         let sheet = Sheet::new("test", SOURCE2, &mut shareds);
         assert_eq!(
-            sheet.get_column_range(ColumnAlphabet::new("B"), ColumnAlphabet::new("E")),
+            sheet.get_column_range("B", "E"),
             vec![
                 vec![None, None, None, None],
                 vec![Some("b".to_string()), None, None, None],
@@ -472,7 +456,7 @@ mod xml_sheet_test {
         let new_cell = ECell::new("new-data", "A2");
         sheet.set_cell(&new_cell);
         assert_eq!(
-            sheet.get_column(ColumnAlphabet::new("A")),
+            sheet.get_column("A"),
             vec![
                 Some("a".to_string()),
                 Some("new-data".to_string()),
