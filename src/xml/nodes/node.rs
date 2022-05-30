@@ -346,7 +346,6 @@ impl<'a> XMLNode<'a> {
 
 #[cfg(test)]
 pub mod xml_node_test {
-    use std::collections::HashMap;
 
     use crate::xml::nodes::node::{NodeType, XMLNode};
     #[test]

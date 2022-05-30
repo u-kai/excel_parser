@@ -2,14 +2,13 @@ use crate::xml::nodes::{node::XMLNode, node_type::NodeType};
 
 impl<'a> XMLNode<'a> {
     pub fn to_string(&self) -> String {
-        let mut result = String::new();
         match self.get_node_type() {
             NodeType::Character => format!("{}", self.get_value()),
             NodeType::Element => {
                 if let Some(children) = self.get_children() {
-                    for child in children {
-                        result = format!("{}{}", result, child.to_string());
-                    }
+                    let result = children.iter().fold(String::new(), |acc, cur| {
+                        format!("{}{}", acc, cur.to_string())
+                    });
                     format!(
                         "<{}>{}</{}>",
                         self.get_node_value().to_string(),
@@ -26,9 +25,9 @@ impl<'a> XMLNode<'a> {
             }
             NodeType::SingleElement => {
                 if let Some(children) = self.get_children() {
-                    for child in children {
-                        result = format!("{}{}", result, child.to_string());
-                    }
+                    let result = children.iter().fold(String::new(), |acc, cur| {
+                        format!("{}{}", acc, cur.to_string())
+                    });
                     if self.get_value().chars().nth(0).unwrap() == '?' {
                         let str = self.get_node_value().to_string();
                         let remove_last_question = str.get(..(str.len() - 2)).unwrap();
