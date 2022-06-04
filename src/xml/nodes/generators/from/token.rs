@@ -27,6 +27,19 @@ impl<'a> Element<'a> {
     }
     pub fn key_values(&mut self) -> Vec<(&'a str, Vec<&'a str>)> {
         let mut result = Vec::new();
+        //todo diff is patch
+        let diff = self.values.len() as isize - self.keys.len() as isize;
+        if (diff) != 0 {
+            let len = if diff > 0 {
+                self.keys.len()
+            } else {
+                self.values.len()
+            };
+            for i in 0..len {
+                result.push((self.keys[i], self.values.remove(0)));
+            }
+            return result;
+        }
         let _ = self
             .keys
             .iter()

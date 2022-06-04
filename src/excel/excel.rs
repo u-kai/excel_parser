@@ -70,7 +70,6 @@ impl<'a, T: XLSXOperator<'a>> Drop for Excel<'a, T> {
 mod excel_tests {
     use crate::excel::file_operator::XLSXOperator;
 
-    use super::Excel;
     #[derive(Debug)]
     struct XLSXOperatorMock<'a> {
         shared_strings: &'a str,
@@ -90,15 +89,10 @@ mod excel_tests {
         fn add_sheet(&mut self, e_sheet_name: &str) -> () {
             ()
         }
-        //fn to_zip(&self) -> () {
-        //println!("ziped!")
-        //}
         fn to_excel(&self) -> () {
             println!("exceled!")
         }
-        //fn decompress(&self) -> () {
-        //println!("decompress")
-        //}
+
         fn read_sheet(&self, _: &str) -> String {
             self.sheet.to_string()
         }

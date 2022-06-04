@@ -7,9 +7,7 @@ use std::{
 };
 
 pub trait XLSXOperator<'a> {
-    //fn to_zip(&self) -> ();
     fn to_excel(&self) -> ();
-    //fn decompress(&self) -> ();
     fn read_sheet(&'a self, e_sheet_name: &str) -> String;
     fn read_workbook(&'a self) -> &'a str;
     fn read_shared_strings(&'a self) -> &'a str;
@@ -139,7 +137,6 @@ impl<'a> XLSXOperator<'a> for XLSXFile<'a> {
     fn read_sheet(&'a self, e_sheet_name: &str) -> String {
         let sheet = XLSXFile::read_file(XLSXFile::sheet_path(e_sheet_name).as_str());
         sheet
-        //self.sheets[e_sheet_name].as_str()
     }
     fn read_shared_strings(&'a self) -> &'a str {
         &self.shared_strings

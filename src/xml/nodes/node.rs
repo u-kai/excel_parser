@@ -41,6 +41,30 @@ impl<'a> XMLNode<'a> {
             None
         }
     }
+    /// Returns children that source has.
+    ///
+    ///     let source = r#"
+    ///         <div id="1180" name="kai">
+    ///             <div>
+    ///                 div-first
+    ///                 <p>p-data</p>
+    ///                 <p>p-data</p>
+    ///                 <data/>
+    ///                 div-data
+    ///              </div>
+    ///          </div>"#;
+    ///
+    ///     let node = XMLNode::from(source);
+    ///     assert_eq!(node.get_child_nodes(),XMLNode::from(r#"
+    ///             <div>
+    ///                 div-first
+    ///                 <p>p-data</p>
+    ///                 <p>p-data</p>
+    ///                 <data/>
+    ///                 div-data
+    ///              </div>"#)
+    ///     );
+    ///
     pub fn get_child_nodes(&self) -> Option<Vec<&XMLNode<'a>>> {
         if self.has_nodes() {
             let nodes = self
@@ -87,18 +111,13 @@ impl<'a> XMLNode<'a> {
     }
     #[allow(dead_code)]
     pub fn get_all_texts(&self) -> Option<Vec<&str>> {
-        if self.has_characters() {
-            let chars = self
-                .children
-                .as_ref()
-                .unwrap()
+        self.children.as_ref().map(|children| {
+            children
                 .iter()
                 .filter(|node| node.node_type == NodeType::Character)
-                .map(|c_node| c_node.get_value())
-                .collect::<Vec<_>>();
-            return Some(chars);
-        }
-        None
+                .map(|node| node.get_value())
+                .collect::<Vec<_>>()
+        })
     }
 
     #[allow(dead_code)]
